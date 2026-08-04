@@ -611,6 +611,21 @@ test('free-math setValue preserves rows, tabs, math semantics, and outputs', asy
   });
 });
 
+test('piecewise command creates editable rows', async ({ page }) => {
+  await page.goto('/dist/playwright-test-page/');
+
+  await page.locator('#mf-1').pressSequentially(String.raw`\piecewise{2}`);
+  await page.locator('#mf-1').press('ArrowRight');
+
+  expect(
+    await page
+      .locator('#mf-1')
+      .evaluate((e: MathfieldElement) => e.getValue('latex-expanded'))
+  ).toBe(
+    String.raw`\begin{cases}\placeholder{} & \placeholder{}\\ \placeholder{} & \placeholder{}\end{cases}`
+  );
+});
+
 test('underscore subscript', async ({ page }) => {
   await page.goto('/dist/playwright-test-page/');
 
