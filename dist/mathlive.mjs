@@ -1,37 +1,3 @@
-/** MathLive 0.110.0 */
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __restKey = (key) => typeof key === "symbol" ? key : key + "";
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
-
 // src/ui/utils/capabilities.ts
 function isBrowser() {
   return "window" in globalThis && "document" in globalThis;
@@ -52,9 +18,8 @@ function canVibrate() {
   return typeof navigator.vibrate === "function";
 }
 function osPlatform() {
-  var _a3, _b3;
   if (!isBrowser()) return "other";
-  const platform2 = (_b3 = (_a3 = navigator["userAgentData"]) == null ? void 0 : _a3.platform) != null ? _b3 : navigator.platform;
+  const platform2 = navigator["userAgentData"]?.platform ?? navigator.platform;
   if (/^mac/i.test(platform2)) {
     if (navigator.maxTouchPoints === 5) return "ios";
     return "macos";
@@ -1114,7 +1079,6 @@ function register(layout) {
     gKeyboardLayouts.push(layout);
 }
 function getCodeForKey(k, layout) {
-  var _a3;
   const result = {
     shift: false,
     alt: false,
@@ -1147,7 +1111,7 @@ function getCodeForKey(k, layout) {
       return result;
     }
   }
-  result.key = (_a3 = BASE_LAYOUT_MAPPING[k]) != null ? _a3 : "";
+  result.key = BASE_LAYOUT_MAPPING[k] ?? "";
   return result;
 }
 function normalizeKeyboardEvent(evt) {
@@ -1170,18 +1134,17 @@ function normalizeKeyboardEvent(evt) {
     }
     if (code) break;
   }
-  return new KeyboardEvent(evt.type, __spreadProps(__spreadValues({}, evt), { altKey, shiftKey, code }));
+  return new KeyboardEvent(evt.type, { ...evt, altKey, shiftKey, code });
 }
 function validateKeyboardLayout(evt) {
-  var _a3, _b3;
   if (!evt) return;
   if (evt.key === "Unidentified") return;
   if (evt.key === "Dead") return;
   const index = evt.shiftKey && evt.altKey ? 3 : evt.altKey ? 2 : evt.shiftKey ? 1 : 0;
   for (const layout of gKeyboardLayouts) {
-    if (((_a3 = layout.mapping[evt.code]) == null ? void 0 : _a3[index]) === evt.key) {
+    if (layout.mapping[evt.code]?.[index] === evt.key) {
       layout.score += 1;
-    } else if ((_b3 = layout.mapping[evt.code]) == null ? void 0 : _b3[index]) {
+    } else if (layout.mapping[evt.code]?.[index]) {
       layout.score = 0;
     }
   }
@@ -1195,7 +1158,7 @@ function setKeyboardLayout(name) {
   return gKeyboardLayout;
 }
 function getActiveKeyboardLayout() {
-  return gKeyboardLayout != null ? gKeyboardLayout : gKeyboardLayouts[0];
+  return gKeyboardLayout ?? gKeyboardLayouts[0];
 }
 function getDefaultKeyboardLayout() {
   switch (platform()) {
@@ -2437,7 +2400,10 @@ var l10n = {
    */
   merge(locale, strings) {
     if (typeof locale === "string" && strings) {
-      l10n.strings[locale] = __spreadValues(__spreadValues({}, l10n.strings[locale]), strings);
+      l10n.strings[locale] = {
+        ...l10n.strings[locale],
+        ...strings
+      };
       l10n.dirty = true;
     } else {
       for (const l of Object.keys(
@@ -2454,7 +2420,7 @@ var l10n = {
     l10n._dirty = true;
     setTimeout(() => {
       l10n._dirty = false;
-      this._subscribers.forEach((x) => x == null ? void 0 : x());
+      this._subscribers.forEach((x) => x?.());
     }, 0);
   },
   subscribe(callback) {
@@ -2677,7 +2643,6 @@ var DVIPS_COLORS = {
   YellowOrange: "#FAA21A"
 };
 function defaultColorMap(s) {
-  var _a3, _b3, _c2, _d2, _e, _f;
   const colorSpec = s.split("!");
   let baseRed;
   let baseGreen;
@@ -2692,17 +2657,17 @@ function defaultColorMap(s) {
     baseRed = red;
     baseGreen = green;
     baseBlue = blue;
-    const colorName = (_a3 = colorSpec[i].trim().match(/^([A-Za-z\d-]+)/)) == null ? void 0 : _a3[1];
-    const lcColorName = colorName == null ? void 0 : colorName.toLowerCase();
-    const color = !colorName ? colorSpec[i].trim() : (_f = (_e = (_d2 = (_c2 = (_b3 = FOREGROUND_COLORS[lcColorName]) != null ? _b3 : FOREGROUND_COLORS[DVIPS_TO_CHROMATIC[colorName]]) != null ? _c2 : MATLAB_COLORS[colorName]) != null ? _d2 : DVIPS_COLORS[colorName]) != null ? _e : MATHEMATICA_COLORS[colorName]) != null ? _f : colorSpec[i].trim();
+    const colorName = colorSpec[i].trim().match(/^([A-Za-z\d-]+)/)?.[1];
+    const lcColorName = colorName?.toLowerCase();
+    const color = !colorName ? colorSpec[i].trim() : FOREGROUND_COLORS[lcColorName] ?? FOREGROUND_COLORS[DVIPS_TO_CHROMATIC[colorName]] ?? MATLAB_COLORS[colorName] ?? DVIPS_COLORS[colorName] ?? MATHEMATICA_COLORS[colorName] ?? colorSpec[i].trim();
     let m = color.match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
-    if ((m == null ? void 0 : m[1]) && m[2] && m[3]) {
+    if (m?.[1] && m[2] && m[3]) {
       red = Math.max(0, Math.min(255, Number.parseInt(m[1], 16)));
       green = Math.max(0, Math.min(255, Number.parseInt(m[2], 16)));
       blue = Math.max(0, Math.min(255, Number.parseInt(m[3], 16)));
     } else {
       m = color.match(/^#([\da-f]{3})$/i);
-      if (m == null ? void 0 : m[1]) {
+      if (m?.[1]) {
         const r1 = Number.parseInt(m[1][0], 16);
         const g1 = Number.parseInt(m[1][1], 16);
         const b1 = Number.parseInt(m[1][2], 16);
@@ -2711,7 +2676,7 @@ function defaultColorMap(s) {
         blue = Math.max(0, Math.min(255, b1 * 16 + b1));
       } else {
         m = color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
-        if ((m == null ? void 0 : m[1]) && m[2] && m[3]) {
+        if (m?.[1] && m[2] && m[3]) {
           red = Math.max(0, Math.min(255, Number.parseInt(m[1])));
           green = Math.max(0, Math.min(255, Number.parseInt(m[2])));
           blue = Math.max(0, Math.min(255, Number.parseInt(m[3])));
@@ -2740,9 +2705,8 @@ function defaultColorMap(s) {
   return "#" + ("00" + Math.round(red).toString(16)).slice(-2) + ("00" + Math.round(green).toString(16)).slice(-2) + ("00" + Math.round(blue).toString(16)).slice(-2);
 }
 function defaultBackgroundColorMap(s) {
-  var _a3, _b3;
   s = s.trim();
-  return (_b3 = (_a3 = BACKGROUND_COLORS[s.toLowerCase()]) != null ? _a3 : BACKGROUND_COLORS[DVIPS_TO_CHROMATIC[s]]) != null ? _b3 : defaultColorMap(s);
+  return BACKGROUND_COLORS[s.toLowerCase()] ?? BACKGROUND_COLORS[DVIPS_TO_CHROMATIC[s]] ?? defaultColorMap(s);
 }
 function parseHex(hex) {
   if (!hex) return void 0;
@@ -3110,12 +3074,11 @@ function mathVariantToUnicode(char, variant, style) {
   return void 0;
 }
 function unicodeToMathVariant(codepoint) {
-  var _a3;
   if ((codepoint < 119808 || codepoint > 120831) && (codepoint < 8448 || codepoint > 8527))
     return { char: String.fromCodePoint(codepoint) };
   for (const c in MATH_LETTER_EXCEPTIONS) {
     if (MATH_LETTER_EXCEPTIONS[c] === codepoint) {
-      codepoint = (_a3 = c.codePointAt(0)) != null ? _a3 : 0;
+      codepoint = c.codePointAt(0) ?? 0;
       break;
     }
   }
@@ -3131,10 +3094,9 @@ function unicodeToMathVariant(codepoint) {
   return { char: String.fromCodePoint(codepoint) };
 }
 function codePointToLatex(c) {
-  var _a3;
   if ("{}<>[]$&*#^_%:'\u02DC".includes(c)) return void 0;
   if (c.length > 1) return void 0;
-  const codepoint = (_a3 = c.codePointAt(0)) != null ? _a3 : 0;
+  const codepoint = c.codePointAt(0) ?? 0;
   let latex = UNICODE_TO_LATEX[codepoint];
   if (latex) return latex;
   const { char, variant, style } = unicodeToMathVariant(codepoint);
@@ -3182,7 +3144,7 @@ function argAtoms(arg) {
   return [];
 }
 var MATH_SYMBOLS = {};
-var REVERSE_MATH_SYMBOLS = __spreadValues({}, UNICODE_TO_LATEX);
+var REVERSE_MATH_SYMBOLS = { ...UNICODE_TO_LATEX };
 var LATEX_COMMANDS = {};
 var ENVIRONMENTS = {};
 var TEXVC_MACROS = {
@@ -3639,37 +3601,34 @@ function defineSymbols(value, inType, inVariant) {
     return;
   }
   for (const [symbol, val, type, variant] of value)
-    defineSymbol(symbol, val, type != null ? type : inType, variant != null ? variant : inVariant);
+    defineSymbol(symbol, val, type ?? inType, variant ?? inVariant);
 }
 function defineSymbolRange(from, to) {
   for (let i = from; i <= to; i++) defineSymbol(String.fromCodePoint(i), i);
 }
 function getEnvironmentDefinition(name) {
-  var _a3;
-  return (_a3 = ENVIRONMENTS[name]) != null ? _a3 : null;
+  return ENVIRONMENTS[name] ?? null;
 }
 function suggest(mf, s) {
-  var _a3, _b3;
   if (s.length === 0 || s === "\\" || !s.startsWith("\\")) return [];
   const result = [];
   for (const p in LATEX_COMMANDS) {
     if (p.startsWith(s) && !LATEX_COMMANDS[p].infix)
-      result.push({ match: p, frequency: (_a3 = LATEX_COMMANDS[p].frequency) != null ? _a3 : 0 });
+      result.push({ match: p, frequency: LATEX_COMMANDS[p].frequency ?? 0 });
   }
   for (const p in MATH_SYMBOLS) {
     if (p.startsWith(s))
-      result.push({ match: p, frequency: (_b3 = MATH_SYMBOLS[p].frequency) != null ? _b3 : 0 });
+      result.push({ match: p, frequency: MATH_SYMBOLS[p].frequency ?? 0 });
   }
   const command = s.substring(1);
   for (const p of Object.keys(mf.options.macros))
     if (p.startsWith(command)) result.push({ match: "\\" + p, frequency: 0 });
   result.sort((a, b) => {
-    var _a4, _b4;
     if (a.frequency === b.frequency) {
       if (a.match.length === b.match.length) return a.match < b.match ? -1 : 1;
       return a.match.length - b.match.length;
     }
-    return ((_a4 = b.frequency) != null ? _a4 : 0) - ((_b4 = a.frequency) != null ? _b4 : 0);
+    return (b.frequency ?? 0) - (a.frequency ?? 0);
   });
   return result.map((x) => x.match);
 }
@@ -3725,10 +3684,9 @@ function defineTabularEnvironment(names, parameters, createAtom) {
   for (const name of names) ENVIRONMENTS[name] = data;
 }
 function defineRootEnvironment(names, createAtom, options) {
-  var _a3;
   if (typeof names === "string") names = [names];
   const def = {
-    tabular: (_a3 = options == null ? void 0 : options.tabular) != null ? _a3 : false,
+    tabular: options?.tabular ?? false,
     rootOnly: true,
     params: [],
     createAtom
@@ -3736,7 +3694,6 @@ function defineRootEnvironment(names, createAtom, options) {
   for (const name of names) ENVIRONMENTS[name] = def;
 }
 function defineFunction(names, parameters, options) {
-  var _a3, _b3;
   if (!options) options = {};
   const data = {
     definitionType: "function",
@@ -3744,9 +3701,9 @@ function defineFunction(names, parameters, options) {
     // {optional, type}
     params: parseParameterTemplate(parameters),
     ifMode: options.ifMode,
-    isFunction: (_a3 = options.isFunction) != null ? _a3 : false,
+    isFunction: options.isFunction ?? false,
     applyMode: options.applyMode,
-    infix: (_b3 = options.infix) != null ? _b3 : false,
+    infix: options.infix ?? false,
     parse: options.parse,
     createAtom: options.createAtom,
     applyStyle: options.applyStyle,
@@ -3761,10 +3718,9 @@ function getMacros(otherMacros) {
   if (!_DEFAULT_MACROS)
     _DEFAULT_MACROS = normalizeMacroDictionary(DEFAULT_MACROS);
   if (!otherMacros) return _DEFAULT_MACROS;
-  return normalizeMacroDictionary(__spreadValues(__spreadValues({}, _DEFAULT_MACROS), otherMacros));
+  return normalizeMacroDictionary({ ..._DEFAULT_MACROS, ...otherMacros });
 }
 function normalizeMacroDefinition(def, options) {
-  var _a3, _b3, _c2, _d2;
   if (typeof def === "string") {
     let argCount = 0;
     const defString = def;
@@ -3778,17 +3734,18 @@ function normalizeMacroDefinition(def, options) {
     if (/(^|[^\\])#8/.test(defString)) argCount = 8;
     if (/(^|[^\\])#9/.test(defString)) argCount = 9;
     return {
-      expand: (_a3 = options == null ? void 0 : options.expand) != null ? _a3 : true,
-      captureSelection: (_b3 = options == null ? void 0 : options.captureSelection) != null ? _b3 : true,
+      expand: options?.expand ?? true,
+      captureSelection: options?.captureSelection ?? true,
       args: argCount,
       def: defString
     };
   }
-  return __spreadValues({
-    expand: (_c2 = options == null ? void 0 : options.expand) != null ? _c2 : true,
-    captureSelection: (_d2 = options == null ? void 0 : options.captureSelection) != null ? _d2 : true,
-    args: 0
-  }, def);
+  return {
+    expand: options?.expand ?? true,
+    captureSelection: options?.captureSelection ?? true,
+    args: 0,
+    ...def
+  };
 }
 function normalizeMacroDictionary(macros) {
   if (!macros) return {};
@@ -3832,7 +3789,7 @@ function getDefinition(token, parseMode = "math") {
     if (!info && token.length === 1) {
       const command = charToLatex("math", token.codePointAt(0));
       if (command.startsWith("\\"))
-        return __spreadProps(__spreadValues({}, getDefinition(command, "math")), { command });
+        return { ...getDefinition(command, "math"), command };
       return null;
     }
   } else if (TEXT_SYMBOLS[token]) {
@@ -3848,7 +3805,7 @@ function getDefinition(token, parseMode = "math") {
       codepoint: token.codePointAt(0)
     };
   }
-  return info != null ? info : null;
+  return info ?? null;
 }
 function getMacroDefinition(token, macros) {
   if (!token.startsWith("\\")) return null;
@@ -8895,13 +8852,12 @@ var EMOJI_COMBINATOR = [
 var emojiCombinator;
 var REGIONAL_INDICATOR = [127462, 127487];
 function isEmojiCombinator(code) {
-  var _a3;
   if (emojiCombinator === void 0) {
     emojiCombinator = {};
     for (const x of EMOJI_COMBINATOR)
       for (let i = x[0]; i <= x[0] + x[1] - 1; i++) emojiCombinator[i] = true;
   }
-  return (_a3 = emojiCombinator[code]) != null ? _a3 : false;
+  return emojiCombinator[code] ?? false;
 }
 function isRegionalIndicator(code) {
   return code >= REGIONAL_INDICATOR[0] && code <= REGIONAL_INDICATOR[1];
@@ -8970,7 +8926,7 @@ var Tokenizer = class {
    */
   match(regEx) {
     const execResult = typeof this.s === "string" ? regEx.exec(this.s.slice(this.pos)) : regEx.exec(this.s.slice(this.pos).join(""));
-    if (execResult == null ? void 0 : execResult[0]) {
+    if (execResult?.[0]) {
       this.pos += execResult[0].length;
       return execResult[0];
     }
@@ -9039,7 +8995,6 @@ var Tokenizer = class {
   }
 };
 function expand(lex, args) {
-  var _a3, _b3, _c2, _d2;
   const result = [];
   let token = lex.next();
   if (token) {
@@ -9071,7 +9026,7 @@ function expand(lex, args) {
           if (/^#[\d?@]$/.test(lex.peek())) {
             const parameter = lex.get().slice(1);
             tokens = tokenize(
-              (_b3 = (_a3 = args == null ? void 0 : args(parameter)) != null ? _a3 : args == null ? void 0 : args("?")) != null ? _b3 : "\\placeholder{}",
+              args?.(parameter) ?? args?.("?") ?? "\\placeholder{}",
               args
             );
             token = tokens[0];
@@ -9096,7 +9051,7 @@ function expand(lex, args) {
     } else if (token.length > 1 && token.startsWith("#")) {
       const parameter = token.slice(1);
       result.push(
-        ...tokenize((_d2 = (_c2 = args == null ? void 0 : args(parameter)) != null ? _c2 : args == null ? void 0 : args("?")) != null ? _d2 : "\\placeholder{}", args)
+        ...tokenize(args?.(parameter) ?? args?.("?") ?? "\\placeholder{}", args)
       );
     } else result.push(token);
   }
@@ -9140,22 +9095,22 @@ function latexCommand(command, ...args) {
 function tokensToString(tokens) {
   return joinLatex(
     tokens.map(
-      (token) => {
-        var _a3;
-        return (_a3 = {
-          "<space>": " ",
-          "<$$>": "$$",
-          "<$>": "$",
-          "<{>": "{",
-          "<}>": "}"
-        }[token]) != null ? _a3 : token;
-      }
+      (token) => ({
+        "<space>": " ",
+        "<$$>": "$$",
+        "<$>": "$",
+        "<{>": "{",
+        "<}>": "}"
+      })[token] ?? token
     )
   );
 }
 
 // src/core/modes-utils.ts
-var _Mode = class _Mode {
+var Mode = class _Mode {
+  static {
+    this._registry = {};
+  }
   constructor(name) {
     _Mode._registry[name] = this;
   }
@@ -9167,9 +9122,8 @@ var _Mode = class _Mode {
     );
   }
   static serialize(atoms, options) {
-    var _a3;
     if (!atoms || atoms.length === 0) return "";
-    if ((_a3 = options.skipStyles) != null ? _a3 : false) {
+    if (options.skipStyles ?? false) {
       const body = [];
       for (const run of getModeRuns(atoms)) {
         const mode = _Mode._registry[run[0].mode];
@@ -9183,8 +9137,6 @@ var _Mode = class _Mode {
     return _Mode._registry[mode].getFont(box, style);
   }
 };
-_Mode._registry = {};
-var Mode = _Mode;
 function getModeRuns(atoms) {
   const result = [];
   let run = [];
@@ -9202,7 +9154,7 @@ function getModeRuns(atoms) {
   return result;
 }
 function weightString(atom) {
-  if ((atom == null ? void 0 : atom.mode) !== "math") return "";
+  if (atom?.mode !== "math") return "";
   const { style } = atom;
   if (!style) return "";
   if (!style.variantStyle) return "";
@@ -9249,22 +9201,22 @@ function getPropertyRuns(atoms, property) {
   return result;
 }
 function emitColorRun(run, options) {
-  var _a3;
   const { parent } = run[0];
-  const parentColor = parent == null ? void 0 : parent.style.color;
+  const parentColor = parent?.style.color;
   const result = [];
   for (const modeRun of getModeRuns(run)) {
     const mode = options.defaultMode;
     for (const colorRun of getPropertyRuns(modeRun, "color")) {
       const style = colorRun[0].style;
-      const body = Mode._registry[colorRun[0].mode].serialize(colorRun, __spreadProps(__spreadValues({}, options), {
+      const body = Mode._registry[colorRun[0].mode].serialize(colorRun, {
+        ...options,
         defaultMode: isTextMode(mode) ? "text" : "math"
-      }));
+      });
       if (!options.skipStyles && style.color && style.color !== "none" && (!parent || parentColor !== style.color)) {
         result.push(
           latexCommand(
             "\\textcolor",
-            (_a3 = style.verbatimColor) != null ? _a3 : style.color,
+            style.verbatimColor ?? style.color,
             joinLatex(body)
           )
         );
@@ -9275,16 +9227,15 @@ function emitColorRun(run, options) {
 }
 function emitBackgroundColorRun(run, options) {
   const { parent } = run[0];
-  const parentColor = parent == null ? void 0 : parent.style.backgroundColor;
+  const parentColor = parent?.style.backgroundColor;
   return getPropertyRuns(run, "backgroundColor").map((x) => {
-    var _a3;
     if (x.length > 0 || x[0].type !== "box") {
       const style = x[0].style;
       if (style.backgroundColor && style.backgroundColor !== "none" && (!parent || parentColor !== style.backgroundColor)) {
         return latexCommand(
           "\\colorbox",
-          (_a3 = style.verbatimBackgroundColor) != null ? _a3 : style.backgroundColor,
-          joinLatex(emitColorRun(x, __spreadProps(__spreadValues({}, options), { defaultMode: "text" })))
+          style.verbatimBackgroundColor ?? style.backgroundColor,
+          joinLatex(emitColorRun(x, { ...options, defaultMode: "text" }))
         );
       }
     }
@@ -9294,7 +9245,7 @@ function emitBackgroundColorRun(run, options) {
 function emitFontSizeRun(run, options) {
   if (run.length === 0) return [];
   const { parent } = run[0];
-  const contextFontsize = parent == null ? void 0 : parent.style.fontSize;
+  const contextFontsize = parent?.style.fontSize;
   const result = [];
   for (const sizeRun of getPropertyRuns(run, "fontSize")) {
     const fontsize = sizeRun[0].style.fontSize;
@@ -9357,34 +9308,33 @@ function toString(arg1, arg2) {
     console.assert(Number.isFinite(arg1));
     const numValue = Math.ceil(100 * arg1) / 100;
     if (numValue === 0) return "0";
-    return numValue.toString() + (arg2 != null ? arg2 : "");
+    return numValue.toString() + (arg2 ?? "");
   }
   return "";
 }
 var Box = class _Box {
   constructor(content, options) {
-    var _a3, _b3, _c2, _d2, _e;
     if (typeof content === "number") this.value = String.fromCodePoint(content);
     else if (typeof content === "string") this.value = content;
     else if (isArray(content))
       this.children = content.filter((x) => x !== null);
     else if (content && content instanceof _Box) this.children = [content];
     if (this.children) for (const child of this.children) child.parent = this;
-    this.type = (_a3 = options == null ? void 0 : options.type) != null ? _a3 : "ignore";
-    this.isSelected = (options == null ? void 0 : options.isSelected) === true;
-    if (options == null ? void 0 : options.caret) this.caret = options.caret;
-    this.classes = (_b3 = options == null ? void 0 : options.classes) != null ? _b3 : "";
-    this.isTight = (_c2 = options == null ? void 0 : options.isTight) != null ? _c2 : false;
-    if (options == null ? void 0 : options.attributes) this.attributes = options.attributes;
-    let fontName = options == null ? void 0 : options.fontFamily;
-    if ((options == null ? void 0 : options.style) && this.value) {
-      fontName = (_e = Mode.getFont((_d2 = options.mode) != null ? _d2 : "math", this, __spreadProps(__spreadValues({
-        variant: "normal"
-      }, options.style), {
+    this.type = options?.type ?? "ignore";
+    this.isSelected = options?.isSelected === true;
+    if (options?.caret) this.caret = options.caret;
+    this.classes = options?.classes ?? "";
+    this.isTight = options?.isTight ?? false;
+    if (options?.attributes) this.attributes = options.attributes;
+    let fontName = options?.fontFamily;
+    if (options?.style && this.value) {
+      fontName = Mode.getFont(options.mode ?? "math", this, {
+        variant: "normal",
+        ...options.style,
         letterShapeStyle: options.letterShapeStyle
-      }))) != null ? _e : void 0;
+      }) ?? void 0;
     }
-    fontName || (fontName = "Main-Regular");
+    fontName ||= "Main-Regular";
     this._height = 0;
     this._depth = 0;
     this._width = 0;
@@ -9393,7 +9343,7 @@ var Box = class _Box {
     this.italic = 0;
     this.maxFontSize = 0;
     this.scale = 1;
-    if ((options == null ? void 0 : options.maxFontSize) !== void 0)
+    if (options?.maxFontSize !== void 0)
       this.maxFontSize = options.maxFontSize;
     horizontalLayout(this, fontName);
   }
@@ -9424,8 +9374,7 @@ var Box = class _Box {
     }
   }
   get left() {
-    var _a3;
-    if ((_a3 = this.cssProperties) == null ? void 0 : _a3["margin-left"])
+    if (this.cssProperties?.["margin-left"])
       return Number.parseFloat(this.cssProperties["margin-left"]);
     return 0;
   }
@@ -9506,7 +9455,6 @@ var Box = class _Box {
    * Generate the HTML markup to represent this box.
    */
   toMarkup() {
-    var _a3, _b3, _c2;
     let body = this.value ? escapeText(this.value) : "";
     if (this.children) for (const box of this.children) body += box.toMarkup();
     let svgMarkup = "";
@@ -9521,7 +9469,7 @@ var Box = class _Box {
       svgMarkup += "</span>";
       svgMarkup += '<svg style="position:absolute;overflow:visible;';
       svgMarkup += `height:${Math.floor(100 * (this.height + this.depth)) / 100}em;`;
-      const padding2 = (_a3 = this.cssProperties) == null ? void 0 : _a3.padding;
+      const padding2 = this.cssProperties?.padding;
       if (padding2) {
         svgMarkup += `top:${padding2};`;
         svgMarkup += `left:${padding2};`;
@@ -9536,11 +9484,11 @@ var Box = class _Box {
     const props = [];
     const classes = this.classes.split(" ");
     classes.push(
-      (_b3 = {
+      {
         latex: "ML__raw-latex",
         placeholder: "ML__placeholder",
         error: "ML__error"
-      }[this.type]) != null ? _b3 : ""
+      }[this.type] ?? ""
     );
     if (this.caret === "latex") classes.push("ML__latex-caret");
     if (this.isSelected) classes.push("ML__selected");
@@ -9581,7 +9529,7 @@ var Box = class _Box {
         }
       }
     }
-    const cssProps = (_c2 = this.cssProperties) != null ? _c2 : {};
+    const cssProps = this.cssProperties ?? {};
     if (this.hasExplicitWidth) {
       if (cssProps.width === void 0)
         cssProps.width = `${Math.ceil(this._width * 100) / 100}em`;
@@ -9700,7 +9648,7 @@ function makeStruts(content, options) {
     struts.push(bottomStrut);
   }
   struts.push(content);
-  return new Box(struts, __spreadProps(__spreadValues({}, options), { type: "lift" }));
+  return new Box(struts, { ...options, type: "lift" });
 }
 function makeSVGBox(svgBodyName) {
   const height = svgBodyHeight(svgBodyName) / 2;
@@ -9711,7 +9659,6 @@ function makeSVGBox(svgBodyName) {
   return box;
 }
 function horizontalLayout(box, fontName) {
-  var _a3;
   if (box.type === "latex") {
     box.height = 0.9;
     box.depth = 0.2;
@@ -9741,7 +9688,7 @@ function horizontalLayout(box, fontName) {
     for (const child of box.children) {
       if (child.height > height) height = child.height;
       if (child.depth > depth) depth = child.depth;
-      maxFontSize = Math.max(maxFontSize, (_a3 = child.maxFontSize) != null ? _a3 : 0);
+      maxFontSize = Math.max(maxFontSize, child.maxFontSize ?? 0);
     }
     box.height = height;
     box.depth = depth;
@@ -9817,7 +9764,6 @@ function getVListChildrenAndDepth(params) {
   return [null, 0];
 }
 function makeRows(params) {
-  var _a3;
   const [children, depth] = getVListChildrenAndDepth(params);
   if (!children) return [[], 0, 0];
   const pstrut = new Box(null, { classes: "ML__pstrut" });
@@ -9840,7 +9786,7 @@ function makeRows(params) {
     if (typeof child === "number") currPos += child;
     else {
       const box = child.box;
-      const classes = (_a3 = child.classes) != null ? _a3 : [];
+      const classes = child.classes ?? [];
       const childWrap = new Box([pstrut, box], {
         classes: classes.join(" "),
         style: child.style
@@ -9889,11 +9835,10 @@ function makeRows(params) {
 }
 var VBox = class extends Box {
   constructor(content, options) {
-    var _a3;
     const [rows, height, depth] = makeRows(content);
     super(rows.length === 1 ? rows[0] : rows, {
-      type: options == null ? void 0 : options.type,
-      classes: ((_a3 = options == null ? void 0 : options.classes) != null ? _a3 : "") + " ML__vlist-t" + (rows.length === 2 ? " ML__vlist-t2" : "")
+      type: options?.type,
+      classes: (options?.classes ?? "") + " ML__vlist-t" + (rows.length === 2 ? " ML__vlist-t2" : "")
     });
     this.height = height;
     this.depth = depth;
@@ -9901,21 +9846,20 @@ var VBox = class extends Box {
   }
 };
 function makeLimitsStack(context, options) {
-  var _a3, _b3, _c2, _d2, _e;
   const metrics = context.metrics;
   const base = new Box(options.base);
-  const baseShift = (_a3 = options.baseShift) != null ? _a3 : 0;
-  const slant = (_b3 = options.slant) != null ? _b3 : 0;
+  const baseShift = options.baseShift ?? 0;
+  const slant = options.slant ?? 0;
   let aboveShift = 0;
   let belowShift = 0;
   if (options.above) {
-    aboveShift = (_c2 = options.aboveShift) != null ? _c2 : Math.max(
+    aboveShift = options.aboveShift ?? Math.max(
       metrics.bigOpSpacing1,
       metrics.bigOpSpacing3 - options.above.depth
     );
   }
   if (options.below) {
-    belowShift = (_d2 = options.belowShift) != null ? _d2 : Math.max(
+    belowShift = options.belowShift ?? Math.max(
       metrics.bigOpSpacing2,
       metrics.bigOpSpacing4 - options.below.height
     );
@@ -9981,7 +9925,7 @@ function makeLimitsStack(context, options) {
       children: [{ box: base }, metrics.bigOpSpacing5]
     }).wrap(context);
   }
-  return new Box(result, { type: (_e = options.type) != null ? _e : "op" });
+  return new Box(result, { type: options.type ?? "op" });
 }
 
 // src/core/mathstyle.ts
@@ -10000,7 +9944,7 @@ var Mathstyle = class {
     this.cramped = cramped;
     const metricsIndex = { "-4": 2, "-3": 1, 0: 0 }[sizeDelta];
     this.metrics = Object.keys(FONT_METRICS).reduce((acc, x) => {
-      return __spreadProps(__spreadValues({}, acc), { [x]: FONT_METRICS[x][metricsIndex] });
+      return { ...acc, [x]: FONT_METRICS[x][metricsIndex] };
     }, {});
   }
   getFontSize(size) {
@@ -10058,16 +10002,16 @@ var NUMERIC_MATHSTYLES = {
   1: new Mathstyle(SS, -4, false),
   0: new Mathstyle(SSc, -4, true)
 };
-var MATHSTYLES = __spreadProps(__spreadValues({}, NUMERIC_MATHSTYLES), {
+var MATHSTYLES = {
+  ...NUMERIC_MATHSTYLES,
   displaystyle: NUMERIC_MATHSTYLES[D],
   textstyle: NUMERIC_MATHSTYLES[T],
   scriptstyle: NUMERIC_MATHSTYLES[S],
   scriptscriptstyle: NUMERIC_MATHSTYLES[SS]
-});
+};
 
 // src/core/registers-utils.ts
 function convertDimensionToPt(value, precision) {
-  var _a3;
   if (!value) return 0;
   const f = {
     pt: 1,
@@ -10081,7 +10025,7 @@ function convertDimensionToPt(value, precision) {
     pc: 12,
     in: 72.27,
     mu: 10 / 18
-  }[(_a3 = value.unit) != null ? _a3 : "pt"];
+  }[value.unit ?? "pt"];
   if (Number.isFinite(precision)) {
     const factor = 10 ** precision;
     return Math.round(value.dimension / PT_PER_EM * f * factor) / factor;
@@ -10098,8 +10042,7 @@ function convertDimensionToEm(value, precision) {
   return result;
 }
 function serializeDimension(value) {
-  var _a3;
-  return `${value.dimension}${(_a3 = value.unit) != null ? _a3 : "pt"}`;
+  return `${value.dimension}${value.unit ?? "pt"}`;
 }
 function serializeGlue(value) {
   let result = serializeDimension(value.glue);
@@ -10110,10 +10053,9 @@ function serializeGlue(value) {
   return result;
 }
 function serializeLatexValue(value) {
-  var _a3, _b3;
   if (value === null || value === void 0) return null;
   let result = "";
-  if ("dimension" in value) result = `${value.dimension}${(_a3 = value.unit) != null ? _a3 : "pt"}`;
+  if ("dimension" in value) result = `${value.dimension}${value.unit ?? "pt"}`;
   if ("glue" in value) result = serializeGlue(value);
   if ("number" in value) {
     if (!("base" in value) || value.base === "decimal")
@@ -10147,19 +10089,19 @@ function serializeLatexValue(value) {
     result += `\\${value.register}`;
   }
   if ("string" in value) result = value.string;
-  if ((_b3 = value.relax) != null ? _b3 : false) result += "\\relax";
+  if (value.relax ?? false) result += "\\relax";
   return result;
 }
 function multiplyLatexValue(value, factor) {
   if (value === null || value === void 0) return null;
-  if ("number" in value) return __spreadProps(__spreadValues({}, value), { number: value.number * factor });
+  if ("number" in value) return { ...value, number: value.number * factor };
   if ("register" in value) {
     if ("factor" in value && value.factor)
-      return __spreadProps(__spreadValues({}, value), { factor: value.factor * factor });
-    return __spreadProps(__spreadValues({}, value), { factor });
+      return { ...value, factor: value.factor * factor };
+    return { ...value, factor };
   }
   if ("dimension" in value)
-    return __spreadProps(__spreadValues({}, value), { dimension: value.dimension * factor });
+    return { ...value, dimension: value.dimension * factor };
   if ("glue" in value) {
     if (value.shrink && value.grow) {
       return {
@@ -10332,7 +10274,7 @@ var DEFAULT_REGISTERS = {
   "year": (/* @__PURE__ */ new Date()).getFullYear()
 };
 function getDefaultRegisters() {
-  return __spreadValues({}, DEFAULT_REGISTERS);
+  return { ...DEFAULT_REGISTERS };
 }
 
 // src/core/context-utils.ts
@@ -10354,33 +10296,32 @@ function getDefaultContext() {
 // src/core/context.ts
 var Context = class _Context {
   constructor(options, style) {
-    var _a3, _b3, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
     let template;
-    if (options == null ? void 0 : options.parent) {
+    if (options?.parent) {
       this.parent = options.parent;
       template = options.parent;
       this.registers = {};
     } else {
-      template = __spreadValues(__spreadValues({}, getDefaultContext()), (_a3 = options == null ? void 0 : options.from) != null ? _a3 : {});
+      template = { ...getDefaultContext(), ...options?.from ?? {} };
       this.registers = template.registers;
     }
     if (template.atomIdsSettings)
-      this.atomIdsSettings = __spreadValues({}, template.atomIdsSettings);
+      this.atomIdsSettings = { ...template.atomIdsSettings };
     this.renderPlaceholder = template.renderPlaceholder;
-    this.isPhantom = (_d2 = (_c2 = options == null ? void 0 : options.isPhantom) != null ? _c2 : (_b3 = this.parent) == null ? void 0 : _b3.isPhantom) != null ? _d2 : false;
+    this.isPhantom = options?.isPhantom ?? this.parent?.isPhantom ?? false;
     this.letterShapeStyle = template.letterShapeStyle;
     this.minFontScale = template.minFontScale;
     this.maxMatrixCols = template.maxMatrixCols;
-    if ((style == null ? void 0 : style.color) && style.color !== "none") this.color = style.color;
-    else this.color = (_f = (_e = this.parent) == null ? void 0 : _e.color) != null ? _f : "";
-    if ((style == null ? void 0 : style.backgroundColor) && style.backgroundColor !== "none")
+    if (style?.color && style.color !== "none") this.color = style.color;
+    else this.color = this.parent?.color ?? "";
+    if (style?.backgroundColor && style.backgroundColor !== "none")
       this.backgroundColor = style.backgroundColor;
-    else this.backgroundColor = (_h = (_g = this.parent) == null ? void 0 : _g.backgroundColor) != null ? _h : "";
-    if ((style == null ? void 0 : style.fontSize) && style.fontSize !== "auto" && style.fontSize !== ((_i = this.parent) == null ? void 0 : _i.size))
+    else this.backgroundColor = this.parent?.backgroundColor ?? "";
+    if (style?.fontSize && style.fontSize !== "auto" && style.fontSize !== this.parent?.size)
       this.size = style.fontSize;
-    else this.size = (_k = (_j = this.parent) == null ? void 0 : _j.size) != null ? _k : DEFAULT_FONT_SIZE;
-    let mathstyle = (_m = (_l = this.parent) == null ? void 0 : _l.mathstyle) != null ? _m : MATHSTYLES.displaystyle;
-    if (typeof (options == null ? void 0 : options.mathstyle) === "string") {
+    else this.size = this.parent?.size ?? DEFAULT_FONT_SIZE;
+    let mathstyle = this.parent?.mathstyle ?? MATHSTYLES.displaystyle;
+    if (typeof options?.mathstyle === "string") {
       if (template instanceof _Context) {
         switch (options.mathstyle) {
           case "cramp":
@@ -10421,8 +10362,8 @@ var Context = class _Context {
     this.mathstyle = mathstyle;
     this.smartFence = template.smartFence;
     this.placeholderSymbol = template.placeholderSymbol;
-    this.colorMap = (_n = template.colorMap) != null ? _n : ((x) => x);
-    this.backgroundColorMap = (_o = template.backgroundColorMap) != null ? _o : ((x) => x);
+    this.colorMap = template.colorMap ?? ((x) => x);
+    this.backgroundColorMap = template.backgroundColorMap ?? ((x) => x);
     this.getMacro = template.getMacro;
     console.assert(this.parent !== void 0 || this.registers !== void 0);
   }
@@ -10530,13 +10471,14 @@ var Context = class _Context {
       return { string: Number(val).toString() + result.string };
     if ("number" in result) return { number: factor * result.number };
     if ("dimension" in result)
-      return __spreadProps(__spreadValues({}, result), { dimension: factor * result.dimension });
+      return { ...result, dimension: factor * result.dimension };
     if ("glue" in result) {
-      return __spreadProps(__spreadValues({}, result), {
-        glue: __spreadProps(__spreadValues({}, result.glue), { dimension: factor * result.glue.dimension }),
-        shrink: result.shrink ? __spreadProps(__spreadValues({}, result.shrink), { dimension: factor * result.shrink.dimension }) : void 0,
-        grow: result.grow ? __spreadProps(__spreadValues({}, result.grow), { dimension: factor * result.grow.dimension }) : void 0
-      });
+      return {
+        ...result,
+        glue: { ...result.glue, dimension: factor * result.glue.dimension },
+        shrink: result.shrink ? { ...result.shrink, dimension: factor * result.shrink.dimension } : void 0,
+        grow: result.grow ? { ...result.grow, dimension: factor * result.grow.dimension } : void 0
+      };
     }
     return value;
   }
@@ -10571,20 +10513,18 @@ var Context = class _Context {
     return null;
   }
   toColor(value) {
-    var _a3, _b3;
     if (value === null) return null;
     const val = this.evaluate(value);
     if (val === void 0) return null;
-    if ("string" in val) return (_b3 = (_a3 = this.colorMap) == null ? void 0 : _a3.call(this, val.string)) != null ? _b3 : val.string;
+    if ("string" in val) return this.colorMap?.(val.string) ?? val.string;
     return null;
   }
   toBackgroundColor(value) {
-    var _a3, _b3;
     if (value === null) return null;
     const val = this.evaluate(value);
     if (val === void 0) return null;
     if ("string" in val)
-      return (_b3 = (_a3 = this.backgroundColorMap) == null ? void 0 : _a3.call(this, val.string)) != null ? _b3 : val.string;
+      return this.backgroundColorMap?.(val.string) ?? val.string;
     return null;
   }
 };
@@ -10608,18 +10548,17 @@ var Atom = class _Atom {
     // If `true`, the atom is the root of the tree. That's the case for
     // some environment, such as `lines`, etc...
     this.isRoot = false;
-    var _a3, _b3, _c2, _d2, _e, _f, _g;
     this.type = options.type;
     if (typeof options.value === "string") this.value = options.value;
-    this.command = (_b3 = (_a3 = options.command) != null ? _a3 : this.value) != null ? _b3 : "";
-    this.mode = (_c2 = options.mode) != null ? _c2 : "math";
+    this.command = options.command ?? this.value ?? "";
+    this.mode = options.mode ?? "math";
     if (options.isFunction) this.isFunction = true;
     if (options.isRoot || this.type === "root") this.isRoot = true;
     if (options.limits) this.subsupPlacement = options.limits;
-    this.style = __spreadValues({}, (_d2 = options.style) != null ? _d2 : {});
-    this.displayContainsHighlight = (_e = options.displayContainsHighlight) != null ? _e : false;
-    this.captureSelection = (_f = options.captureSelection) != null ? _f : false;
-    this.skipBoundary = (_g = options.skipBoundary) != null ? _g : false;
+    this.style = { ...options.style ?? {} };
+    this.displayContainsHighlight = options.displayContainsHighlight ?? false;
+    this.captureSelection = options.captureSelection ?? false;
+    this.skipBoundary = options.skipBoundary ?? false;
     if (options.verbatimLatex !== void 0 && options.verbatimLatex !== null)
       this.verbatimLatex = options.verbatimLatex;
     if (options.args) this.args = options.args;
@@ -10637,7 +10576,6 @@ var Atom = class _Atom {
    * to render an expression
    */
   static createBox(context, atoms, options) {
-    var _a3;
     if (!atoms) return null;
     const runs = getStyleRuns(atoms);
     const boxes = [];
@@ -10653,10 +10591,10 @@ var Atom = class _Atom {
       if (box) boxes.push(box);
     }
     if (boxes.length === 0) return null;
-    const classes = ((_a3 = options == null ? void 0 : options.classes) != null ? _a3 : "").trim();
-    if (boxes.length === 1 && !classes && !(options == null ? void 0 : options.type))
+    const classes = (options?.classes ?? "").trim();
+    if (boxes.length === 1 && !classes && !options?.type)
       return boxes[0].wrap(context);
-    return new Box(boxes, { classes, type: options == null ? void 0 : options.type }).wrap(context);
+    return new Box(boxes, { classes, type: options?.type }).wrap(context);
   }
   /**
    * Given an atom or an array of atoms, return a LaTeX string representation
@@ -10698,7 +10636,7 @@ var Atom = class _Atom {
       result.command = this.command;
     if (this.value !== void 0) result.value = this.value;
     if (this.style && Object.keys(this.style).length > 0)
-      result.style = __spreadValues({}, this.style);
+      result.style = { ...this.style };
     if (this.verbatimLatex !== void 0)
       result.verbatimLatex = this.verbatimLatex;
     if (this.subsupPlacement) result.subsupPlacement = this.subsupPlacement;
@@ -10746,7 +10684,7 @@ var Atom = class _Atom {
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
+    if (def?.serialize) return def.serialize(this, options);
     if (this.body && this.command) {
       return joinLatex([
         latexCommand(this.command, this.bodyToLatex(options)),
@@ -10763,9 +10701,8 @@ var Atom = class _Atom {
     return this.command;
   }
   bodyToLatex(options) {
-    var _a3;
-    const defaultMode = (_a3 = options.defaultMode) != null ? _a3 : this.mode === "math" ? "math" : "text";
-    return Mode.serialize(this.body, __spreadProps(__spreadValues({}, options), { defaultMode }));
+    const defaultMode = options.defaultMode ?? (this.mode === "math" ? "math" : "text");
+    return Mode.serialize(this.body, { ...options, defaultMode });
   }
   aboveToLatex(options) {
     return Mode.serialize(this.above, options);
@@ -10775,7 +10712,7 @@ var Atom = class _Atom {
   }
   supsubToLatex(options) {
     let result = "";
-    options = __spreadProps(__spreadValues({}, options), { defaultMode: "math" });
+    options = { ...options, defaultMode: "math" };
     if (this.branch("subscript") !== void 0) {
       const sub = Mode.serialize(this.subscript, options);
       if (sub.length === 0) result += "_{}";
@@ -10868,43 +10805,38 @@ var Atom = class _Atom {
     return this.parentBranch[1];
   }
   get body() {
-    var _a3;
-    return (_a3 = this._branches) == null ? void 0 : _a3.body;
+    return this._branches?.body;
   }
   set body(atoms) {
     this.setChildren(atoms, "body");
   }
   get superscript() {
-    var _a3;
-    return (_a3 = this._branches) == null ? void 0 : _a3.superscript;
+    return this._branches?.superscript;
   }
   set superscript(atoms) {
     this.setChildren(atoms, "superscript");
   }
   get subscript() {
-    var _a3;
-    return (_a3 = this._branches) == null ? void 0 : _a3.subscript;
+    return this._branches?.subscript;
   }
   set subscript(atoms) {
     this.setChildren(atoms, "subscript");
   }
   get above() {
-    var _a3;
-    return (_a3 = this._branches) == null ? void 0 : _a3.above;
+    return this._branches?.above;
   }
   set above(atoms) {
     this.setChildren(atoms, "above");
   }
   get below() {
-    var _a3;
-    return (_a3 = this._branches) == null ? void 0 : _a3.below;
+    return this._branches?.below;
   }
   set below(atoms) {
     this.setChildren(atoms, "below");
   }
   applyStyle(style, options) {
     this.isDirty = true;
-    if (options == null ? void 0 : options.unstyledOnly) {
+    if (options?.unstyledOnly) {
       if (style.color && !this.style.color) this.style.color = style.color;
       if (style.backgroundColor && !this.style.backgroundColor)
         this.style.backgroundColor = style.backgroundColor;
@@ -10922,7 +10854,7 @@ var Atom = class _Atom {
         this.style.variant = style.variant;
       if (style.variantStyle && !this.style.variantStyle)
         this.style.variantStyle = style.variantStyle;
-    } else this.style = __spreadValues(__spreadValues({}, this.style), style);
+    } else this.style = { ...this.style, ...style };
     if (this.style.fontFamily === "none") delete this.style.fontFamily;
     if (this.style.fontShape === "auto") delete this.style.fontShape;
     if (this.style.fontSeries === "auto") delete this.style.fontSeries;
@@ -10938,10 +10870,9 @@ var Atom = class _Atom {
     for (const child of this.children) child.applyStyle(style, options);
   }
   getInitialBaseElement() {
-    var _a3, _b3, _c2;
     if (this.hasEmptyBranch("body")) return this;
-    console.assert(((_a3 = this.body) == null ? void 0 : _a3[0].type) === "first");
-    return (_c2 = (_b3 = this.body[1]) == null ? void 0 : _b3.getInitialBaseElement()) != null ? _c2 : this;
+    console.assert(this.body?.[0].type === "first");
+    return this.body[1]?.getInitialBaseElement() ?? this;
   }
   getFinalBaseElement() {
     if (this.hasEmptyBranch("body")) return this;
@@ -10966,11 +10897,10 @@ var Atom = class _Atom {
    * the `first` atom will be added if necessary
    */
   setChildren(children, branch) {
-    var _a3;
     if (!children) return;
     console.assert(isNamedBranch(branch));
     if (!isNamedBranch(branch)) return;
-    const newBranch = ((_a3 = children[0]) == null ? void 0 : _a3.type) === "first" ? [...children] : [this.makeFirstAtom(branch), ...children];
+    const newBranch = children[0]?.type === "first" ? [...children] : [this.makeFirstAtom(branch), ...children];
     if (this._branches) this._branches[branch] = newBranch;
     else this._branches = { [branch]: newBranch };
     for (const child of children) {
@@ -11129,7 +11059,7 @@ var Atom = class _Atom {
   render(parentContext) {
     if (this.type === "first" && !parentContext.atomIdsSettings) return null;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.render) return def.render(this, parentContext);
+    if (def?.render) return def.render(this, parentContext);
     const context = new Context({ parent: parentContext }, this.style);
     let result = this.createBox(context, {
       classes: !this.parent ? "ML__base" : ""
@@ -11141,14 +11071,13 @@ var Atom = class _Atom {
     return result.wrap(context);
   }
   attachSupsub(parentContext, options) {
-    var _a3;
     const base = options.base;
     const superscript = this.superscript;
     const subscript = this.subscript;
     if (!superscript && !subscript) return base;
     let supBox = null;
     let subBox = null;
-    const isCharacterBox = (_a3 = options.isCharacterBox) != null ? _a3 : this.isCharacterBox();
+    const isCharacterBox = options.isCharacterBox ?? this.isCharacterBox();
     let supShift = 0;
     if (superscript) {
       const context = new Context({
@@ -11251,13 +11180,13 @@ var Atom = class _Atom {
       this.subscript
     ) : null;
     if (!above && !below) return options.base.wrap(ctx);
-    return makeLimitsStack(ctx, __spreadProps(__spreadValues({}, options), { above, below }));
+    return makeLimitsStack(ctx, { ...options, above, below });
   }
   bind(context, box) {
     if (!box || context.isPhantom || this.value === "\u200B") return box;
     let parent = this.parent;
     while (parent && !parent.captureSelection) parent = parent.parent;
-    if (parent == null ? void 0 : parent.captureSelection) return box;
+    if (parent?.captureSelection) return box;
     if (!this.id) this.id = context.makeID();
     box.atomID = this.id;
     return box;
@@ -11266,27 +11195,27 @@ var Atom = class _Atom {
    * Create a box with the specified body.
    */
   createBox(context, options) {
-    var _a3, _b3, _c2, _d2;
-    const value = (_a3 = this.value) != null ? _a3 : this.body;
-    const type = (_b3 = options == null ? void 0 : options.boxType) != null ? _b3 : boxType(this.type);
-    let classes = (_c2 = options == null ? void 0 : options.classes) != null ? _c2 : "";
+    const value = this.value ?? this.body;
+    const type = options?.boxType ?? boxType(this.type);
+    let classes = options?.classes ?? "";
     if (isTextMode(this.mode)) classes += " ML__text";
-    const result = typeof value === "string" || value === void 0 ? new Box(value != null ? value : null, {
+    const result = typeof value === "string" || value === void 0 ? new Box(value ?? null, {
       type,
       isSelected: this.isSelected,
       mode: this.mode,
       maxFontSize: context.scalingFactor,
-      style: __spreadProps(__spreadValues({
-        variant: "normal"
-      }, this.style), {
+      style: {
+        variant: "normal",
+        // Will auto-italicize
+        ...this.style,
         fontSize: Math.max(
           1,
           context.size + context.mathstyle.sizeDelta
         )
-      }),
+      },
       letterShapeStyle: context.letterShapeStyle,
       classes
-    }) : (_d2 = _Atom.createBox(context, value, { type, classes })) != null ? _d2 : new Box(null);
+    }) : _Atom.createBox(context, value, { type, classes }) ?? new Box(null);
     if (context.isTight) result.isTight = true;
     if (this.mode !== "math" || this.style.variant === "main")
       result.italic = 0;
@@ -11299,17 +11228,15 @@ var Atom = class _Atom {
   }
   /** Return true if a digit, or a decimal point, or a french decimal `{,}` */
   isDigit() {
-    var _a3;
     if (this.type === "mord" && this.value) return /^[\d,\.]$/.test(this.value);
-    if (this.type === "group" && ((_a3 = this.body) == null ? void 0 : _a3.length) === 2)
+    if (this.type === "group" && this.body?.length === 2)
       return this.body[0].type === "first" && this.body[1].value === ",";
     return false;
   }
   asDigit() {
-    var _a3;
     if (this.type === "mord" && this.value && /^[\d,\.]$/.test(this.value))
       return this.value;
-    if (this.type === "group" && ((_a3 = this.body) == null ? void 0 : _a3.length) === 2) {
+    if (this.type === "group" && this.body?.length === 2) {
       if (this.body[0].type === "first" && this.body[1].value === ",")
         return ".";
     }
@@ -11341,10 +11268,9 @@ function getStyleRuns(atoms) {
   return runs;
 }
 function renderStyleRun(parentContext, atoms, options) {
-  var _a3, _b3, _c2, _d2, _e;
   if (!atoms || atoms.length === 0) return null;
   const context = new Context({ parent: parentContext }, options.style);
-  const displaySelection = !((_a3 = context.atomIdsSettings) == null ? void 0 : _a3.groupNumbers);
+  const displaySelection = !context.atomIdsSettings?.groupNumbers;
   let boxes = [];
   if (atoms.length === 1) {
     const atom = atoms[0];
@@ -11357,17 +11283,17 @@ function renderStyleRun(parentContext, atoms, options) {
     let digitOrTextStringID = "";
     let lastWasDigit = true;
     for (const atom of atoms) {
-      if (((_b3 = context.atomIdsSettings) == null ? void 0 : _b3.groupNumbers) && digitOrTextStringID && (lastWasDigit && atom.isDigit() || !lastWasDigit && isText(atom)))
+      if (context.atomIdsSettings?.groupNumbers && digitOrTextStringID && (lastWasDigit && atom.isDigit() || !lastWasDigit && isText(atom)))
         context.atomIdsSettings.overrideID = digitOrTextStringID;
       const box = atom.render(context);
       if (context.atomIdsSettings)
         context.atomIdsSettings.overrideID = void 0;
       if (box) {
-        if ((_c2 = context.atomIdsSettings) == null ? void 0 : _c2.groupNumbers) {
+        if (context.atomIdsSettings?.groupNumbers) {
           if (atom.isDigit() || isText(atom)) {
             if (!digitOrTextStringID || lastWasDigit !== atom.isDigit()) {
               lastWasDigit = atom.isDigit();
-              digitOrTextStringID = (_d2 = atom.id) != null ? _d2 : "";
+              digitOrTextStringID = atom.id ?? "";
             }
           }
           if (digitOrTextStringID && (!(atom.isDigit() || isText(atom)) || !atom.hasEmptyBranch("superscript") || !atom.hasEmptyBranch("subscript"))) {
@@ -11380,11 +11306,11 @@ function renderStyleRun(parentContext, atoms, options) {
     }
   }
   if (boxes.length === 0) return null;
-  const result = new Box(boxes, __spreadProps(__spreadValues({
-    isTight: context.isTight
-  }, options), {
-    type: (_e = options.type) != null ? _e : "lift"
-  }));
+  const result = new Box(boxes, {
+    isTight: context.isTight,
+    ...options,
+    type: options.type ?? "lift"
+  });
   result.isSelected = boxes.every((x) => x.isSelected);
   return result.wrap(context);
 }
@@ -11424,8 +11350,7 @@ var TextAtom = class _TextAtom extends Atom {
     return result;
   }
   _serialize(_options) {
-    var _a3;
-    return (_a3 = this.verbatimLatex) != null ? _a3 : charToLatex("text", this.value.codePointAt(0));
+    return this.verbatimLatex ?? charToLatex("text", this.value.codePointAt(0));
   }
 };
 
@@ -11499,7 +11424,7 @@ function validateShortcut(siblings, shortcut) {
   let space = false;
   let sibling = siblings[0];
   let index = 0;
-  while ((sibling == null ? void 0 : sibling.type) && /^(subsup|placeholder)$/.test(sibling.type)) {
+  while (sibling?.type && /^(subsup|placeholder)$/.test(sibling.type)) {
     index += 1;
     sibling = siblings[index];
   }
@@ -11955,8 +11880,7 @@ var INLINE_SHORTCUTS = {
 
 // src/formats/parse-math-string.ts
 function parseMathString(s, options) {
-  var _a3;
-  let format = (_a3 = options == null ? void 0 : options.format) != null ? _a3 : "auto";
+  let format = options?.format ?? "auto";
   if (format === "auto") [format, s] = inferFormat(s);
   if (format === "ascii-math") {
     s = s.replace(/\u2061/gu, "");
@@ -11967,16 +11891,15 @@ function parseMathString(s, options) {
     s = s.replace(/\u2013/g, "-");
     return [
       "ascii-math",
-      parseMathExpression(s, { inlineShortcuts: options == null ? void 0 : options.inlineShortcuts })
+      parseMathExpression(s, { inlineShortcuts: options?.inlineShortcuts })
     ];
   }
   return ["latex", s];
 }
 function parseMathExpression(s, options) {
-  var _a3;
   s = s.trim();
   if (!s) return "";
-  const inlineShortcuts = (_a3 = options.inlineShortcuts) != null ? _a3 : INLINE_SHORTCUTS;
+  const inlineShortcuts = options.inlineShortcuts ?? INLINE_SHORTCUTS;
   if (s.startsWith("^") || s.startsWith("_")) {
     const { match: match2, rest: rest2 } = parseMathArgument(s.slice(1), {
       inlineShortcuts,
@@ -11990,7 +11913,7 @@ function parseMathExpression(s, options) {
       inlineShortcuts,
       noWrap: true
     });
-    return `\\sqrt{${match2 != null ? match2 : "\\placeholder{}"}}${parseMathExpression(
+    return `\\sqrt{${match2 ?? "\\placeholder{}"}}${parseMathExpression(
       rest2,
       options
     )}`;
@@ -12001,7 +11924,7 @@ function parseMathExpression(s, options) {
       inlineShortcuts,
       noWrap: true
     });
-    return `\\sqrt[3]{${match2 != null ? match2 : "\\placeholder{}"}}${parseMathExpression(
+    return `\\sqrt[3]{${match2 ?? "\\placeholder{}"}}${parseMathExpression(
       rest2,
       options
     )}`;
@@ -12012,7 +11935,7 @@ function parseMathExpression(s, options) {
       inlineShortcuts,
       noWrap: true
     });
-    return `\\left|${match2 != null ? match2 : "\\placeholder{}"}\\right|${parseMathExpression(
+    return `\\left|${match2 ?? "\\placeholder{}"}\\right|${parseMathExpression(
       rest2,
       options
     )}`;
@@ -12071,7 +11994,6 @@ var FENCES = {
   "}": "\\rbrace"
 };
 function parseMathArgument(s, options) {
-  var _a3, _b3;
   let match = "";
   s = s.trim();
   let rest = s;
@@ -12089,7 +12011,7 @@ function parseMathArgument(s, options) {
       const body = parseMathExpression(s.substring(1, i - 1), options);
       if (options.noWrap && lFence === "(") match = body;
       else
-        match = `\\left${(_a3 = FENCES[lFence]) != null ? _a3 : lFence}${body}\\right${(_b3 = FENCES[rFence]) != null ? _b3 : rFence}`;
+        match = `\\left${FENCES[lFence] ?? lFence}${body}\\right${FENCES[rFence] ?? rFence}`;
       rest = s.slice(Math.max(0, i));
     } else {
       match = s.substring(1, i);
@@ -12206,8 +12128,7 @@ var LEFT_DELIM = Object.fromEntries(
   ])
 );
 function getSymbolValue(symbol) {
-  var _a3;
-  return (_a3 = {
+  return {
     "[": 91,
     // '[',
     "]": 93,
@@ -12264,36 +12185,33 @@ function getSymbolValue(symbol) {
     "\\lmoustache": 9136,
     "\\rmoustache": 9137,
     "\\surd": 8730
-  }[symbol]) != null ? _a3 : symbol.codePointAt(0);
+  }[symbol] ?? symbol.codePointAt(0);
 }
 function makeSmallDelim(delim, context, center, options) {
-  var _a3;
   const text = new Box(getSymbolValue(delim), {
     fontFamily: "Main-Regular",
     isSelected: options.isSelected,
-    classes: "ML__small-delim " + ((_a3 = options.classes) != null ? _a3 : "")
+    classes: "ML__small-delim " + (options.classes ?? "")
   });
   const box = text.wrap(context);
   if (center) box.setTop((1 - context.scalingFactor) * AXIS_HEIGHT);
   return box;
 }
 function makeLargeDelim(delim, size, center, parentContext, options) {
-  var _a3, _b3;
   const context = new Context(
     { parent: parentContext, mathstyle: "textstyle" },
-    options == null ? void 0 : options.style
+    options?.style
   );
   const result = new Box(getSymbolValue(delim), {
     fontFamily: `Size${size}-Regular`,
     isSelected: options.isSelected,
-    classes: ((_a3 = options.classes) != null ? _a3 : "") + ` ML__delim-size${size}`,
-    type: (_b3 = options.type) != null ? _b3 : "ignore"
+    classes: (options.classes ?? "") + ` ML__delim-size${size}`,
+    type: options.type ?? "ignore"
   }).wrap(context);
   if (center) result.setTop((1 - context.scalingFactor) * AXIS_HEIGHT);
   return result;
 }
 function makeStackedDelim(delim, heightTotal, center, context, options) {
-  var _a3;
   let top;
   let middle;
   let repeat;
@@ -12451,9 +12369,10 @@ function makeStackedDelim(delim, heightTotal, center, context, options) {
     },
     { classes: sizeClass }
   );
-  const result = new Box(inner, __spreadProps(__spreadValues({}, options != null ? options : {}), {
-    classes: ((_a3 = options == null ? void 0 : options.classes) != null ? _a3 : "") + " ML__delim-mult"
-  }));
+  const result = new Box(inner, {
+    ...options ?? {},
+    classes: (options?.classes ?? "") + " ML__delim-mult"
+  });
   return result;
 }
 var stackLargeDelimiters = /* @__PURE__ */ new Set([
@@ -12615,20 +12534,21 @@ function makeCustomSizedDelim(type, delim, height, center, context, options) {
   );
   const ctx = new Context(
     { parent: context, mathstyle: delimType.mathstyle },
-    options == null ? void 0 : options.style
+    options?.style
   );
   if (delimType.type === "small")
-    return makeSmallDelim(delim, ctx, center, __spreadProps(__spreadValues({}, options), { type }));
+    return makeSmallDelim(delim, ctx, center, { ...options, type });
   if (delimType.type === "large") {
-    return makeLargeDelim(delim, delimType.size, center, ctx, __spreadProps(__spreadValues({}, options), {
+    return makeLargeDelim(delim, delimType.size, center, ctx, {
+      ...options,
       type
-    }));
+    });
   }
   console.assert(delimType.type === "stack");
-  return makeStackedDelim(delim, height, center, ctx, __spreadProps(__spreadValues({}, options), { type }));
+  return makeStackedDelim(delim, height, center, ctx, { ...options, type });
 }
 function makeLeftRightDelim(type, delim, height, depth, context, options) {
-  if (delim === ".") return makeNullDelimiter(context, options == null ? void 0 : options.classes);
+  if (delim === ".") return makeNullDelimiter(context, options?.classes);
   const axisHeight = AXIS_HEIGHT * context.scalingFactor;
   const delimiterFactor = 901;
   const delimiterExtend = 5 / PT_PER_EM;
@@ -12641,7 +12561,7 @@ function makeLeftRightDelim(type, delim, height, depth, context, options) {
 }
 function makeNullDelimiter(parent, classes) {
   const box = new Box(null, {
-    classes: " ML__nulldelimiter " + (classes != null ? classes : ""),
+    classes: " ML__nulldelimiter " + (classes ?? ""),
     type: "ignore"
   });
   box.width = parent.getRegisterAsEm("nulldelimiterspace");
@@ -12651,12 +12571,11 @@ function makeNullDelimiter(parent, classes) {
 // src/atoms/placeholder.ts
 var PlaceholderAtom = class _PlaceholderAtom extends Atom {
   constructor(options) {
-    var _a3;
     super({
       type: "placeholder",
       command: "\\placeholder",
-      mode: (_a3 = options == null ? void 0 : options.mode) != null ? _a3 : "math",
-      style: options == null ? void 0 : options.style
+      mode: options?.mode ?? "math",
+      style: options?.style
     });
     this.captureSelection = true;
   }
@@ -12797,7 +12716,7 @@ function makeEmptyLineAnchor(cell, context, metrics) {
   marker.height = metrics.height;
   marker.depth = metrics.depth;
   const caretAtom = cell.find((atom) => atom.caret);
-  if (caretAtom == null ? void 0 : caretAtom.caret) marker.caret = caretAtom.caret;
+  if (caretAtom?.caret) marker.caret = caretAtom.caret;
   if (cell.some((atom) => atom.isSelected)) marker.selected(true);
   return marker;
 }
@@ -12829,7 +12748,6 @@ var ArrayAtom = class _ArrayAtom extends Atom {
     ].includes(env);
   }
   constructor(envName, array, rowGaps, options = {}) {
-    var _a3, _b3, _c2, _d2;
     super({ type: "array", isRoot: options.isRoot });
     this.environmentName = envName;
     if (options.columns) {
@@ -12856,9 +12774,9 @@ var ArrayAtom = class _ArrayAtom extends Atom {
         ];
       }
     }
-    this.minColumns = (_a3 = options.minColumns) != null ? _a3 : 1;
-    this.minRows = (_b3 = options.minRows) != null ? _b3 : 1;
-    this.maxRows = (_c2 = options.maxRows) != null ? _c2 : Infinity;
+    this.minColumns = options.minColumns ?? 1;
+    this.minRows = options.minRows ?? 1;
+    this.maxRows = options.maxRows ?? Infinity;
     this._rows = normalizeCells(this, array, {
       columns: this.colFormat,
       minColumns: this.minColumns,
@@ -12874,7 +12792,7 @@ var ArrayAtom = class _ArrayAtom extends Atom {
     if (options.mathstyleName) this.mathstyleName = options.mathstyleName;
     if (options.leftDelim) this.leftDelim = options.leftDelim;
     if (options.rightDelim) this.rightDelim = options.rightDelim;
-    this.classes = (_d2 = options.classes) != null ? _d2 : [];
+    this.classes = options.classes ?? [];
   }
   static fromJson(json) {
     return new _ArrayAtom(
@@ -12885,7 +12803,8 @@ var ArrayAtom = class _ArrayAtom extends Atom {
     );
   }
   toJson() {
-    const result = __spreadProps(__spreadValues({}, super.toJson()), {
+    const result = {
+      ...super.toJson(),
       environmentName: this.environmentName,
       array: this._rows.map(
         (row) => row.map((col) => col.map((x) => x.toJson()))
@@ -12896,7 +12815,7 @@ var ArrayAtom = class _ArrayAtom extends Atom {
       minColumns: this.minColumns,
       minRows: this.minRows,
       maxRows: this.maxRows
-    });
+    };
     if (this.arraystretch !== void 0)
       result.arraystretch = this.arraystretch;
     if (this.arraycolsep !== void 0) result.arraycolsep = this.arraycolsep;
@@ -12911,15 +12830,13 @@ var ArrayAtom = class _ArrayAtom extends Atom {
     return result;
   }
   branch(cell) {
-    var _a3;
     if (!isCellBranch(cell)) return void 0;
-    return (_a3 = this._rows[cell[0]][cell[1]]) != null ? _a3 : void 0;
+    return this._rows[cell[0]][cell[1]] ?? void 0;
   }
   createBranch(cell) {
-    var _a3;
     if (!isCellBranch(cell)) return [];
     this.isDirty = true;
-    return (_a3 = this.branch(cell)) != null ? _a3 : [];
+    return this.branch(cell) ?? [];
   }
   get rowCount() {
     return this._rows.length;
@@ -12960,7 +12877,6 @@ var ArrayAtom = class _ArrayAtom extends Atom {
     return [...result, ...super.children];
   }
   render(context) {
-    var _a3, _b3, _c2, _d2, _e, _f;
     const innerContext = new Context(
       { parent: context, mathstyle: this.mathstyleName },
       this.style
@@ -12968,7 +12884,7 @@ var ArrayAtom = class _ArrayAtom extends Atom {
     const arrayRuleWidth = innerContext.getRegisterAsEm("arrayrulewidth");
     const arrayColSep = innerContext.getRegisterAsEm("arraycolsep");
     const doubleRuleSep = innerContext.getRegisterAsEm("doublerulesep");
-    const arraystretch = (_b3 = (_a3 = this.arraystretch) != null ? _a3 : innerContext.getRegisterAsNumber("arraystretch")) != null ? _b3 : 1;
+    const arraystretch = this.arraystretch ?? innerContext.getRegisterAsNumber("arraystretch") ?? 1;
     let arraycolsep = typeof this.arraycolsep === "number" ? this.arraycolsep : arrayColSep;
     if (this.colSeparationType === "small") {
       const localMultiplier = new Context({
@@ -12998,12 +12914,12 @@ var ArrayAtom = class _ArrayAtom extends Atom {
         const elt = this.isMultiline && element && isEmptyMultilineCell(element) ? makeEmptyLineAnchor(element, cellContext, {
           height: arstrutHeight / cellContext.scalingFactor,
           depth: arstrutDepth / cellContext.scalingFactor
-        }) : (_c2 = Atom.createBox(cellContext, element, { type: "ignore" })) != null ? _c2 : new Box(null, { type: "ignore" });
+        }) : Atom.createBox(cellContext, element, { type: "ignore" }) ?? new Box(null, { type: "ignore" });
         depth = Math.max(depth, elt.depth);
         height = Math.max(height, elt.height);
         outrow.cells.push(elt);
       }
-      let gap = (_d2 = convertDimensionToEm(this.rowGaps[r])) != null ? _d2 : 0;
+      let gap = convertDimensionToEm(this.rowGaps[r]) ?? 0;
       if (gap > 0) {
         gap += arstrutDepth;
         depth = Math.max(depth, gap);
@@ -13116,7 +13032,7 @@ var ArrayAtom = class _ArrayAtom extends Atom {
             context,
             makeLeftRightDelim(
               "open",
-              (_e = this.leftDelim) != null ? _e : ".",
+              this.leftDelim ?? ".",
               innerHeight,
               innerDepth,
               innerContext,
@@ -13128,7 +13044,7 @@ var ArrayAtom = class _ArrayAtom extends Atom {
             context,
             makeLeftRightDelim(
               "close",
-              (_f = this.rightDelim) != null ? _f : ".",
+              this.rightDelim ?? ".",
               innerHeight,
               innerDepth,
               innerContext,
@@ -13145,7 +13061,6 @@ var ArrayAtom = class _ArrayAtom extends Atom {
     return this.bind(context, this.attachSupsub(context, { base }));
   }
   _serialize(options) {
-    var _a3;
     const result = [];
     if (this.environmentName === "lines" && this._rows.length > 1)
       result.push(`\\displaylines{`);
@@ -13172,8 +13087,8 @@ var ArrayAtom = class _ArrayAtom extends Atom {
       }
       if (row < this._rows.length - 1) {
         const gap = this.rowGaps[row];
-        if (gap == null ? void 0 : gap.dimension)
-          result.push(`\\\\[${gap.dimension} ${(_a3 = gap.unit) != null ? _a3 : "pt"}] `);
+        if (gap?.dimension)
+          result.push(`\\\\[${gap.dimension} ${gap.unit ?? "pt"}] `);
         else result.push("\\\\ ");
       }
     }
@@ -13188,8 +13103,7 @@ var ArrayAtom = class _ArrayAtom extends Atom {
       for (let j = 0; j < this.colCount; j++) callback(this._rows[i][j], i, j);
   }
   getCell(row, col) {
-    var _a3;
-    return (_a3 = this._rows[row]) == null ? void 0 : _a3[col];
+    return this._rows[row]?.[col];
   }
   setCell(row, column, value) {
     console.assert(
@@ -13368,7 +13282,7 @@ var GroupAtom = class _GroupAtom extends Atom {
     this.boxType = arg.length > 1 ? "ord" : "ignore";
     this.skipBoundary = true;
     this.displayContainsHighlight = false;
-    if ((arg == null ? void 0 : arg.length) === 1 && arg[0].command === ",")
+    if (arg?.length === 1 && arg[0].command === ",")
       this.captureSelection = true;
   }
   static fromJson(json) {
@@ -13384,7 +13298,7 @@ var GroupAtom = class _GroupAtom extends Atom {
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
+    if (def?.serialize) return def.serialize(this, options);
     return `{${this.bodyToLatex(options)}}`;
   }
 };
@@ -13403,8 +13317,7 @@ var LeftRightAtom = class _LeftRightAtom extends Atom {
     this.rightDelim = options.rightDelim;
   }
   static fromJson(json) {
-    var _a3;
-    return new _LeftRightAtom((_a3 = json.variant) != null ? _a3 : "", json.body, json);
+    return new _LeftRightAtom(json.variant ?? "", json.body, json);
   }
   toJson() {
     const result = super.toJson();
@@ -13414,12 +13327,11 @@ var LeftRightAtom = class _LeftRightAtom extends Atom {
     return result;
   }
   _serialize(options) {
-    var _a3, _b3;
     const rightDelim = this.matchingRightDelim();
     if (this.variant === "left...right") {
       return joinLatex([
         "\\left",
-        (_a3 = this.leftDelim) != null ? _a3 : ".",
+        this.leftDelim ?? ".",
         this.bodyToLatex(options),
         "\\right",
         rightDelim
@@ -13428,7 +13340,7 @@ var LeftRightAtom = class _LeftRightAtom extends Atom {
     if (this.variant === "mleft...mright") {
       return joinLatex([
         "\\mleft",
-        (_b3 = this.leftDelim) != null ? _b3 : ".",
+        this.leftDelim ?? ".",
         this.bodyToLatex(options),
         "\\mright",
         rightDelim
@@ -13441,20 +13353,18 @@ var LeftRightAtom = class _LeftRightAtom extends Atom {
     ]);
   }
   matchingRightDelim() {
-    var _a3, _b3;
     if (this.rightDelim && this.rightDelim !== "?") return this.rightDelim;
-    const leftDelim = (_a3 = this.leftDelim) != null ? _a3 : ".";
-    return (_b3 = RIGHT_DELIM[leftDelim]) != null ? _b3 : leftDelim;
+    const leftDelim = this.leftDelim ?? ".";
+    return RIGHT_DELIM[leftDelim] ?? leftDelim;
   }
   render(parentContext) {
-    var _a3, _b3;
     const context = new Context({ parent: parentContext }, this.style);
     console.assert(this.body !== void 0);
     const delimContext = new Context(
       { parent: parentContext, mathstyle: "textstyle" },
       this.style
     );
-    const inner = (_a3 = Atom.createBox(context, this.body, { type: "inner" })) != null ? _a3 : new Box(null, { type: "inner" });
+    const inner = Atom.createBox(context, this.body, { type: "inner" }) ?? new Box(null, { type: "inner" });
     const innerHeight = inner.height / delimContext.scalingFactor;
     const innerDepth = inner.depth / delimContext.scalingFactor;
     const boxes = [];
@@ -13514,7 +13424,7 @@ var LeftRightAtom = class _LeftRightAtom extends Atom {
     const sibling = this.leftSibling;
     if (sibling) {
       if (!tightSpacing && sibling.isFunction) tightSpacing = true;
-      if (!tightSpacing && sibling.type === "subsup" && ((_b3 = sibling.leftSibling) == null ? void 0 : _b3.isFunction))
+      if (!tightSpacing && sibling.type === "subsup" && sibling.leftSibling?.isFunction)
         tightSpacing = true;
     }
     const result = new Box(boxes, {
@@ -13553,7 +13463,6 @@ function upgradeMiddle(boxes, atom, context, height, depth) {
 // src/atoms/macro.ts
 var MacroAtom = class _MacroAtom extends Atom {
   constructor(macro, options) {
-    var _a3;
     super({ type: "macro", command: macro, style: options.style });
     this.body = options.body;
     if (options.captureSelection === void 0) {
@@ -13561,7 +13470,7 @@ var MacroAtom = class _MacroAtom extends Atom {
       else this.captureSelection = true;
     } else this.captureSelection = options.captureSelection;
     this.macroArgs = options.args;
-    this.expand = (_a3 = options.expand) != null ? _a3 : false;
+    this.expand = options.expand ?? false;
   }
   static fromJson(json) {
     return new _MacroAtom(json.command, json);
@@ -13575,8 +13484,7 @@ var MacroAtom = class _MacroAtom extends Atom {
     return options;
   }
   _serialize(options) {
-    var _a3;
-    return options.expandMacro && this.expand ? this.bodyToLatex(options) : this.command + ((_a3 = this.macroArgs) != null ? _a3 : "");
+    return options.expandMacro && this.expand ? this.bodyToLatex(options) : this.command + (this.macroArgs ?? "");
   }
   applyStyle(style, options) {
     const allowedStyle = {};
@@ -13614,11 +13522,10 @@ var MacroArgumentAtom = class _MacroArgumentAtom extends Atom {
 // src/atoms/prompt.ts
 var PromptAtom = class _PromptAtom extends Atom {
   constructor(placeholderId, correctness, locked = false, body, options) {
-    var _a3;
     super({
       type: "prompt",
-      mode: (_a3 = options == null ? void 0 : options.mode) != null ? _a3 : "math",
-      style: options == null ? void 0 : options.style,
+      mode: options?.mode ?? "math",
+      style: options?.style,
       command: "\\placeholder"
     });
     this.body = body;
@@ -13648,7 +13555,6 @@ var PromptAtom = class _PromptAtom extends Atom {
     return result;
   }
   render(parentContext) {
-    var _a3, _b3, _c2, _d2, _e;
     const context = new Context({ parent: parentContext });
     const fboxsep = context.getRegisterAsEm("fboxsep");
     const hPadding = fboxsep;
@@ -13660,10 +13566,10 @@ var PromptAtom = class _PromptAtom extends Atom {
       mode: this.mode,
       style: this.style
     }).render(new Context({ parent: parentContext, isPhantom: true })) : null;
-    const emptyHeight = (_a3 = placeholderMetrics == null ? void 0 : placeholderMetrics.height) != null ? _a3 : context.metrics.xHeight;
-    const emptyDepth = (_b3 = placeholderMetrics == null ? void 0 : placeholderMetrics.depth) != null ? _b3 : emptyHeight / 2;
-    const effectiveHeight = Math.max((_c2 = content.height) != null ? _c2 : 0, emptyHeight);
-    const effectiveDepth = Math.max((_d2 = content.depth) != null ? _d2 : 0, emptyDepth);
+    const emptyHeight = placeholderMetrics?.height ?? context.metrics.xHeight;
+    const emptyDepth = placeholderMetrics?.depth ?? emptyHeight / 2;
+    const effectiveHeight = Math.max(content.height ?? 0, emptyHeight);
+    const effectiveDepth = Math.max(content.depth ?? 0, emptyDepth);
     content.setStyle("vertical-align", `calc(-${effectiveHeight}em + 2px)`);
     if (this.correctness === "correct") {
       content.setStyle(
@@ -13684,7 +13590,7 @@ var PromptAtom = class _PromptAtom extends Atom {
     base.depth = effectiveDepth;
     base.setStyle("height", effectiveHeight + effectiveDepth, "em");
     base.setStyle("vertical-align", -vPadding, "em");
-    if (((_e = content.width) != null ? _e : 0) < minInnerWidth) {
+    if ((content.width ?? 0) < minInnerWidth) {
       base.width = minInnerWidth;
       base.setStyle("width", minInnerWidth, "em");
     }
@@ -13745,8 +13651,7 @@ var PromptAtom = class _PromptAtom extends Atom {
     return bound;
   }
   _serialize(options) {
-    var _a3;
-    const value = (_a3 = this.bodyToLatex(options)) != null ? _a3 : "";
+    const value = this.bodyToLatex(options) ?? "";
     if (options.skipPlaceholders) return value;
     let command = "\\placeholder";
     if (this.placeholderId) command += `[${this.placeholderId}]`;
@@ -13760,7 +13665,7 @@ var PromptAtom = class _PromptAtom extends Atom {
 // src/atoms/subsup.ts
 var SubsupAtom = class _SubsupAtom extends Atom {
   constructor(options) {
-    super({ type: "subsup", style: options == null ? void 0 : options.style });
+    super({ type: "subsup", style: options?.style });
     this.subsupPlacement = "auto";
   }
   get children() {
@@ -13791,10 +13696,9 @@ var SubsupAtom = class _SubsupAtom extends Atom {
     return result;
   }
   render(context) {
-    var _a3;
     const phantomCtx = new Context({ parent: context, isPhantom: true });
     const leftSibling = this.leftSibling;
-    const base = (_a3 = leftSibling.render(phantomCtx)) != null ? _a3 : new Box(null);
+    const base = leftSibling.render(phantomCtx) ?? new Box(null);
     const phantom = new Box(null);
     phantom.height = base.height;
     phantom.depth = base.depth;
@@ -13833,36 +13737,34 @@ var Parser = class {
     // Counter to prevent deadlock. If `end()` is called too many
     // times (1,000) in a row for the same token, bail.
     this.endCount = 0;
-    var _a3, _b3, _c2, _d2;
-    options != null ? options : options = {};
+    options ??= {};
     this.tokens = tokens;
-    this.context = context instanceof Context && !(options == null ? void 0 : options.parseMode) && !options.mathstyle ? context : new Context(
+    this.context = context instanceof Context && !options?.parseMode && !options.mathstyle ? context : new Context(
       { from: context, mathstyle: options.mathstyle },
       options.style
     );
-    this.args = (_a3 = options.args) != null ? _a3 : void 0;
+    this.args = options.args ?? void 0;
     this.smartFence = this.context.smartFence;
     this.parsingContext = {
       parent: void 0,
       mathlist: [],
-      style: (_b3 = options.style) != null ? _b3 : {},
+      style: options.style ?? {},
       // Free-text has the text parser semantics. Free-math has the ordinary
       // math parser semantics; both distinctions are editor/layout modes.
-      parseMode: options.parseMode === "free-text" ? "text" : options.parseMode === "free-math" ? "math" : (_c2 = options.parseMode) != null ? _c2 : "math",
-      mathstyle: (_d2 = options.mathstyle) != null ? _d2 : "displaystyle",
+      parseMode: options.parseMode === "free-text" ? "text" : options.parseMode === "free-math" ? "math" : options.parseMode ?? "math",
+      mathstyle: options.mathstyle ?? "displaystyle",
       tabular: false
     };
   }
   beginContext(options) {
-    var _a3, _b3, _c2, _d2, _e, _f;
-    if (options == null ? void 0 : options.root) {
+    if (options?.root) {
       this.parsingContext = {
         parent: this.parsingContext.parent,
         mathlist: [],
         style: {},
-        parseMode: (_a3 = options == null ? void 0 : options.mode) != null ? _a3 : "math",
-        mathstyle: (_b3 = options == null ? void 0 : options.mathstyle) != null ? _b3 : "displaystyle",
-        tabular: (_c2 = options == null ? void 0 : options.tabular) != null ? _c2 : false
+        parseMode: options?.mode ?? "math",
+        mathstyle: options?.mathstyle ?? "displaystyle",
+        tabular: options?.tabular ?? false
       };
       return;
     }
@@ -13870,10 +13772,10 @@ var Parser = class {
     const newContext = {
       parent: current,
       mathlist: [],
-      style: __spreadValues({}, current.style),
-      parseMode: (_d2 = options == null ? void 0 : options.mode) != null ? _d2 : current.parseMode,
-      mathstyle: (_e = options == null ? void 0 : options.mathstyle) != null ? _e : current.mathstyle,
-      tabular: (_f = options == null ? void 0 : options.tabular) != null ? _f : false
+      style: { ...current.style },
+      parseMode: options?.mode ?? current.parseMode,
+      mathstyle: options?.mathstyle ?? current.mathstyle,
+      tabular: options?.tabular ?? false
     };
     this.parsingContext = newContext;
   }
@@ -13881,12 +13783,13 @@ var Parser = class {
     this.parsingContext = this.parsingContext.parent;
   }
   onError(err) {
-    this.errors.push(__spreadValues({
+    this.errors.push({
       before: tokensToString(this.tokens.slice(this.index, this.index + 10)),
       after: tokensToString(
         this.tokens.slice(Math.max(0, this.index - 10), this.index)
-      )
-    }, err));
+      ),
+      ...err
+    });
   }
   get mathlist() {
     return this.parsingContext.mathlist;
@@ -13906,7 +13809,7 @@ var Parser = class {
   get style() {
     let context = this.parsingContext;
     while (context) {
-      if (context.style) return __spreadValues({}, context.style);
+      if (context.style) return { ...context.style };
       context = context.parent;
     }
     return {};
@@ -13972,13 +13875,12 @@ var Parser = class {
     return pattern.test(this.tokens[this.index]);
   }
   hasInfixCommand() {
-    var _a3;
     const { index } = this;
     if (index < this.tokens.length && this.tokens[index].startsWith("\\")) {
       const info = getDefinition(this.tokens[index], this.parseMode);
       if (!info || info.definitionType === "symbol") return false;
       if (info.ifMode && !info.ifMode.includes(this.parseMode)) return false;
-      return (_a3 = info.infix) != null ? _a3 : false;
+      return info.infix ?? false;
     }
     return false;
   }
@@ -14002,8 +13904,7 @@ var Parser = class {
    * one, or if a value was provided for #? via args, that value.
    */
   placeholder() {
-    var _a3;
-    const placeHolderArg = (_a3 = this.args) == null ? void 0 : _a3.call(this, "?");
+    const placeHolderArg = this.args?.("?");
     if (!placeHolderArg)
       return [new PlaceholderAtom({ mode: this.parseMode, style: this.style })];
     return parseLatex(placeHolderArg, {
@@ -14108,7 +14009,6 @@ var Parser = class {
    * Used when handling macros
    */
   scanLiteralGroup() {
-    var _a3;
     if (!this.match("<{>")) return "";
     let result = "";
     let level = 1;
@@ -14123,11 +14023,11 @@ var Parser = class {
       } else {
         if (/\\[a-zA-Z]+$/.test(result) && /^[a-zA-Z]/.test(token))
           result += " ";
-        result += (_a3 = {
+        result += {
           "<space>": " ",
           "<$$>": "$$",
           "<$>": "$"
-        }[token]) != null ? _a3 : token;
+        }[token] ?? token;
       }
     }
     return result;
@@ -14144,7 +14044,6 @@ var Parser = class {
    * > an internal variable.
    */
   scanNumber(isInteger = true) {
-    var _a3, _b3;
     let negative = false;
     let token = this.peek();
     while (token === "<space>" || token === "+" || token === "-") {
@@ -14172,12 +14071,12 @@ var Parser = class {
       if (token) {
         if (token.length === 2 && token.startsWith("\\")) {
           return {
-            number: (negative ? -1 : 1) * ((_a3 = token.codePointAt(1)) != null ? _a3 : 0),
+            number: (negative ? -1 : 1) * (token.codePointAt(1) ?? 0),
             base: "alpha"
           };
         }
         return {
-          number: (negative ? -1 : 1) * ((_b3 = token.codePointAt(0)) != null ? _b3 : 0),
+          number: (negative ? -1 : 1) * (token.codePointAt(0) ?? 0),
           base: "alpha"
         };
       }
@@ -14197,7 +14096,6 @@ var Parser = class {
     };
   }
   scanRegister() {
-    var _a3;
     const index = this.index;
     const number = this.scanNumber(false);
     this.skipWhitespace();
@@ -14230,7 +14128,7 @@ var Parser = class {
       return null;
     }
     let register3 = this.get();
-    if (!(register3 == null ? void 0 : register3.startsWith("\\"))) {
+    if (!register3?.startsWith("\\")) {
       this.index = index;
       return null;
     }
@@ -14242,7 +14140,7 @@ var Parser = class {
     if (!negative || number !== null) {
       return {
         register: register3,
-        factor: (negative ? -1 : 1) * ((_a3 = number == null ? void 0 : number.number) != null ? _a3 : 1)
+        factor: (negative ? -1 : 1) * (number?.number ?? 1)
       };
     }
     return { register: register3 };
@@ -14427,7 +14325,7 @@ var Parser = class {
             this.skipWhitespace();
             this.match("]");
           }
-          rowGaps.push(gap != null ? gap : { dimension: 0 });
+          rowGaps.push(gap ?? { dimension: 0 });
           array.push(row);
           row = [];
         } else {
@@ -14594,7 +14492,6 @@ var Parser = class {
    * Return either an atom of type `"leftright"` or null
    */
   scanLeftRight() {
-    var _a3;
     if (this.match("\\right")) {
       this.onError({ code: "unbalanced-braces" });
       return new ErrorAtom("\\right");
@@ -14617,7 +14514,7 @@ var Parser = class {
     while (!this.end() && !this.match(close)) this.parseExpression();
     const body = this.mathlist;
     this.endContext();
-    const rightDelim = (_a3 = this.scanDelim()) != null ? _a3 : ".";
+    const rightDelim = this.scanDelim() ?? ".";
     return new LeftRightAtom(
       close === "\\right" ? "left...right" : "mleft...mright",
       body,
@@ -14698,7 +14595,7 @@ var Parser = class {
     return true;
   }
   scanArguments(info) {
-    if (!(info == null ? void 0 : info.params)) return [void 0, []];
+    if (!info?.params) return [void 0, []];
     let deferredArg = void 0;
     const args = [];
     let i = info.infix ? 2 : 0;
@@ -14742,7 +14639,7 @@ var Parser = class {
       if (token === FREE_TEXT_TAB_MARKER) {
         return [new TextAtom(token, "	", this.style)];
       }
-      const result2 = Mode.createAtom(this.parseMode, token, __spreadValues({}, this.style));
+      const result2 = Mode.createAtom(this.parseMode, token, { ...this.style });
       return result2 ? [result2] : null;
     }
     result = this.scanMacro(token);
@@ -14754,7 +14651,7 @@ var Parser = class {
         return [new ErrorAtom(token)];
       }
       if (def.definitionType === "symbol") {
-        const style = __spreadValues({}, this.style);
+        const style = { ...this.style };
         if (def.variant) style.variant = def.variant;
         result = new Atom({
           type: def.type,
@@ -14779,14 +14676,13 @@ var Parser = class {
     return result ? [result] : null;
   }
   scanArgument(type) {
-    var _a3;
     this.skipFiller();
     const mode = this.parseMode;
     if (type === "auto") type = mode;
     if (!this.match("<{>")) {
       if (type === "string") return this.scanString();
       if (type === "value") return this.scanValue();
-      if (type === "delim") return (_a3 = this.scanDelim()) != null ? _a3 : ".";
+      if (type === "delim") return this.scanDelim() ?? ".";
       if (type === "expression") return this.scanExpression();
       if (type === "math") {
         if (type !== mode) this.beginContext({ mode: "math" });
@@ -14897,7 +14793,6 @@ var Parser = class {
    * unbraced argument, i.e. `\frac1\alpha`.
    */
   scanSymbolOrCommand(command) {
-    var _a3, _b3, _c2;
     if (command === "\\placeholder") {
       const id = this.scanOptionalArgument("string");
       const defaultValue = this.scanOptionalArgument("math");
@@ -14920,7 +14815,7 @@ var Parser = class {
       else body = defaultAtoms;
       if (id) {
         return [
-          new PromptAtom(id, correctness, locked, body != null ? body : defaultAtoms, {
+          new PromptAtom(id, correctness, locked, body ?? defaultAtoms, {
             mode: this.parseMode,
             style: this.style
           })
@@ -14947,7 +14842,7 @@ var Parser = class {
     const info = getDefinition(command, this.parseMode);
     if (!info) {
       if (this.parseMode === "text") {
-        if (/[a-zA-Z]/.test((_a3 = this.peek()) != null ? _a3 : "")) {
+        if (/[a-zA-Z]/.test(this.peek() ?? "")) {
           command += " ";
         }
         return [...command].map(
@@ -14964,7 +14859,7 @@ var Parser = class {
     }
     const initialIndex = this.index;
     if (info.definitionType === "symbol") {
-      const style = __spreadValues({}, this.style);
+      const style = { ...this.style };
       if (info.variant) style.variant = info.variant;
       result = new Atom({
         type: info.type,
@@ -15018,15 +14913,15 @@ var Parser = class {
       } else {
         result = new Atom({
           type: "mord",
-          command: (_b3 = info.command) != null ? _b3 : command,
-          style: __spreadValues({}, this.style),
+          command: info.command ?? command,
+          style: { ...this.style },
           value: command,
-          mode: (_c2 = info.applyMode) != null ? _c2 : this.parseMode
+          mode: info.applyMode ?? this.parseMode
         });
       }
     }
     if (!result) return null;
-    if (result instanceof Atom && result.verbatimLatex === void 0 && !/^\\(llap|rlap|class|cssId|htmlData)$/.test(command)) {
+    if (result instanceof Atom && result.verbatimLatex === void 0 && (info.definitionType !== "function" || !info.parse) && !/^\\(llap|rlap|class|cssId|htmlData)$/.test(command)) {
       const verbatim = joinLatex([
         command,
         tokensToString(this.tokens.slice(initialIndex, this.index))
@@ -15045,7 +14940,7 @@ var Parser = class {
     const token = this.get();
     if (!token) return null;
     if (isLiteral(token)) {
-      const result = Mode.createAtom(this.parseMode, token, __spreadValues({}, this.style));
+      const result = Mode.createAtom(this.parseMode, token, { ...this.style });
       if (!result) return null;
       if (result.isFunction && this.smartFence) {
         const smartFence = this.scanSmartFence();
@@ -15073,12 +14968,11 @@ var Parser = class {
    * Scan the macro name and its arguments and return a macro atom
    */
   scanMacro(macro) {
-    var _a3;
     const def = this.context.getMacro(macro);
     if (!def) return null;
     const initialIndex = this.index;
     const argCount = def.args;
-    const args = { "?": (_a3 = this.args) == null ? void 0 : _a3.call(this, "?") };
+    const args = { "?": this.args?.("?") };
     for (let i = 1; i <= argCount; i++) {
       let arg = this.scanLiteralGroup();
       if (!arg) {
@@ -15109,8 +15003,7 @@ var Parser = class {
    * arguments.
    */
   parseExpression() {
-    var _a3, _b3, _c2, _d2;
-    let result = (_d2 = (_c2 = (_b3 = (_a3 = this.scanEnvironment()) != null ? _a3 : this.scanModeShift()) != null ? _b3 : this.scanModeSet()) != null ? _c2 : this.scanGroup()) != null ? _d2 : this.scanLeftRight();
+    let result = this.scanEnvironment() ?? this.scanModeShift() ?? this.scanModeSet() ?? this.scanGroup() ?? this.scanLeftRight();
     if (result === null) {
       if (this.parseSupSub()) return true;
       if (this.parseLimits()) return true;
@@ -15123,23 +15016,21 @@ var Parser = class {
   }
 };
 function parseLatex(s, options) {
-  var _a3, _b3, _c2, _d2;
-  const args = (_a3 = options == null ? void 0 : options.args) != null ? _a3 : void 0;
-  const parser = new Parser(tokenize(s, args), options == null ? void 0 : options.context, {
+  const args = options?.args ?? void 0;
+  const parser = new Parser(tokenize(s, args), options?.context, {
     args,
-    mathstyle: (_b3 = options == null ? void 0 : options.mathstyle) != null ? _b3 : "displaystyle",
-    parseMode: (_c2 = options == null ? void 0 : options.parseMode) != null ? _c2 : "math",
-    style: (_d2 = options == null ? void 0 : options.style) != null ? _d2 : {}
+    mathstyle: options?.mathstyle ?? "displaystyle",
+    parseMode: options?.parseMode ?? "math",
+    style: options?.style ?? {}
   });
   const atoms = [];
   while (!parser.end()) atoms.push(...parser.scan(() => false));
   return atoms;
 }
 function validateLatex(s, options) {
-  var _a3;
-  const parser = new Parser(tokenize(s, null), options == null ? void 0 : options.context, {
+  const parser = new Parser(tokenize(s, null), options?.context, {
     mathstyle: "displaystyle",
-    parseMode: (_a3 = options == null ? void 0 : options.parseMode) != null ? _a3 : "math"
+    parseMode: options?.parseMode ?? "math"
   });
   while (!parser.end()) parser.scan();
   return parser.errors;
@@ -15172,10 +15063,9 @@ function makeFreeLinesRoot(lines, mode) {
   );
 }
 function markFreeTextAnchors(root, mode = "free-text") {
-  var _a3;
   for (const row of root.rows)
     for (const cell of row)
-      if (((_a3 = cell == null ? void 0 : cell[0]) == null ? void 0 : _a3.type) === "first") cell[0].mode = mode;
+      if (cell?.[0]?.type === "first") cell[0].mode = mode;
   return root;
 }
 function isFreeLinesRoot(root) {
@@ -15185,8 +15075,7 @@ function isFreeTextRoot(root) {
   return isFreeLinesRoot(root) && freeLinesMode(root) === "free-text";
 }
 function freeLinesMode(root) {
-  var _a3, _b3, _c2;
-  const mode = (_c2 = (_b3 = (_a3 = root.rows[0]) == null ? void 0 : _a3[0]) == null ? void 0 : _b3[0]) == null ? void 0 : _c2.mode;
+  const mode = root.rows[0]?.[0]?.[0]?.mode;
   return mode === "free-text" || mode === "free-math" ? mode : void 0;
 }
 function makeFreeTextAtoms(text, style = {}) {
@@ -15358,12 +15247,14 @@ var defaultExportHook = (_from, latex, _range) => {
     latex = `${CLIPBOARD_LATEX_BEGIN} ${latex} ${CLIPBOARD_LATEX_END}`;
   return latex;
 };
-var _ModeEditor = class _ModeEditor {
+var ModeEditor = class _ModeEditor {
+  static {
+    this._modes = {};
+  }
   constructor(name) {
     _ModeEditor._modes[name] = this;
   }
   static onPaste(mode, mathfield, data) {
-    var _a3;
     if (!mathfield.contentEditable && mathfield.userSelect === "none") {
       mathfield.model.announce("plonk");
       return false;
@@ -15377,7 +15268,7 @@ var _ModeEditor = class _ModeEditor {
       clipboardData: data,
       cancelable: true
     });
-    if (!((_a3 = mathfield.host) == null ? void 0 : _a3.dispatchEvent(redispatchedEvent))) return false;
+    if (!mathfield.host?.dispatchEvent(redispatchedEvent)) return false;
     return _ModeEditor._modes[mode].onPaste(mathfield, data);
   }
   /** Call this method from a menu */
@@ -15397,7 +15288,6 @@ var _ModeEditor = class _ModeEditor {
   }
   /** Call this method in response to a clipboard event */
   static onCopy(mathfield, ev) {
-    var _a3;
     if (!ev.clipboardData) return;
     if (!mathfield.contentEditable && mathfield.userSelect === "none") {
       mathfield.model.announce("plonk");
@@ -15418,10 +15308,7 @@ var _ModeEditor = class _ModeEditor {
     } else if (atoms.every((x) => x.mode === "latex")) {
       ev.clipboardData.setData(
         "text/plain",
-        model.getAtoms(exportRange, { includeChildren: true }).map((x) => {
-          var _a4;
-          return (_a4 = x.value) != null ? _a4 : "";
-        }).join("")
+        model.getAtoms(exportRange, { includeChildren: true }).map((x) => x.value ?? "").join("")
       );
     } else {
       let latex;
@@ -15434,7 +15321,7 @@ var _ModeEditor = class _ModeEditor {
           "text/plain",
           mathfield.options.onExport(mathfield, latex, exportRange)
         );
-      } catch (e) {
+      } catch {
       }
       if (atoms.length === 1) {
         const atom = atoms[0];
@@ -15446,9 +15333,9 @@ var _ModeEditor = class _ModeEditor {
           "application/json+mathlive",
           JSON.stringify(atoms.map((x) => x.toJson()))
         );
-      } catch (e) {
+      } catch {
       }
-      if ((_a3 = window[Symbol.for("io.cortexjs.compute-engine")]) == null ? void 0 : _a3.ComputeEngine) {
+      if (window[Symbol.for("io.cortexjs.compute-engine")]?.ComputeEngine) {
         const ce = globalThis.MathfieldElement.computeEngine;
         if (ce) {
           try {
@@ -15461,7 +15348,7 @@ var _ModeEditor = class _ModeEditor {
             const mathJson = JSON.stringify(expr.json);
             if (mathJson)
               ev.clipboardData.setData("application/json", mathJson);
-          } catch (e) {
+          } catch {
           }
         }
       }
@@ -15469,8 +15356,7 @@ var _ModeEditor = class _ModeEditor {
     ev.preventDefault();
   }
   static insert(model, text, options = {}) {
-    var _a3;
-    const mode = options.mode === "auto" ? model.mode : (_a3 = options.mode) != null ? _a3 : model.mode;
+    const mode = options.mode === "auto" ? model.mode : options.mode ?? model.mode;
     return _ModeEditor._modes[mode].insert(model, text, options);
   }
   onPaste(_mathfield, _data) {
@@ -15480,8 +15366,6 @@ var _ModeEditor = class _ModeEditor {
     return false;
   }
 };
-_ModeEditor._modes = {};
-var ModeEditor = _ModeEditor;
 
 // src/editor/keybindings-definitions.ts
 var DEFAULT_KEYBINDINGS = [
@@ -15568,6 +15452,12 @@ var DEFAULT_KEYBINDINGS = [
   {
     key: "[IntlBackslash]",
     ifMode: "math",
+    command: ["switchMode", "latex", "", "\\"]
+  },
+  // On UK QWERTY keyboards
+  {
+    key: "[IntlBackslash]",
+    ifMode: "text",
     command: ["switchMode", "latex", "", "\\"]
   },
   // On UK QWERTY keyboards
@@ -15959,12 +15849,10 @@ var REVERSE_KEYBINDINGS = {
 
 // src/editor-mathfield/utils.ts
 function isValidMathfield(mf) {
-  var _a3;
-  return ((_a3 = mf.element) == null ? void 0 : _a3.mathfield) === mf;
+  return mf.element?.mathfield === mf;
 }
 function findElementWithCaret(element) {
-  var _a3, _b3;
-  return (_b3 = (_a3 = element.querySelector(".ML__caret")) != null ? _a3 : element.querySelector(".ML__text-caret")) != null ? _b3 : element.querySelector(".ML__latex-caret");
+  return element.querySelector(".ML__caret") ?? element.querySelector(".ML__text-caret") ?? element.querySelector(".ML__latex-caret");
 }
 function getCaretPoint(element) {
   const caret = findElementWithCaret(element);
@@ -15977,9 +15865,8 @@ function getCaretPoint(element) {
   };
 }
 function branchId(atom) {
-  var _a3;
   if (!atom.parent) return "root";
-  let result = (_a3 = atom.parent.id) != null ? _a3 : "";
+  let result = atom.parent.id ?? "";
   result += typeof atom.parentBranch === "string" ? "-" + atom.parentBranch : `-${atom.parentBranch[0]}/${atom.parentBranch[0]}`;
   return result;
 }
@@ -16040,9 +15927,8 @@ function getNodeBounds(node) {
   return result;
 }
 function getAtomBounds(mathfield, atom) {
-  var _a3, _b3;
   if (!atom.id) return null;
-  let result = (_b3 = (_a3 = mathfield.atomBoundsCache) == null ? void 0 : _a3.get(atom.id)) != null ? _b3 : null;
+  let result = mathfield.atomBoundsCache?.get(atom.id) ?? null;
   if (result !== null) return result;
   const nodes = mathfield.field.querySelectorAll(`[data-atom-id="${atom.id}"]`);
   const nodeList = Array.from(nodes);
@@ -16077,7 +15963,7 @@ function getAtomBounds(mathfield, atom) {
     if (result) mathfield.atomBoundsCache.set(atom.id, result);
     else mathfield.atomBoundsCache.delete(atom.id);
   }
-  return result != null ? result : null;
+  return result ?? null;
 }
 function getRangeBoundingRect(mf, range2) {
   const [start, end] = range2;
@@ -16094,7 +15980,7 @@ function getRangeBoundingRect(mf, range2) {
       }
     }
   }
-  return result != null ? result : { top: 0, bottom: 0, left: 0, right: 0 };
+  return result ?? { top: 0, bottom: 0, left: 0, right: 0 };
 }
 function getRangeBounds(mathfield, range2, options) {
   const rects = /* @__PURE__ */ new Map();
@@ -16106,7 +15992,7 @@ function getRangeBounds(mathfield, range2, options) {
   for (const atom of mathfield.model.getAtoms(range2, {
     includeChildren: true
   })) {
-    if ((options == null ? void 0 : options.excludeAtomsWithBackground) && atom.style.backgroundColor)
+    if (options?.excludeAtomsWithBackground && atom.style.backgroundColor)
       continue;
     const bounds = adjustForScrolling(
       mathfield,
@@ -17110,6 +16996,10 @@ body > .ML__keyboard.is-visible.animate > .MLK__backdrop {
 .MLK__rows > .MLK__row .small {
   font-size: var(--_keycap-small-font-size);
 }
+.MLK__rows > .MLK__row .compact .ML__latex {
+  transform: scale(0.72);
+  transform-origin: center;
+}
 .MLK__rows > .MLK__row .bottom {
   justify-content: flex-end;
 }
@@ -17787,7 +17677,6 @@ function getStylesheet(id) {
 }
 var gInjectedStylesheets;
 function injectStylesheet(id) {
-  var _a3;
   try {
     if (!("adoptedStyleSheets" in document)) {
       if (window.document.getElementById(`mathlive-style-${id}`)) return;
@@ -17800,7 +17689,7 @@ function injectStylesheet(id) {
       return;
     }
     if (!gInjectedStylesheets) gInjectedStylesheets = {};
-    if (((_a3 = gInjectedStylesheets[id]) != null ? _a3 : 0) !== 0) gInjectedStylesheets[id] += 1;
+    if ((gInjectedStylesheets[id] ?? 0) !== 0) gInjectedStylesheets[id] += 1;
     else {
       const stylesheet = getStylesheet(id);
       document.adoptedStyleSheets = [
@@ -17815,7 +17704,7 @@ function injectStylesheet(id) {
 }
 function releaseStylesheet(id) {
   if (!("adoptedStyleSheets" in document)) return;
-  if (!(gInjectedStylesheets == null ? void 0 : gInjectedStylesheets[id])) return;
+  if (!gInjectedStylesheets?.[id]) return;
   gInjectedStylesheets[id] -= 1;
   if (gInjectedStylesheets[id] <= 0) {
     const stylesheet = gStylesheets[id];
@@ -17828,10 +17717,9 @@ function releaseStylesheet(id) {
 // src/atoms/accent.ts
 var AccentAtom = class _AccentAtom extends Atom {
   constructor(options) {
-    var _a3;
-    super(__spreadProps(__spreadValues({}, options), { type: "accent", body: (_a3 = options.body) != null ? _a3 : void 0 }));
+    super({ ...options, type: "accent", body: options.body ?? void 0 });
     if (options.accentChar) this.accent = options.accentChar;
-    else this.svgAccent = options == null ? void 0 : options.svgAccent;
+    else this.svgAccent = options?.svgAccent;
     this.skipBoundary = true;
     this.captureSelection = true;
   }
@@ -17839,18 +17727,18 @@ var AccentAtom = class _AccentAtom extends Atom {
     return new _AccentAtom(json);
   }
   toJson() {
-    return __spreadProps(__spreadValues({}, super.toJson()), {
+    return {
+      ...super.toJson(),
       accentChar: this.accent,
       svgAccent: this.svgAccent
-    });
+    };
   }
   render(parentContext) {
-    var _a3;
     const context = new Context(
       { parent: parentContext, mathstyle: "cramp" },
       this.style
     );
-    const base = (_a3 = Atom.createBox(context, this.body)) != null ? _a3 : new Box("\u25A1", { style: this.style });
+    const base = Atom.createBox(context, this.body) ?? new Box("\u25A1", { style: this.style });
     let skew = 0;
     if (!this.hasEmptyBranch("body") && this.body.length === 2 && this.body[1].isCharacterBox())
       skew = base.skew;
@@ -17912,19 +17800,19 @@ var BoxAtom = class _BoxAtom extends Atom {
     return new _BoxAtom(json);
   }
   toJson() {
-    return __spreadProps(__spreadValues({}, super.toJson()), {
+    return {
+      ...super.toJson(),
       framecolor: this.framecolor,
       backgroundcolor: this.backgroundcolor,
       padding: this.padding,
       offset: this.offset,
       border: this.border
-    });
+    };
   }
   render(parentContext) {
-    var _a3, _b3, _c2, _d2;
     const base = Atom.createBox(parentContext, this.body, { type: "lift" });
     if (!base) return null;
-    const offset = parentContext.toEm((_a3 = this.offset) != null ? _a3 : { dimension: 0 });
+    const offset = parentContext.toEm(this.offset ?? { dimension: 0 });
     base.depth += offset;
     base.setStyle("display", "inline-block");
     base.setStyle("position", "relative");
@@ -17935,7 +17823,7 @@ var BoxAtom = class _BoxAtom extends Atom {
     );
     base.setStyle("vertical-align", -Math.floor(100 * base.height) / 100, "em");
     const context = new Context({ parent: parentContext }, this.style);
-    const padding2 = context.toEm((_b3 = this.padding) != null ? _b3 : { register: "fboxsep" });
+    const padding2 = context.toEm(this.padding ?? { register: "fboxsep" });
     const box = new Box(null, { classes: "ML__box" });
     box.height = base.height + padding2;
     box.depth = base.depth + padding2;
@@ -17948,13 +17836,13 @@ var BoxAtom = class _BoxAtom extends Atom {
     if (this.backgroundcolor) {
       box.setStyle(
         "background-color",
-        (_c2 = context.toBackgroundColor(this.backgroundcolor)) != null ? _c2 : "transparent"
+        context.toBackgroundColor(this.backgroundcolor) ?? "transparent"
       );
     }
     if (this.framecolor) {
       box.setStyle(
         "border",
-        `${context.getRegisterAsEm("fboxrule", 2)}em solid ${(_d2 = context.toColor(this.framecolor)) != null ? _d2 : "black"}`
+        `${context.getRegisterAsEm("fboxrule", 2)}em solid ${context.toColor(this.framecolor) ?? "black"}`
       );
     }
     if (this.border) box.setStyle("border", this.border);
@@ -17996,8 +17884,7 @@ var BoxAtom = class _BoxAtom extends Atom {
 // src/atoms/composition.ts
 var CompositionAtom = class _CompositionAtom extends Atom {
   constructor(value, options) {
-    var _a3;
-    super({ type: "composition", mode: (_a3 = options == null ? void 0 : options.mode) != null ? _a3 : "math", value });
+    super({ type: "composition", mode: options?.mode ?? "math", value });
   }
   static fromJson(json) {
     return new _CompositionAtom(json.value, json);
@@ -18043,7 +17930,7 @@ var ChemAtom = class _ChemAtom extends Atom {
     return this._verbatimLatex;
   }
   toJson() {
-    return __spreadProps(__spreadValues({}, super.toJson()), { arg: this.arg });
+    return { ...super.toJson(), arg: this.arg };
   }
   render(context) {
     const box = Atom.createBox(context, this.body, { type: "inner" });
@@ -18056,10 +17943,7 @@ var ChemAtom = class _ChemAtom extends Atom {
   }
 };
 defineFunction(["ce", "pu"], "{chemformula:balanced-string}", {
-  createAtom: (options) => {
-    var _a3;
-    return new ChemAtom(options.command, (_a3 = options.args[0]) != null ? _a3 : "");
-  }
+  createAtom: (options) => new ChemAtom(options.command, options.args[0] ?? "")
 });
 var mhchemParser = {
   //
@@ -20328,7 +20212,7 @@ function assertString(a) {
 // src/atoms/delim.ts
 var MiddleDelimAtom = class _MiddleDelimAtom extends Atom {
   constructor(options) {
-    super(__spreadProps(__spreadValues({}, options), { type: "delim" }));
+    super({ ...options, type: "delim" });
     this.value = options.delim;
     this.size = options.size;
   }
@@ -20336,7 +20220,7 @@ var MiddleDelimAtom = class _MiddleDelimAtom extends Atom {
     return new _MiddleDelimAtom(json);
   }
   toJson() {
-    return __spreadProps(__spreadValues({}, super.toJson()), { delim: this.value, size: this.size });
+    return { ...super.toJson(), delim: this.value, size: this.size };
   }
   render(_context) {
     return new Box(this.value, { type: "middle" });
@@ -20345,13 +20229,13 @@ var MiddleDelimAtom = class _MiddleDelimAtom extends Atom {
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
+    if (def?.serialize) return def.serialize(this, options);
     return latexCommand(this.command, this.value);
   }
 };
 var SizedDelimAtom = class _SizedDelimAtom extends Atom {
   constructor(options) {
-    super(__spreadProps(__spreadValues({}, options), { type: "sizeddelim", value: options.delim }));
+    super({ ...options, type: "sizeddelim", value: options.delim });
     this.delimType = options.delimType;
     this.size = options.size;
   }
@@ -20359,11 +20243,12 @@ var SizedDelimAtom = class _SizedDelimAtom extends Atom {
     return new _SizedDelimAtom(json);
   }
   toJson() {
-    return __spreadProps(__spreadValues({}, super.toJson()), {
+    return {
+      ...super.toJson(),
       delim: this.value,
       size: this.size,
       delimType: this.delimType
-    });
+    };
   }
   render(context) {
     let result = makeSizedDelim(this.value, this.size, context, {
@@ -20380,7 +20265,7 @@ var SizedDelimAtom = class _SizedDelimAtom extends Atom {
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
+    if (def?.serialize) return def.serialize(this, options);
     return latexCommand(this.command, this.value);
   }
 };
@@ -20391,7 +20276,6 @@ function escapeSvgAttr(s) {
 }
 var EncloseAtom = class _EncloseAtom extends Atom {
   constructor(command, body, notation, options) {
-    var _a3, _b3;
     super({ type: "enclose", command, style: options.style });
     this.body = body;
     this.backgroundcolor = options.backgroundcolor;
@@ -20403,8 +20287,8 @@ var EncloseAtom = class _EncloseAtom extends Atom {
       notation.top = false;
     }
     this.notation = notation;
-    this.shadow = (_a3 = options.shadow) != null ? _a3 : "none";
-    this.strokeWidth = (_b3 = options.strokeWidth) != null ? _b3 : "0.06em";
+    this.shadow = options.shadow ?? "none";
+    this.strokeWidth = options.strokeWidth ?? "0.06em";
     if (!this.strokeWidth) this.strokeWidth = "0.06em";
     this.strokeStyle = options.strokeStyle;
     this.svgStrokeStyle = options.svgStrokeStyle;
@@ -20422,7 +20306,8 @@ var EncloseAtom = class _EncloseAtom extends Atom {
     );
   }
   toJson() {
-    return __spreadProps(__spreadValues({}, super.toJson()), {
+    return {
+      ...super.toJson(),
       notation: this.notation,
       shadow: this.shadow,
       strokeWidth: this.strokeWidth,
@@ -20431,15 +20316,14 @@ var EncloseAtom = class _EncloseAtom extends Atom {
       strokeColor: this.strokeColor,
       borderStyle: this.borderStyle,
       padding: this.padding
-    });
+    };
   }
   _serialize(options) {
-    var _a3;
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
-    let command = (_a3 = this.command) != null ? _a3 : "";
+    if (def?.serialize) return def.serialize(this, options);
+    let command = this.command ?? "";
     if (this.command === "\\enclose") {
       command += "{" + Object.keys(this.notation).join(" ") + "}";
       let style = "";
@@ -20464,7 +20348,6 @@ var EncloseAtom = class _EncloseAtom extends Atom {
     return latexCommand(command, this.bodyToLatex(options));
   }
   render(parentContext) {
-    var _a3, _b3, _c2, _d2, _e;
     const context = new Context({ parent: parentContext }, this.style);
     const base = Atom.createBox(context, this.body);
     if (!base) return null;
@@ -20538,7 +20421,7 @@ var EncloseAtom = class _EncloseAtom extends Atom {
       svg += `${x},${y} ${x - wf - 0.4 * hf},${y + hf - 0.4 * wf} `;
       svg += `${x - 0.7 * wf},${y + 0.7 * hf} ${x - wf + 0.4 * hf},${y + hf + 0.4 * wf} `;
       svg += `${x},${y}`;
-      svg += `" stroke='none' fill="${escapeSvgAttr((_a3 = this.strokeColor) != null ? _a3 : "")}"`;
+      svg += `" stroke='none' fill="${escapeSvgAttr(this.strokeColor ?? "")}"`;
       svg += "/>";
     }
     let wDelta = 0;
@@ -20578,7 +20461,7 @@ var EncloseAtom = class _EncloseAtom extends Atom {
       svg += '<path d="';
       svg += `M ${padding2} ${padding2}  a${surdWidth} ${(base.depth + base.height + 2 * clearance) / 2}, 0, 1, 1, 0 ${base.depth + base.height + 2 * clearance} "`;
       svg += ` stroke-width="${getRuleThickness(context)}" stroke="${escapeSvgAttr(
-        (_b3 = this.strokeColor) != null ? _b3 : ""
+        this.strokeColor ?? ""
       )}" fill="none"`;
       svg += "/>";
     }
@@ -20627,8 +20510,8 @@ var EncloseAtom = class _EncloseAtom extends Atom {
         svgStyle += "filter: drop-shadow(0 0 .5px rgba(255, 255, 255, .7)) drop-shadow(1px 1px 2px #333)";
       }
       if (this.shadow !== "none")
-        svgStyle += `filter: drop-shadow(${escapeSvgAttr((_c2 = this.shadow) != null ? _c2 : "")})`;
-      svgStyle += ` stroke-width="${escapeSvgAttr((_d2 = this.strokeWidth) != null ? _d2 : "")}" stroke="${escapeSvgAttr((_e = this.strokeColor) != null ? _e : "")}"`;
+        svgStyle += `filter: drop-shadow(${escapeSvgAttr(this.shadow ?? "")})`;
+      svgStyle += ` stroke-width="${escapeSvgAttr(this.strokeWidth ?? "")}" stroke="${escapeSvgAttr(this.strokeColor ?? "")}"`;
       svgStyle += ' stroke-linecap="round"';
       if (this.svgStrokeStyle)
         svgStyle += ` stroke-dasharray="${escapeSvgAttr(this.svgStrokeStyle)}"`;
@@ -20682,21 +20565,21 @@ var _MathEnvironment = {
 // src/atoms/genfrac.ts
 var GenfracAtom = class _GenfracAtom extends Atom {
   constructor(above, below, options) {
-    var _a3, _b3, _c2;
-    super(__spreadProps(__spreadValues({}, options), {
+    super({
+      ...options,
       type: "genfrac",
       displayContainsHighlight: true
-    }));
+    });
     this.above = above;
     this.below = below;
-    this.hasBarLine = (_a3 = options == null ? void 0 : options.hasBarLine) != null ? _a3 : true;
-    this.continuousFraction = (_b3 = options == null ? void 0 : options.continuousFraction) != null ? _b3 : false;
-    this.align = (_c2 = options == null ? void 0 : options.align) != null ? _c2 : "center";
-    this.numerPrefix = options == null ? void 0 : options.numerPrefix;
-    this.denomPrefix = options == null ? void 0 : options.denomPrefix;
-    this.mathstyleName = options == null ? void 0 : options.mathstyleName;
-    this.leftDelim = options == null ? void 0 : options.leftDelim;
-    this.rightDelim = options == null ? void 0 : options.rightDelim;
+    this.hasBarLine = options?.hasBarLine ?? true;
+    this.continuousFraction = options?.continuousFraction ?? false;
+    this.align = options?.align ?? "center";
+    this.numerPrefix = options?.numerPrefix;
+    this.denomPrefix = options?.denomPrefix;
+    this.mathstyleName = options?.mathstyleName;
+    this.leftDelim = options?.leftDelim;
+    this.rightDelim = options?.rightDelim;
   }
   static fromJson(json) {
     return new _GenfracAtom(
@@ -20715,7 +20598,7 @@ var GenfracAtom = class _GenfracAtom extends Atom {
     if (this.rightDelim) options.rightDelim = this.rightDelim;
     if (!this.hasBarLine) options.hasBarLine = false;
     if (this.mathstyleName) options.mathstyleName = this.mathstyleName;
-    return __spreadValues(__spreadValues({}, super.toJson()), options);
+    return { ...super.toJson(), ...options };
   }
   // The order of the children, which is used for keyboard navigation order,
   // may be customized for fractions...
@@ -20745,7 +20628,6 @@ var GenfracAtom = class _GenfracAtom extends Atom {
     return result;
   }
   render(context) {
-    var _a3, _b3;
     const fracContext = new Context(
       { parent: context, mathstyle: this.mathstyleName },
       this.style
@@ -20761,7 +20643,7 @@ var GenfracAtom = class _GenfracAtom extends Atom {
     const numerBox = this.numerPrefix ? new Box(
       [new Box(this.numerPrefix), Atom.createBox(numContext, this.above)],
       { isTight: numContext.isTight, type: "ignore" }
-    ) : (_a3 = Atom.createBox(numContext, this.above, { type: "ignore" })) != null ? _a3 : new Box(null, { type: "ignore" });
+    ) : Atom.createBox(numContext, this.above, { type: "ignore" }) ?? new Box(null, { type: "ignore" });
     const denomContext = new Context(
       {
         parent: fracContext,
@@ -20772,7 +20654,7 @@ var GenfracAtom = class _GenfracAtom extends Atom {
     const denomBox = this.denomPrefix ? new Box([
       new Box(this.denomPrefix),
       Atom.createBox(denomContext, this.below, { type: "ignore" })
-    ]) : (_b3 = Atom.createBox(denomContext, this.below, { type: "ignore" })) != null ? _b3 : new Box(null, { type: "ignore" });
+    ]) : Atom.createBox(denomContext, this.below, { type: "ignore" }) ?? new Box(null, { type: "ignore" });
     const ruleThickness = this.hasBarLine ? metrics.defaultRuleThickness : 0;
     let numerShift;
     let clearance = 0;
@@ -20888,21 +20770,19 @@ var GenfracAtom = class _GenfracAtom extends Atom {
   }
 };
 function align2(v) {
-  var _a3;
-  return (_a3 = {
+  return {
     left: "ML__left",
     right: "ML__right",
     center: "ML__center"
-  }[v]) != null ? _a3 : "ML__center";
+  }[v] ?? "ML__center";
 }
 
 // src/atoms/latex.ts
 var LatexAtom = class _LatexAtom extends Atom {
   // Display errors with wavy red line
   constructor(value, options) {
-    var _a3;
     super({ type: "latex", value, mode: "latex" });
-    this.isSuggestion = (_a3 = options == null ? void 0 : options.isSuggestion) != null ? _a3 : false;
+    this.isSuggestion = options?.isSuggestion ?? false;
     this.isError = false;
   }
   static fromJson(json) {
@@ -20915,7 +20795,7 @@ var LatexAtom = class _LatexAtom extends Atom {
     const options = {};
     if (this.isSuggestion) options.isSuggestion = true;
     if (this.isError) options.isError = true;
-    return __spreadValues({ type: "latex", value: this.value }, options);
+    return { type: "latex", value: this.value, ...options };
   }
   render(context) {
     const result = new Box(this.value, {
@@ -20947,21 +20827,21 @@ var LatexGroupAtom = class _LatexGroupAtom extends Atom {
     return this.bind(context, box);
   }
   _serialize(_options) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this.body) == null ? void 0 : _a3.map((x) => x.value).join("")) != null ? _b3 : "";
+    return this.body?.map((x) => x.value).join("") ?? "";
   }
 };
 
 // src/atoms/extensible-symbol.ts
 var ExtensibleSymbolAtom = class _ExtensibleSymbolAtom extends Atom {
   constructor(symbol, options) {
-    super(__spreadProps(__spreadValues({}, options), {
+    super({
+      ...options,
       type: "extensible-symbol",
-      isFunction: options == null ? void 0 : options.isFunction
-    }));
+      isFunction: options?.isFunction
+    });
     this.value = symbol;
-    this.variant = options == null ? void 0 : options.variant;
-    this.subsupPlacement = options == null ? void 0 : options.limits;
+    this.variant = options?.variant;
+    this.subsupPlacement = options?.limits;
   }
   static fromJson(json) {
     return new _ExtensibleSymbolAtom(json.symbol, json);
@@ -20974,7 +20854,6 @@ var ExtensibleSymbolAtom = class _ExtensibleSymbolAtom extends Atom {
     return result;
   }
   render(context) {
-    var _a3;
     const large = context.isDisplayStyle && this.value !== "\\smallint";
     const base = new Box(this.value, {
       fontFamily: large ? "Size2-Regular" : "Size1-Regular",
@@ -20990,7 +20869,7 @@ var ExtensibleSymbolAtom = class _ExtensibleSymbolAtom extends Atom {
     base.setTop(baseShift);
     let result = base;
     if (this.superscript || this.subscript) {
-      let limits = (_a3 = this.subsupPlacement) != null ? _a3 : "auto";
+      let limits = this.subsupPlacement ?? "auto";
       if (limits === "auto" && context.isDisplayStyle) limits = "over-under";
       result = limits === "over-under" ? this.attachLimits(context, { base, baseShift, slant }) : this.attachSupsub(context, { base });
     }
@@ -21005,7 +20884,7 @@ var ExtensibleSymbolAtom = class _ExtensibleSymbolAtom extends Atom {
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
+    if (def?.serialize) return def.serialize(this, options);
     const result = [];
     result.push(this.command);
     if (this.explicitSubsupPlacement) {
@@ -21022,14 +20901,15 @@ var ExtensibleSymbolAtom = class _ExtensibleSymbolAtom extends Atom {
 var OverlapAtom = class _OverlapAtom extends Atom {
   constructor(options) {
     const body = options.body;
-    super(__spreadProps(__spreadValues({}, options), {
+    super({
+      ...options,
       type: "overlap",
       body: typeof body === "string" ? [new Atom({ value: body })] : body,
-      style: options == null ? void 0 : options.style
-    }));
+      style: options?.style
+    });
     this.skipBoundary = true;
-    this.align = options == null ? void 0 : options.align;
-    this.boxType = options == null ? void 0 : options.boxType;
+    this.align = options?.align;
+    this.boxType = options?.boxType;
   }
   static fromJson(json) {
     return new _OverlapAtom(json);
@@ -21038,7 +20918,7 @@ var OverlapAtom = class _OverlapAtom extends Atom {
     const options = {};
     if (this.align) options.align = this.align;
     if (this.boxType) options.boxType = this.boxType;
-    return __spreadValues(__spreadValues({}, super.toJson()), options);
+    return { ...super.toJson(), ...options };
   }
   render(context) {
     const inner = Atom.createBox(context, this.body, { classes: "ML__inner" });
@@ -21057,14 +20937,13 @@ var OverlapAtom = class _OverlapAtom extends Atom {
 // src/atoms/overunder.ts
 var OverunderAtom = class _OverunderAtom extends Atom {
   constructor(options) {
-    var _a3, _b3, _c2, _d2;
     super({
       type: "overunder",
       command: options.command,
       style: options.style,
       mode: options.mode,
       body: options.body,
-      skipBoundary: (_a3 = options.skipBoundary) != null ? _a3 : true
+      skipBoundary: options.skipBoundary ?? true
     });
     this.subsupPlacement = options.supsubPlacement;
     this.svgAbove = options.svgAbove;
@@ -21072,9 +20951,9 @@ var OverunderAtom = class _OverunderAtom extends Atom {
     this.svgBody = options.svgBody;
     this.above = options.above;
     this.below = options.below;
-    this.boxType = (_b3 = options.boxType) != null ? _b3 : "ord";
-    this.paddedBody = (_c2 = options.paddedBody) != null ? _c2 : false;
-    this.paddedLabels = (_d2 = options.paddedLabels) != null ? _d2 : false;
+    this.boxType = options.boxType ?? "ord";
+    this.paddedBody = options.paddedBody ?? false;
+    this.paddedLabels = options.paddedLabels ?? false;
   }
   static fromJson(json) {
     return new _OverunderAtom(json);
@@ -21193,13 +21072,12 @@ function makeOverunderStack(context, options) {
 // src/atoms/phantom.ts
 var PhantomAtom = class _PhantomAtom extends Atom {
   constructor(options) {
-    var _a3, _b3, _c2, _d2;
-    super(__spreadProps(__spreadValues({}, options), { type: "phantom" }));
+    super({ ...options, type: "phantom" });
     this.captureSelection = true;
-    this.isInvisible = (_a3 = options.isInvisible) != null ? _a3 : false;
-    this.smashDepth = (_b3 = options.smashDepth) != null ? _b3 : false;
-    this.smashHeight = (_c2 = options.smashHeight) != null ? _c2 : false;
-    this.smashWidth = (_d2 = options.smashWidth) != null ? _d2 : false;
+    this.isInvisible = options.isInvisible ?? false;
+    this.smashDepth = options.smashDepth ?? false;
+    this.smashHeight = options.smashHeight ?? false;
+    this.smashWidth = options.smashWidth ?? false;
   }
   static fromJson(json) {
     return new _PhantomAtom(json);
@@ -21210,7 +21088,7 @@ var PhantomAtom = class _PhantomAtom extends Atom {
     if (this.smashDepth) options.smashDepth = true;
     if (this.smashHeight) options.smashHeight = true;
     if (this.smashWidth) options.smashWidth = true;
-    return __spreadValues(__spreadValues({}, super.toJson()), options);
+    return { ...super.toJson(), ...options };
   }
   render(context) {
     const phantom = new Context({ parent: context, isPhantom: true });
@@ -21246,10 +21124,9 @@ var PhantomAtom = class _PhantomAtom extends Atom {
 // src/atoms/spacing.ts
 var SpacingAtom = class _SpacingAtom extends Atom {
   constructor(options) {
-    var _a3;
-    super(__spreadValues({ type: "spacing" }, options));
-    this.width = options == null ? void 0 : options.width;
-    this._braced = (_a3 = options == null ? void 0 : options.braced) != null ? _a3 : false;
+    super({ type: "spacing", ...options });
+    this.width = options?.width;
+    this._braced = options?.braced ?? false;
   }
   static fromJson(json) {
     return new _SpacingAtom(json);
@@ -21261,7 +21138,6 @@ var SpacingAtom = class _SpacingAtom extends Atom {
     return json;
   }
   render(context) {
-    var _a3;
     if (this.command === "space")
       return new Box(this.mode === "math" ? null : " ");
     let result;
@@ -21269,7 +21145,7 @@ var SpacingAtom = class _SpacingAtom extends Atom {
       result = new Box(null, { classes: "ML__mspace" });
       result.left = context.toEm(this.width);
     } else {
-      const spacingCls = (_a3 = {
+      const spacingCls = {
         "\\qquad": "ML__qquad",
         "\\quad": "ML__quad",
         "\\enspace": "ML__enspace",
@@ -21278,7 +21154,7 @@ var SpacingAtom = class _SpacingAtom extends Atom {
         "\\>": "ML__mediumspace",
         "\\,": "ML__thinspace",
         "\\!": "ML__negativethinspace"
-      }[this.command]) != null ? _a3 : "ML__mediumspace";
+      }[this.command] ?? "ML__mediumspace";
       result = new Box(null, { classes: spacingCls });
     }
     result = this.bind(context, result);
@@ -21286,12 +21162,11 @@ var SpacingAtom = class _SpacingAtom extends Atom {
     return result;
   }
   _serialize(options) {
-    var _a3;
     if (!options.expandMacro && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
-    const command = (_a3 = this.command) != null ? _a3 : "";
+    if (def?.serialize) return def.serialize(this, options);
+    const command = this.command ?? "";
     if (this.width === void 0) return command;
     if (this._braced && !("register" in this.width))
       return `${command}{${serializeLatexValue(this.width)}}`;
@@ -21302,26 +21177,27 @@ var SpacingAtom = class _SpacingAtom extends Atom {
 // src/atoms/surd.ts
 var SurdAtom = class _SurdAtom extends Atom {
   constructor(options) {
-    var _a3;
-    super(__spreadProps(__spreadValues({}, options), {
+    super({
+      ...options,
       type: "surd",
-      mode: (_a3 = options.mode) != null ? _a3 : "math",
+      mode: options.mode ?? "math",
       style: options.style,
       displayContainsHighlight: true,
       body: options.body
-    }));
+    });
     this.above = options.index;
   }
   static fromJson(json) {
-    return new _SurdAtom(__spreadProps(__spreadValues({}, json), {
+    return new _SurdAtom({
+      ...json,
       index: json.above
-    }));
+    });
   }
   _serialize(options) {
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
+    if (def?.serialize) return def.serialize(this, options);
     const command = this.command;
     const body = this.bodyToLatex(options);
     if (this.above && !this.hasEmptyBranch("above"))
@@ -21349,12 +21225,11 @@ var SurdAtom = class _SurdAtom extends Atom {
     return result;
   }
   render(context) {
-    var _a3;
     const innerContext = new Context(
       { parent: context, mathstyle: "cramp" },
       this.style
     );
-    const innerBox = (_a3 = Atom.createBox(innerContext, this.body, { type: "inner" })) != null ? _a3 : new Box(null);
+    const innerBox = Atom.createBox(innerContext, this.body, { type: "inner" }) ?? new Box(null);
     const factor = innerContext.scalingFactor;
     const ruleWidth = innerContext.metrics.defaultRuleThickness / factor;
     const phi = context.isDisplayStyle ? X_HEIGHT : ruleWidth;
@@ -21489,7 +21364,7 @@ function adjustType(boxes) {
   traverseBoxes(boxes, (prev, cur) => {
     if (cur.type === "bin" && (!prev || /^(middle|bin|op|rel|open|punct)$/.test(prev.type)))
       cur.type = "ord";
-    if ((prev == null ? void 0 : prev.type) === "bin" && /^(rel|close|punct)$/.test(cur.type))
+    if (prev?.type === "bin" && /^(rel|close|punct)$/.test(cur.type))
       prev.type = "ord";
     if (cur.type !== "ignore") prev = cur;
   });
@@ -21502,11 +21377,10 @@ function applyInterBoxSpacing(root, context) {
   const med = context.getRegisterAsEm("medmuskip");
   const thick = context.getRegisterAsEm("thickmuskip");
   traverseBoxes(boxes, (prev, cur) => {
-    var _a3, _b3, _c2;
     if (!prev) return;
     const prevType = prev.type;
-    const table = cur.isTight ? (_a3 = INTER_BOX_TIGHT_SPACING[prevType]) != null ? _a3 : null : (_b3 = INTER_BOX_SPACING[prevType]) != null ? _b3 : null;
-    const hskip = (_c2 = table == null ? void 0 : table[cur.type]) != null ? _c2 : null;
+    const table = cur.isTight ? INTER_BOX_TIGHT_SPACING[prevType] ?? null : INTER_BOX_SPACING[prevType] ?? null;
+    const hskip = table?.[cur.type] ?? null;
     if (hskip === 3) addSkipBefore(cur, thin);
     if (hskip === 4) addSkipBefore(cur, med);
     if (hskip === 5) addSkipBefore(cur, thick);
@@ -21549,14 +21423,14 @@ var TooltipAtom = class _TooltipAtom extends Atom {
     this.captureSelection = false;
   }
   static fromJson(json) {
-    return new _TooltipAtom(__spreadProps(__spreadValues({}, json), {
+    return new _TooltipAtom({
+      ...json,
       tooltip: fromJson(json.tooltip)
-    }));
+    });
   }
   toJson() {
-    var _a3;
-    const tooltip = (_a3 = this.tooltip.body) == null ? void 0 : _a3.filter((x) => x.type !== "first").map((x) => x.toJson());
-    return __spreadProps(__spreadValues({}, super.toJson()), { tooltip });
+    const tooltip = this.tooltip.body?.filter((x) => x.type !== "first").map((x) => x.toJson());
+    return { ...super.toJson(), tooltip };
   }
   render(context) {
     const body = Atom.createBox(context, this.body);
@@ -21582,14 +21456,15 @@ var TooltipAtom = class _TooltipAtom extends Atom {
 // src/atoms/operator.ts
 var OperatorAtom = class _OperatorAtom extends Atom {
   constructor(symbol, options) {
-    super(__spreadProps(__spreadValues({}, options), {
+    super({
+      ...options,
       type: "operator",
-      isFunction: options == null ? void 0 : options.isFunction
-    }));
+      isFunction: options?.isFunction
+    });
     this.value = symbol;
-    this.variant = options == null ? void 0 : options.variant;
-    this.variantStyle = options == null ? void 0 : options.variantStyle;
-    this.subsupPlacement = options == null ? void 0 : options.limits;
+    this.variant = options?.variant;
+    this.variantStyle = options?.variantStyle;
+    this.subsupPlacement = options?.limits;
   }
   static fromJson(json) {
     return new _OperatorAtom(json.symbol, json);
@@ -21603,7 +21478,6 @@ var OperatorAtom = class _OperatorAtom extends Atom {
     return result;
   }
   render(context) {
-    var _a3;
     const base = new Box(this.value, {
       type: "op",
       mode: "math",
@@ -21617,7 +21491,7 @@ var OperatorAtom = class _OperatorAtom extends Atom {
     });
     let result = base;
     if (this.superscript || this.subscript) {
-      const limits = (_a3 = this.subsupPlacement) != null ? _a3 : "auto";
+      const limits = this.subsupPlacement ?? "auto";
       result = limits === "over-under" || limits === "auto" && context.isDisplayStyle ? this.attachLimits(context, { base }) : this.attachSupsub(context, { base });
     }
     return new Box(this.bind(context, result), {
@@ -21631,7 +21505,7 @@ var OperatorAtom = class _OperatorAtom extends Atom {
     if (!(options.expandMacro || options.skipStyles || options.skipPlaceholders) && typeof this.verbatimLatex === "string")
       return this.verbatimLatex;
     const def = getDefinition(this.command, this.mode);
-    if (def == null ? void 0 : def.serialize) return def.serialize(this, options);
+    if (def?.serialize) return def.serialize(this, options);
     const result = [this.command];
     if (this.explicitSubsupPlacement) {
       if (this.subsupPlacement === "over-under") result.push("\\limits");
@@ -21647,7 +21521,7 @@ var OperatorAtom = class _OperatorAtom extends Atom {
 function fromJson(json) {
   if (isArray(json)) return json.map((x) => fromJson(x));
   if (typeof json === "string") return Atom.fromJson(json);
-  json = __spreadValues({}, json);
+  json = { ...json };
   for (const branch of NAMED_BRANCHES)
     if (json[branch]) json[branch] = fromJson(json[branch]);
   if (json.args) json.args = argumentsFromJson(json.args);
@@ -21736,7 +21610,6 @@ function applyStyleToUnstyledAtoms(atom, style) {
     atom.applyStyle(style, { unstyledOnly: true });
 }
 function applyStyle(model, range2, style, options) {
-  var _a3;
   function everyStyle(property, value) {
     for (const atom of atoms) if (atom.style[property] !== value) return false;
     return true;
@@ -21769,15 +21642,12 @@ function applyStyle(model, range2, style, options) {
       const requestedDecorations = style.textDecoration.split(" ");
       const allHaveDecoration = atoms.every(
         (atom) => requestedDecorations.every(
-          (decoration) => {
-            var _a4;
-            return ((_a4 = atom.style.textDecoration) != null ? _a4 : "").includes(decoration);
-          }
+          (decoration) => (atom.style.textDecoration ?? "").includes(decoration)
         )
       );
       for (const atom of atoms) {
         const currentDecorations = new Set(
-          ((_a3 = atom.style.textDecoration) != null ? _a3 : "").split(" ").filter(Boolean)
+          (atom.style.textDecoration ?? "").split(" ").filter(Boolean)
         );
         if (allHaveDecoration) {
           requestedDecorations.forEach(
@@ -21788,9 +21658,10 @@ function applyStyle(model, range2, style, options) {
             (decoration) => currentDecorations.add(decoration)
           );
         }
-        atom.applyStyle(__spreadProps(__spreadValues({}, style), {
+        atom.applyStyle({
+          ...style,
           textDecoration: Array.from(currentDecorations).join(" ") || "none"
-        }));
+        });
       }
       delete style.textDecoration;
     }
@@ -21811,7 +21682,7 @@ function addItalic(v) {
     "italic": "italic",
     "bolditalic": "bolditalic",
     "": "italic"
-  }[v != null ? v : ""];
+  }[v ?? ""];
 }
 function removeItalic(v) {
   return {
@@ -21820,7 +21691,7 @@ function removeItalic(v) {
     "italic": void 0,
     "bolditalic": "bold",
     "": void 0
-  }[v != null ? v : ""];
+  }[v ?? ""];
 }
 
 // src/latex-commands/accents.ts
@@ -21840,34 +21711,38 @@ var ACCENTS = {
   vec: 8407
 };
 defineFunction(Object.keys(ACCENTS), "{body:auto}", {
-  createAtom: (options) => new AccentAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new AccentAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     accentChar: ACCENTS[options.command.slice(1)]
-  }))
+  })
 });
 defineFunction(["widehat", "widecheck", "widetilde"], "{body:auto}", {
   createAtom: (options) => {
     const baseString = parseArgAsString(argAtoms(options.args[0]));
-    return new AccentAtom(__spreadProps(__spreadValues({}, options), {
+    return new AccentAtom({
+      ...options,
       body: argAtoms(options.args[0]),
       svgAccent: options.command.slice(1) + (baseString.length > 5 ? "4" : ["1", "1", "2", "2", "3", "3"][baseString.length])
-    }));
+    });
   }
 });
 defineFunction(["overarc", "overparen", "wideparen"], "{body:auto}", {
   createAtom: (options) => {
-    return new AccentAtom(__spreadProps(__spreadValues({}, options), {
+    return new AccentAtom({
+      ...options,
       body: argAtoms(options.args[0]),
       svgAccent: "overarc"
-    }));
+    });
   }
 });
 defineFunction(["underarc", "underparen"], "{body:auto}", {
   createAtom: (options) => {
-    return new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+    return new OverunderAtom({
+      ...options,
       body: argAtoms(options.args[0]),
       svgBelow: "underarc"
-    }));
+    });
   }
 });
 defineFunction("utilde", "{body:auto}", {
@@ -21875,179 +21750,162 @@ defineFunction("utilde", "{body:auto}", {
     const body = argAtoms(options.args[0]);
     const baseString = parseArgAsString(body);
     const accent = "widetilde" + (baseString.length > 5 ? "4" : ["1", "1", "2", "2", "3", "3"][baseString.length]);
-    return new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+    return new OverunderAtom({
+      ...options,
       body,
       svgBelow: accent,
       boxType: atomsBoxType(body)
-    }));
+    });
   }
 });
 defineFunction("^", "{:string}", {
-  createAtom: (options) => {
-    var _a3;
-    return new Atom(__spreadProps(__spreadValues({}, options), {
-      type: "mord",
-      isFunction: false,
-      limits: "adjacent",
-      value: options.args[0] ? (_a3 = {
-        a: "\xE2",
-        e: "\xEA",
-        i: "\xEE",
-        o: "\xF4",
-        u: "\xFB",
-        A: "\xC2",
-        E: "\xCA",
-        I: "\xCE",
-        O: "\xD4",
-        U: "\xDB"
-      }[options.args[0]]) != null ? _a3 : "^" : "^"
-    }));
-  }
+  createAtom: (options) => new Atom({
+    ...options,
+    type: "mord",
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args[0] ? {
+      a: "\xE2",
+      e: "\xEA",
+      i: "\xEE",
+      o: "\xF4",
+      u: "\xFB",
+      A: "\xC2",
+      E: "\xCA",
+      I: "\xCE",
+      O: "\xD4",
+      U: "\xDB"
+    }[options.args[0]] ?? "^" : "^"
+  })
 });
 defineFunction("`", "{:string}", {
-  createAtom: (options) => {
-    var _a3;
-    return new Atom(__spreadProps(__spreadValues({}, options), {
-      type: "mord",
-      isFunction: false,
-      limits: "adjacent",
-      value: options.args[0] ? (_a3 = {
-        a: "\xE0",
-        e: "\xE8",
-        i: "\xEC",
-        o: "\xF2",
-        u: "\xF9",
-        A: "\xC0",
-        E: "\xC8",
-        I: "\xCC",
-        O: "\xD2",
-        U: "\xD9"
-      }[options.args[0]]) != null ? _a3 : "`" : "`"
-    }));
-  }
+  createAtom: (options) => new Atom({
+    ...options,
+    type: "mord",
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args[0] ? {
+      a: "\xE0",
+      e: "\xE8",
+      i: "\xEC",
+      o: "\xF2",
+      u: "\xF9",
+      A: "\xC0",
+      E: "\xC8",
+      I: "\xCC",
+      O: "\xD2",
+      U: "\xD9"
+    }[options.args[0]] ?? "`" : "`"
+  })
 });
 defineFunction("'", "{:string}", {
-  createAtom: (options) => {
-    var _a3;
-    return new Atom(__spreadProps(__spreadValues({}, options), {
-      type: "mord",
-      isFunction: false,
-      limits: "adjacent",
-      value: options.args[0] ? (_a3 = {
-        a: "\xE1",
-        e: "\xE9",
-        i: "\xED",
-        o: "\xF3",
-        u: "\xFA",
-        A: "\xC1",
-        E: "\xC9",
-        I: "\xCD",
-        O: "\xD3",
-        U: "\xDA"
-      }[options.args[0]]) != null ? _a3 : "'" : "'"
-    }));
-  }
+  createAtom: (options) => new Atom({
+    ...options,
+    type: "mord",
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args[0] ? {
+      a: "\xE1",
+      e: "\xE9",
+      i: "\xED",
+      o: "\xF3",
+      u: "\xFA",
+      A: "\xC1",
+      E: "\xC9",
+      I: "\xCD",
+      O: "\xD3",
+      U: "\xDA"
+    }[options.args[0]] ?? "'" : "'"
+  })
 });
 defineFunction('"', "{:string}", {
-  createAtom: (options) => {
-    var _a3, _b3;
-    return new Atom(__spreadProps(__spreadValues({}, options), {
-      type: "mord",
-      isFunction: false,
-      limits: "adjacent",
-      value: ((_a3 = options.args) == null ? void 0 : _a3[0]) ? (_b3 = {
-        a: "\xE4",
-        e: "\xEB",
-        i: "\xEF",
-        o: "\xF6",
-        u: "\xFC",
-        A: "\xC4",
-        E: "\xCB",
-        I: "\xCB",
-        O: "\xD6",
-        U: "\xDC"
-      }[options.args[0]]) != null ? _b3 : '"' + options.args[0] : '"'
-    }));
-  }
+  createAtom: (options) => new Atom({
+    ...options,
+    type: "mord",
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args?.[0] ? {
+      a: "\xE4",
+      e: "\xEB",
+      i: "\xEF",
+      o: "\xF6",
+      u: "\xFC",
+      A: "\xC4",
+      E: "\xCB",
+      I: "\xCB",
+      O: "\xD6",
+      U: "\xDC"
+    }[options.args[0]] ?? '"' + options.args[0] : '"'
+  })
 });
 defineFunction(".", "{:string}", {
-  createAtom: (options) => {
-    var _a3, _b3;
-    return new Atom(__spreadProps(__spreadValues({}, options), {
-      type: "mord",
-      isFunction: false,
-      limits: "adjacent",
-      value: ((_a3 = options.args) == null ? void 0 : _a3[0]) ? (_b3 = {
-        // a with single dot above
-        a: "\u0227",
-        e: "\u0117",
-        // i with single dot above (combining character)
-        i: "\u0307i",
-        o: "\u022F",
-        // U with single dot above (combining character)
-        u: "\u0307u",
-        A: "\u0226",
-        E: "\u0116",
-        I: "\u0130",
-        O: "\u022E",
-        // U with single dot above (combining character)
-        U: "\u0307U"
-      }[options.args[0]]) != null ? _b3 : "." + options.args[0] : "."
-    }));
-  }
+  createAtom: (options) => new Atom({
+    ...options,
+    type: "mord",
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args?.[0] ? {
+      // a with single dot above
+      a: "\u0227",
+      e: "\u0117",
+      // i with single dot above (combining character)
+      i: "\u0307i",
+      o: "\u022F",
+      // U with single dot above (combining character)
+      u: "\u0307u",
+      A: "\u0226",
+      E: "\u0116",
+      I: "\u0130",
+      O: "\u022E",
+      // U with single dot above (combining character)
+      U: "\u0307U"
+    }[options.args[0]] ?? "." + options.args[0] : "."
+  })
 });
 defineFunction("=", "{:string}", {
-  createAtom: (options) => {
-    var _a3, _b3;
-    return new Atom(__spreadProps(__spreadValues({}, options), {
-      type: "mord",
-      isFunction: false,
-      limits: "adjacent",
-      value: ((_a3 = options.args) == null ? void 0 : _a3[0]) ? (_b3 = {
-        // a with macron
-        a: "\u0101",
-        e: "\u0113",
-        i: "\u012B",
-        o: "\u014D",
-        u: "\u016B",
-        A: "\u0100",
-        E: "\u0112",
-        I: "\u012A",
-        O: "\u014C",
-        U: "\u016A"
-      }[options.args[0]]) != null ? _b3 : "=" + options.args[0] : "="
-      // fallback
-    }));
-  }
+  createAtom: (options) => new Atom({
+    ...options,
+    type: "mord",
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args?.[0] ? {
+      // a with macron
+      a: "\u0101",
+      e: "\u0113",
+      i: "\u012B",
+      o: "\u014D",
+      u: "\u016B",
+      A: "\u0100",
+      E: "\u0112",
+      I: "\u012A",
+      O: "\u014C",
+      U: "\u016A"
+    }[options.args[0]] ?? "=" + options.args[0] : "="
+    // fallback
+  })
 });
 defineFunction("~", "{:string}", {
-  createAtom: (options) => {
-    var _a3;
-    return new Atom(__spreadProps(__spreadValues({
-      type: "mord"
-    }, options), {
-      isFunction: false,
-      limits: "adjacent",
-      value: options.args[0] ? (_a3 = { n: "\xF1", N: "\xD1", a: "\xE3", o: "\xF5", A: "\xC3", O: "\xD5" }[options.args[0]]) != null ? _a3 : "\xB4" : "\xB4"
-    }));
-  }
+  createAtom: (options) => new Atom({
+    type: "mord",
+    ...options,
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args[0] ? { n: "\xF1", N: "\xD1", a: "\xE3", o: "\xF5", A: "\xC3", O: "\xD5" }[options.args[0]] ?? "\xB4" : "\xB4"
+  })
 });
 defineFunction("c", "{:string}", {
-  createAtom: (options) => {
-    var _a3;
-    return new Atom(__spreadProps(__spreadValues({}, options), {
-      type: "mord",
-      isFunction: false,
-      limits: "adjacent",
-      value: options.args[0] ? (_a3 = { c: "\xE7", C: "\xC7" }[options.args[0]]) != null ? _a3 : "" : ""
-    }));
-  }
+  createAtom: (options) => new Atom({
+    ...options,
+    type: "mord",
+    isFunction: false,
+    limits: "adjacent",
+    value: options.args[0] ? { c: "\xE7", C: "\xC7" }[options.args[0]] ?? "" : ""
+  })
 });
 
 // src/latex-commands/enclose.ts
 defineFunction("enclose", "{notation:string}[style:string]{body:auto}", {
   createAtom: (atomOptions) => {
-    var _a3, _b3;
     const args = atomOptions.args;
     const options = {
       strokeColor: "currentColor",
@@ -22058,7 +21916,7 @@ defineFunction("enclose", "{notation:string}[style:string]{body:auto}", {
       shadow: "none",
       svgStrokeStyle: void 0,
       borderStyle: void 0,
-      style: (_a3 = atomOptions.style) != null ? _a3 : {}
+      style: atomOptions.style ?? {}
     };
     if (args[1]) {
       const styles = args[1].split(/,(?![^(]*\)(?:(?:[^(]*\)){2})*[^"]*$)/);
@@ -22085,7 +21943,7 @@ defineFunction("enclose", "{notation:string}[style:string]{body:auto}", {
     }
     options.borderStyle = `${options.strokeWidth} ${options.strokeStyle} ${options.strokeColor}`;
     const notation = {};
-    ((_b3 = args[0]) != null ? _b3 : "").split(/[, ]/).filter((v) => v.length > 0).forEach((x) => {
+    (args[0] ?? "").split(/[, ]/).filter((v) => v.length > 0).forEach((x) => {
       notation[x.toLowerCase()] = true;
     });
     return new EncloseAtom(
@@ -22097,64 +21955,55 @@ defineFunction("enclose", "{notation:string}[style:string]{body:auto}", {
   }
 });
 defineFunction("cancel", "{body:auto}", {
-  createAtom: (options) => {
-    var _a3;
-    return new EncloseAtom(
-      options.command,
-      argAtoms(options.args[0]),
-      { updiagonalstrike: true },
-      {
-        strokeColor: "currentColor",
-        strokeWidth: "",
-        strokeStyle: "solid",
-        borderStyle: "1px solid currentColor",
-        backgroundcolor: "transparent",
-        padding: "auto",
-        shadow: "none",
-        style: (_a3 = options.style) != null ? _a3 : {}
-      }
-    );
-  }
+  createAtom: (options) => new EncloseAtom(
+    options.command,
+    argAtoms(options.args[0]),
+    { updiagonalstrike: true },
+    {
+      strokeColor: "currentColor",
+      strokeWidth: "",
+      strokeStyle: "solid",
+      borderStyle: "1px solid currentColor",
+      backgroundcolor: "transparent",
+      padding: "auto",
+      shadow: "none",
+      style: options.style ?? {}
+    }
+  )
 });
 defineFunction("bcancel", "{body:auto}", {
-  createAtom: (options) => {
-    var _a3;
-    return new EncloseAtom(
-      options.command,
-      argAtoms(options.args[0]),
-      { downdiagonalstrike: true },
-      {
-        strokeColor: "currentColor",
-        strokeWidth: "",
-        strokeStyle: "solid",
-        borderStyle: "1px solid currentColor",
-        backgroundcolor: "transparent",
-        padding: "auto",
-        shadow: "none",
-        style: (_a3 = options.style) != null ? _a3 : {}
-      }
-    );
-  }
+  createAtom: (options) => new EncloseAtom(
+    options.command,
+    argAtoms(options.args[0]),
+    { downdiagonalstrike: true },
+    {
+      strokeColor: "currentColor",
+      strokeWidth: "",
+      strokeStyle: "solid",
+      borderStyle: "1px solid currentColor",
+      backgroundcolor: "transparent",
+      padding: "auto",
+      shadow: "none",
+      style: options.style ?? {}
+    }
+  )
 });
 defineFunction("xcancel", "{body:auto}", {
-  createAtom: (options) => {
-    var _a3;
-    return new EncloseAtom(
-      options.command,
-      argAtoms(options.args[0]),
-      { updiagonalstrike: true, downdiagonalstrike: true },
-      {
-        strokeColor: "currentColor",
-        strokeWidth: "",
-        strokeStyle: "solid",
-        borderStyle: "1px solid currentColor",
-        backgroundcolor: "transparent",
-        padding: "auto",
-        shadow: "none",
-        style: (_a3 = options.style) != null ? _a3 : {}
-      }
-    );
-  }
+  createAtom: (options) => new EncloseAtom(
+    options.command,
+    argAtoms(options.args[0]),
+    { updiagonalstrike: true, downdiagonalstrike: true },
+    {
+      strokeColor: "currentColor",
+      strokeWidth: "",
+      strokeStyle: "solid",
+      borderStyle: "1px solid currentColor",
+      backgroundcolor: "transparent",
+      padding: "auto",
+      shadow: "none",
+      style: options.style ?? {}
+    }
+  )
 });
 
 // src/latex-commands/environments.ts
@@ -22249,6 +22098,32 @@ defineTabularEnvironment(
   makeEnvironment
 );
 defineTabularEnvironment(["cases", "dcases", "rcases"], "", makeEnvironment);
+var MAX_PIECEWISE_ROWS = 100;
+defineFunction("piecewise", "{count:string}", {
+  parse: (parser) => {
+    const count = parser.scanArgument("string")?.trim() ?? "";
+    if (count.length === 0) {
+      parser.onError({ code: "missing-argument", arg: "\\piecewise" });
+      return ["1"];
+    }
+    if (!/^[1-9]\d*$/.test(count) || Number(count) > MAX_PIECEWISE_ROWS) {
+      parser.onError({ code: "unexpected-token", arg: count });
+      return ["1"];
+    }
+    return [count];
+  },
+  createAtom: (options) => {
+    const count = Number.parseInt(options.args?.[0], 10);
+    const rows = Number.isInteger(count) && count > 0 ? Math.min(count, MAX_PIECEWISE_ROWS) : 1;
+    return makeEnvironment(
+      "cases",
+      Array.from({ length: rows }, () => [
+        [new PlaceholderAtom()],
+        [new PlaceholderAtom()]
+      ])
+    );
+  }
+});
 function makeEnvironment(name, content = [[[]]], rowGaps = [], args = [], maxMatrixCols) {
   switch (name) {
     case "math":
@@ -22417,13 +22292,13 @@ function makeEnvironment(name, content = [[[]]], rowGaps = [], args = [], maxMat
         mathstyleName: "textstyle",
         leftDelim: ".",
         rightDelim: ".",
-        columns: defaultColumns(args == null ? void 0 : args[0], maxMatrixCols)
+        columns: defaultColumns(args?.[0], maxMatrixCols)
       });
     case "smallmatrix":
     case "smallmatrix*":
       return new ArrayAtom(name, content, rowGaps, {
         mathstyleName: "scriptstyle",
-        columns: defaultColumns(args == null ? void 0 : args[0], maxMatrixCols),
+        columns: defaultColumns(args?.[0], maxMatrixCols),
         colSeparationType: "small",
         arraystretch: 0.5
       });
@@ -22460,7 +22335,7 @@ function makeEnvironment(name, content = [[[]]], rowGaps = [], args = [], maxMat
   });
 }
 function defaultColumns(args, maxMatrixCols = 10) {
-  return args != null ? args : Array(maxMatrixCols).fill({ align: "c" });
+  return args ?? Array(maxMatrixCols).fill({ align: "c" });
 }
 function casesColumns(maxCasesColumns = 10) {
   const columns = [];
@@ -22485,30 +22360,29 @@ defineFunction(
   ],
   "{:auto}",
   {
-    createAtom: (options) => {
-      var _a3;
-      return new OverunderAtom(__spreadProps(__spreadValues({}, options), {
-        body: argAtoms((_a3 = options.args) == null ? void 0 : _a3[0]),
-        skipBoundary: false,
-        supsubPlacement: "over-under",
-        paddedBody: true,
-        boxType: "rel",
-        // Set the "svgAbove" to the name of a SVG object (which is the same
-        // as the command name)
-        svgAbove: options.command.slice(1)
-      }));
-    }
+    createAtom: (options) => new OverunderAtom({
+      ...options,
+      body: argAtoms(options.args?.[0]),
+      skipBoundary: false,
+      supsubPlacement: "over-under",
+      paddedBody: true,
+      boxType: "rel",
+      // Set the "svgAbove" to the name of a SVG object (which is the same
+      // as the command name)
+      svgAbove: options.command.slice(1)
+    })
   }
 );
 defineFunction("overbrace", "{:auto}", {
-  createAtom: (options) => new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OverunderAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     skipBoundary: false,
     supsubPlacement: "over-under",
     paddedBody: true,
     boxType: "ord",
     svgAbove: options.command.slice(1)
-  }))
+  })
 });
 defineFunction(
   [
@@ -22520,7 +22394,8 @@ defineFunction(
   ],
   "{:auto}",
   {
-    createAtom: (options) => new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+    createAtom: (options) => new OverunderAtom({
+      ...options,
       body: argAtoms(options.args[0]),
       skipBoundary: false,
       supsubPlacement: "over-under",
@@ -22529,18 +22404,19 @@ defineFunction(
       // Set the "svgBelow" to the name of a SVG object (which is the same
       // as the command name)
       svgBelow: options.command.slice(1)
-    }))
+    })
   }
 );
 defineFunction(["underbrace"], "{:auto}", {
-  createAtom: (options) => new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OverunderAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     skipBoundary: false,
     supsubPlacement: "over-under",
     paddedBody: true,
     boxType: "ord",
     svgBelow: options.command.slice(1)
-  }))
+  })
 });
 defineFunction(
   [
@@ -22586,25 +22462,41 @@ defineFunction(
   ],
   "[:auto]{:auto}",
   {
-    createAtom: (options) => {
-      var _a3, _b3, _c2, _d2, _e;
-      return new OverunderAtom(__spreadProps(__spreadValues({}, options), {
-        // Set the "svgBody" to the name of a SVG object (which is the same
-        // as the command name)
-        svgBody: options.command.slice(1),
-        // The overscript is optional, i.e. `\xtofrom` is valid
-        above: ((_b3 = argAtoms((_a3 = options.args) == null ? void 0 : _a3[1])) == null ? void 0 : _b3.length) === 0 ? void 0 : argAtoms((_c2 = options.args) == null ? void 0 : _c2[1]),
-        below: (_e = argAtoms((_d2 = options.args) == null ? void 0 : _d2[0])) != null ? _e : null,
-        skipBoundary: false,
-        supsubPlacement: "over-under",
-        paddedBody: true,
-        paddedLabels: true,
-        boxType: "rel"
-      }));
-    },
+    createAtom: (options) => new OverunderAtom({
+      ...options,
+      // Set the "svgBody" to the name of a SVG object (which is the same
+      // as the command name)
+      svgBody: options.command.slice(1),
+      // The overscript is optional, i.e. `\xtofrom` is valid
+      above: argAtoms(options.args?.[1])?.length === 0 ? void 0 : argAtoms(options.args?.[1]),
+      below: argAtoms(options.args?.[0]) ?? null,
+      skipBoundary: false,
+      supsubPlacement: "over-under",
+      paddedBody: true,
+      paddedLabels: true,
+      boxType: "rel"
+    }),
     serialize: (atom, options) => atom.command + (!atom.hasEmptyBranch("below") ? `[${atom.belowToLatex(options)}]` : "") + `{${atom.aboveToLatex(options)}}${atom.supsubToLatex(options)}`
   }
 );
+
+// src/atoms/bounded-argument.ts
+var BoundedArgumentAtom = class extends PromptAtom {
+  constructor(body, options) {
+    super(void 0, void 0, false, body, options);
+    this.type = "mord";
+    this.captureSelection = false;
+  }
+  render(context) {
+    const hasContent = this.body?.some((atom) => atom.type !== "first") ?? false;
+    const box = hasContent ? Atom.createBox(context, this.body) : new PlaceholderAtom({ mode: this.mode, style: this.style }).render(context);
+    return box ? this.bind(context, box) : null;
+  }
+  _serialize(options) {
+    const hasContent = this.body?.some((atom) => atom.type !== "first") ?? false;
+    return hasContent ? this.bodyToLatex(options) : "\\placeholder{}";
+  }
+};
 
 // src/latex-commands/functions.ts
 defineFunction(
@@ -22674,47 +22566,50 @@ defineFunction(
   {
     isFunction: true,
     ifMode: "math",
-    createAtom: (options) => new OperatorAtom(options.command.slice(1), __spreadProps(__spreadValues({}, options), {
+    createAtom: (options) => new OperatorAtom(options.command.slice(1), {
+      ...options,
       limits: "adjacent",
       isFunction: true,
       variant: "main",
       variantStyle: "up"
-    }))
+    })
   }
 );
 defineFunction(["liminf", "limsup"], "", {
   ifMode: "math",
   createAtom: (options) => new OperatorAtom(
     { "\\liminf": "lim inf", "\\limsup": "lim sup" }[options.command],
-    __spreadProps(__spreadValues({}, options), { limits: "over-under", variant: "main" })
+    { ...options, limits: "over-under", variant: "main" }
   )
 });
 defineFunction(["lim", "mod"], "", {
   ifMode: "math",
-  createAtom: (options) => new OperatorAtom(options.command.slice(1), __spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OperatorAtom(options.command.slice(1), {
+    ...options,
     limits: "over-under",
     variant: "main"
-  }))
+  })
 });
 defineFunction(["det", "max", "min"], "", {
   ifMode: "math",
   isFunction: true,
-  createAtom: (options) => new OperatorAtom(options.command.slice(1), __spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OperatorAtom(options.command.slice(1), {
+    ...options,
     limits: "over-under",
     isFunction: true,
     variant: "main"
-  }))
+  })
 });
 defineFunction("ang", "{:math}", {
   ifMode: "math",
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { body: argAtoms(options.args[0]) })),
+  createAtom: (options) => new Atom({ ...options, body: argAtoms(options.args[0]) }),
   serialize: (atom, options) => `\\ang{${atom.bodyToLatex(options)}}`,
   render: (atom, context) => {
     const box = atom.createBox(context);
     const caret = box.caret;
     box.caret = void 0;
     const deg = new Box("\xB0", {
-      style: __spreadProps(__spreadValues({}, atom.style), { variant: "normal", variantStyle: "up" })
+      style: { ...atom.style, variant: "normal", variantStyle: "up" }
     });
     return new Box([box, deg], {
       type: "inner",
@@ -22725,10 +22620,11 @@ defineFunction("ang", "{:math}", {
 });
 defineFunction("sqrt", "[index:auto]{radicand:expression}", {
   ifMode: "math",
-  createAtom: (options) => new SurdAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new SurdAtom({
+    ...options,
     body: argAtoms(options.args[1]),
     index: options.args[0] ? argAtoms(options.args[0]) : void 0
-  }))
+  })
 });
 defineFunction(
   ["frac", "dfrac", "tfrac", "binom", "dbinom", "tbinom"],
@@ -22736,7 +22632,7 @@ defineFunction(
   {
     ifMode: "math",
     createAtom: (options) => {
-      const genfracOptions = __spreadValues({}, options);
+      const genfracOptions = { ...options };
       const command = options.command;
       const args = options.args;
       switch (command) {
@@ -22790,7 +22686,7 @@ defineFunction(
 defineFunction(["cfrac"], "[:string]{:expression}{:expression}", {
   ifMode: "math",
   createAtom: (options) => {
-    const genfracOptions = __spreadValues({}, options);
+    const genfracOptions = { ...options };
     const args = options.args;
     genfracOptions.hasBarLine = true;
     genfracOptions.continuousFraction = true;
@@ -22810,11 +22706,12 @@ defineFunction(["cfrac"], "[:string]{:expression}{:expression}", {
 });
 defineFunction(["brace", "brack"], "", {
   infix: true,
-  createAtom: (options) => new GenfracAtom(argAtoms(options.args[0]), argAtoms(options.args[1]), __spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new GenfracAtom(argAtoms(options.args[0]), argAtoms(options.args[1]), {
+    ...options,
     hasBarLine: false,
     leftDelim: options.command === "\\brace" ? "\\lbrace" : "\\lbrack",
     rightDelim: options.command === "\\brace" ? "\\rbrace" : "\\rbrack"
-  })),
+  }),
   serialize: (atom, options) => joinLatex([
     atom.aboveToLatex(options),
     atom.command,
@@ -22831,11 +22728,12 @@ defineFunction(["over", "atop", "choose"], "", {
       leftDelim = "(";
       rightDelim = ")";
     }
-    return new GenfracAtom(argAtoms(args[0]), argAtoms(args[1]), __spreadProps(__spreadValues({}, options), {
+    return new GenfracAtom(argAtoms(args[0]), argAtoms(args[1]), {
+      ...options,
       hasBarLine: options.command === "\\over",
       leftDelim,
       rightDelim
-    }));
+    });
   },
   serialize: (atom, options) => joinLatex([
     atom.aboveToLatex(options),
@@ -22849,24 +22747,25 @@ defineFunction(
   {
     infix: true,
     createAtom: (options) => {
-      var _a3, _b3;
       const args = options.args;
-      return new GenfracAtom(argAtoms(args[0]), argAtoms(args[1]), __spreadProps(__spreadValues({}, options), {
-        leftDelim: (_a3 = args[2]) != null ? _a3 : ".",
-        rightDelim: (_b3 = args[3]) != null ? _b3 : ".",
+      return new GenfracAtom(argAtoms(args[0]), argAtoms(args[1]), {
+        ...options,
+        leftDelim: args[2] ?? ".",
+        rightDelim: args[3] ?? ".",
         hasBarLine: false
-      }));
+      });
     },
     serialize: (atom, options) => `${atom.aboveToLatex(options)} ${atom.command}${atom.leftDelim}${atom.rightDelim}${atom.belowToLatex(options)}`
   }
 );
 defineFunction("pdiff", "{numerator}{denominator}", {
   ifMode: "math",
-  createAtom: (options) => new GenfracAtom(argAtoms(options.args[0]), argAtoms(options.args[1]), __spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new GenfracAtom(argAtoms(options.args[0]), argAtoms(options.args[1]), {
+    ...options,
     hasBarLine: true,
     numerPrefix: "\u2202",
     denomPrefix: "\u2202"
-  })),
+  }),
   serialize: (atom, options) => joinLatex([
     atom.aboveToLatex(options),
     atom.command,
@@ -22909,19 +22808,21 @@ defineFunction(
         bigsqcup: "\u2A06",
         smallint: "\u222B"
       }[options.command.slice(1)],
-      __spreadProps(__spreadValues({}, options), {
+      {
+        ...options,
         limits: "auto",
         variant: "main"
-      })
+      }
     )
   }
 );
 defineFunction("smallint", "", {
   ifMode: "math",
-  createAtom: (options) => new OperatorAtom("\u222B", __spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OperatorAtom("\u222B", {
+    ...options,
     limits: "adjacent",
     variant: "main"
-  }))
+  })
 });
 var EXTENSIBLE_SYMBOLS = {
   int: "\u222B",
@@ -22949,53 +22850,53 @@ defineFunction(Object.keys(EXTENSIBLE_SYMBOLS), "", {
   createAtom: (options) => {
     const command = options.command;
     const symbol = EXTENSIBLE_SYMBOLS[command.slice(1)];
-    return new ExtensibleSymbolAtom(symbol, __spreadProps(__spreadValues({}, options), {
+    return new ExtensibleSymbolAtom(symbol, {
+      ...options,
       limits: "adjacent",
       variant: { "\u22D2": "ams", "\u22D3": "ams" }[symbol]
-    }));
+    });
   }
 });
 defineFunction(["Re", "Im"], "", {
   ifMode: "math",
   createAtom: (options) => new OperatorAtom(
     { "\\Re": "\u211C", "\\Im": "\u2111" }[options.command],
-    __spreadProps(__spreadValues({}, options), {
+    {
+      ...options,
       limits: "adjacent",
       isFunction: true,
       variant: "fraktur"
-    })
+    }
   )
 });
 defineFunction("middle", "{:delim}", {
   ifMode: "math",
-  createAtom: (options) => {
-    var _a3;
-    return new MiddleDelimAtom(__spreadProps(__spreadValues({}, options), {
-      delim: (_a3 = options.args[0]) != null ? _a3 : "|",
-      size: 1
-    }));
-  }
+  createAtom: (options) => new MiddleDelimAtom({
+    ...options,
+    delim: options.args[0] ?? "|",
+    size: 1
+  })
 });
 defineFunction("the", "{:value}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new Atom({
+    ...options,
     captureSelection: true,
     verbatimLatex: null
     // disable verbatim LaTeX
-  })),
+  }),
   render: (atom, parent) => {
-    var _a3;
     const ctx = new Context({ parent }, atom.style);
     let classes = "";
     if (atom.isSelected) classes += " ML__selected";
     const arg = ctx.evaluate(atom.args[0]);
     return new Box(
-      ((_a3 = serializeLatexValue(arg)) != null ? _a3 : "").split("").map(
+      (serializeLatexValue(arg) ?? "").split("").map(
         (x) => new Box(x, {
           type: "ord",
           classes,
           mode: atom.mode,
           isSelected: atom.isSelected,
-          style: __spreadValues({ variant: "main" }, atom.style)
+          style: { variant: "main", ...atom.style }
         })
       ),
       {
@@ -23007,81 +22908,119 @@ defineFunction("the", "{:value}", {
       }
     ).wrap(ctx);
   },
-  serialize: (atom) => {
-    var _a3;
-    return `\\the${(_a3 = serializeLatexValue(atom.args[0])) != null ? _a3 : "\\relax"}`;
-  }
+  serialize: (atom) => `\\the${serializeLatexValue(atom.args[0]) ?? "\\relax"}`
+});
+function parseBoundedOperator(parser) {
+  if (parser.peek() !== "<{>") return [];
+  const lower = parser.scanArgument("expression");
+  if (!lower) return [];
+  if (parser.peek() !== "<{>") return [lower];
+  const upper = parser.scanArgument("expression");
+  return upper ? [lower, upper] : [lower];
+}
+function createBoundedOperator(symbol, options) {
+  const atom = new ExtensibleSymbolAtom(symbol, {
+    ...options,
+    limits: "auto",
+    variant: "main"
+  });
+  atom.verbatimLatex = null;
+  const [lower, upper] = options.args ?? [];
+  atom.boundedArgumentSlots = {
+    subscript: Boolean(lower),
+    superscript: Boolean(upper)
+  };
+  if (lower)
+    atom.setChildren(
+      [new BoundedArgumentAtom(argAtoms(lower), options)],
+      "subscript"
+    );
+  if (upper)
+    atom.setChildren(
+      [new BoundedArgumentAtom(argAtoms(upper), options)],
+      "superscript"
+    );
+  return atom;
+}
+defineFunction(["int", "sum", "prod"], "{lower:expression}{upper:expression}", {
+  ifMode: "math",
+  parse: parseBoundedOperator,
+  createAtom: (options) => createBoundedOperator(
+    { int: "\u222B", sum: "\u2211", prod: "\u220F" }[options.command.slice(1)],
+    options
+  )
 });
 
 // src/latex-commands/styling.ts
 defineFunction("mathtip", "{:auto}{:math}", {
-  createAtom: (options) => new TooltipAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new TooltipAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     tooltip: argAtoms(options.args[1]),
     content: "math"
-  })),
+  }),
   serialize: (atom, options) => options.skipStyles ? atom.bodyToLatex(options) : `\\mathtip{${atom.bodyToLatex(options)}}{${Atom.serialize(
     [atom.tooltip],
-    __spreadProps(__spreadValues({}, options), {
+    {
+      ...options,
       defaultMode: "math"
-    })
+    }
   )}}`
 });
 defineFunction("texttip", "{:auto}{:text}", {
-  createAtom: (options) => new TooltipAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new TooltipAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     tooltip: argAtoms(options.args[1]),
     content: "text"
-  })),
+  }),
   serialize: (atom, options) => options.skipStyles ? atom.bodyToLatex(options) : `\\texttip{${atom.bodyToLatex(options)}}{${Atom.serialize(
     [atom.tooltip],
-    __spreadProps(__spreadValues({}, options), {
+    {
+      ...options,
       defaultMode: "text"
-    })
+    }
   )}}`
 });
 defineFunction("error", "{:math}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { body: argAtoms(options.args[0]) })),
+  createAtom: (options) => new Atom({ ...options, body: argAtoms(options.args[0]) }),
   serialize: (atom, options) => `\\error{${atom.bodyToLatex(options)}}`,
   render: (atom, context) => atom.createBox(context, { classes: "ML__error" })
 });
 defineFunction("ensuremath", "{:math}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { body: argAtoms(options.args[0]) })),
-  serialize: (atom, options) => `${atom.command}{${atom.bodyToLatex(__spreadProps(__spreadValues({}, options), { defaultMode: "math" }))}}`
+  createAtom: (options) => new Atom({ ...options, body: argAtoms(options.args[0]) }),
+  serialize: (atom, options) => `${atom.command}{${atom.bodyToLatex({ ...options, defaultMode: "math" })}}`
 });
 defineFunction("color", "{:value}", {
-  applyStyle: (style, _name, args, context) => {
-    var _a3, _b3;
-    return __spreadProps(__spreadValues({}, style), {
-      verbatimColor: (_a3 = serializeLatexValue(args[0])) != null ? _a3 : void 0,
-      color: context.toColor((_b3 = args[0]) != null ? _b3 : { string: "red" })
-    });
-  }
+  applyStyle: (style, _name, args, context) => ({
+    ...style,
+    verbatimColor: serializeLatexValue(args[0]) ?? void 0,
+    color: context.toColor(args[0] ?? { string: "red" })
+  })
 });
 defineFunction("textcolor", "{:value}{content:auto*}", {
-  applyStyle: (style, _name, args, context) => {
-    var _a3, _b3;
-    return __spreadProps(__spreadValues({}, style), {
-      verbatimColor: (_a3 = serializeLatexValue(args[0])) != null ? _a3 : void 0,
-      color: context.toColor((_b3 = args[0]) != null ? _b3 : { string: "red" })
-    });
-  }
+  applyStyle: (style, _name, args, context) => ({
+    ...style,
+    verbatimColor: serializeLatexValue(args[0]) ?? void 0,
+    color: context.toColor(args[0] ?? { string: "red" })
+  })
 });
 defineFunction("boxed", "{content:math}", {
-  createAtom: (options) => new BoxAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new BoxAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     framecolor: { string: "black" }
-  }))
+  })
 });
 defineFunction("colorbox", "{:value}{:text*}", {
   applyStyle: (style, _name, args, context) => {
-    var _a3, _b3;
-    return __spreadProps(__spreadValues({}, style), {
-      verbatimBackgroundColor: (_a3 = serializeLatexValue(args[0])) != null ? _a3 : void 0,
+    return {
+      ...style,
+      verbatimBackgroundColor: serializeLatexValue(args[0]) ?? void 0,
       backgroundColor: context.toBackgroundColor(
-        (_b3 = args[0]) != null ? _b3 : { string: "yellow" }
+        args[0] ?? { string: "yellow" }
       )
-    });
+    };
   }
 });
 defineFunction(
@@ -23090,48 +23029,44 @@ defineFunction(
   {
     applyMode: "text",
     createAtom: (options) => {
-      var _a3, _b3;
-      return new BoxAtom(__spreadProps(__spreadValues({}, options), {
+      return new BoxAtom({
+        ...options,
         body: argAtoms(options.args[2]),
-        framecolor: (_a3 = options.args[0]) != null ? _a3 : { string: "blue" },
-        backgroundcolor: (_b3 = options.args[1]) != null ? _b3 : { string: "yellow" }
-      }));
+        framecolor: options.args[0] ?? { string: "blue" },
+        backgroundcolor: options.args[1] ?? { string: "yellow" }
+      });
     },
-    serialize: (atom, options) => {
-      var _a3, _b3;
-      return options.skipStyles ? atom.bodyToLatex(__spreadProps(__spreadValues({}, options), { defaultMode: "text" })) : latexCommand(
-        atom.command,
-        (_a3 = serializeLatexValue(atom.framecolor)) != null ? _a3 : "",
-        (_b3 = serializeLatexValue(atom.backgroundcolor)) != null ? _b3 : "",
-        atom.bodyToLatex(__spreadProps(__spreadValues({}, options), { defaultMode: "text" }))
-      );
-    }
+    serialize: (atom, options) => options.skipStyles ? atom.bodyToLatex({ ...options, defaultMode: "text" }) : latexCommand(
+      atom.command,
+      serializeLatexValue(atom.framecolor) ?? "",
+      serializeLatexValue(atom.backgroundcolor) ?? "",
+      atom.bodyToLatex({ ...options, defaultMode: "text" })
+    )
   }
 );
 defineFunction("bbox", "[:bbox]{body:auto}", {
   createAtom: (options) => {
-    var _a3;
     const arg = options.args[0];
     const body = argAtoms(options.args[1]);
-    if (!arg) return new BoxAtom(__spreadProps(__spreadValues({}, options), { body }));
-    return new BoxAtom(__spreadProps(__spreadValues({}, options), {
+    if (!arg) return new BoxAtom({ ...options, body });
+    return new BoxAtom({
+      ...options,
       body,
       padding: arg.padding,
       border: arg.border,
-      backgroundcolor: (_a3 = arg.backgroundcolor) != null ? _a3 : void 0
-    }));
+      backgroundcolor: arg.backgroundcolor ?? void 0
+    });
   },
   serialize: (atom, options) => {
-    var _a3, _b3;
     if (options.skipStyles) return atom.bodyToLatex(options);
     let result = atom.command;
     if (Number.isFinite(atom.padding) || atom.border !== void 0 || atom.backgroundcolor !== void 0) {
       const bboxParameters = [];
       if (atom.padding)
-        bboxParameters.push((_a3 = serializeLatexValue(atom.padding)) != null ? _a3 : "");
+        bboxParameters.push(serializeLatexValue(atom.padding) ?? "");
       if (atom.border) bboxParameters.push(`border: ${atom.border}`);
       if (atom.backgroundcolor)
-        bboxParameters.push((_b3 = serializeLatexValue(atom.backgroundcolor)) != null ? _b3 : "");
+        bboxParameters.push(serializeLatexValue(atom.backgroundcolor) ?? "");
       result += `[${bboxParameters.join(",")}]`;
     }
     return latexCommand(result, atom.bodyToLatex(options));
@@ -23141,7 +23076,7 @@ defineFunction(
   ["displaystyle", "textstyle", "scriptstyle", "scriptscriptstyle"],
   "{:rest}",
   {
-    createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { body: argAtoms(options.args[0]) })),
+    createAtom: (options) => new Atom({ ...options, body: argAtoms(options.args[0]) }),
     render: (atom, context) => {
       const ctx = new Context(
         { parent: context, mathstyle: atom.command.slice(1) },
@@ -23173,7 +23108,8 @@ defineFunction(
     // to math mode. We allow sizing commands to be applied in both math and
     // text mode
     applyStyle: (style, name) => {
-      return __spreadProps(__spreadValues({}, style), {
+      return {
+        ...style,
         fontSize: {
           "\\tiny": 1,
           "\\scriptsize": 2,
@@ -23187,29 +23123,26 @@ defineFunction(
           "\\huge": 9,
           "\\Huge": 10
         }[name]
-      });
+      };
     }
   }
 );
 defineFunction("fontseries", "{:string}", {
   ifMode: "text",
   applyStyle: (style, _name, args) => {
-    var _a3;
-    return __spreadProps(__spreadValues({}, style), { fontSeries: (_a3 = args[0]) != null ? _a3 : "auto" });
+    return { ...style, fontSeries: args[0] ?? "auto" };
   }
 });
 defineFunction("fontshape", "{:string}", {
   ifMode: "text",
   applyStyle: (style, _name, args) => {
-    var _a3;
-    return __spreadProps(__spreadValues({}, style), { fontShape: (_a3 = args[0]) != null ? _a3 : "auto" });
+    return { ...style, fontShape: args[0] ?? "auto" };
   }
 });
 defineFunction("fontfamily", "{:string}", {
   ifMode: "text",
   applyStyle: (style, _name, args) => {
-    var _a3;
-    return __spreadProps(__spreadValues({}, style), { fontFamily: (_a3 = args[0]) != null ? _a3 : "roman" });
+    return { ...style, fontFamily: args[0] ?? "roman" };
   }
 });
 defineFunction("selectfont", "", {
@@ -23217,7 +23150,8 @@ defineFunction("selectfont", "", {
   applyStyle: (style) => style
 });
 defineFunction("bf", "{:rest*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     fontSeries: "b",
     fontShape: "n",
     fontFamily: "roman"
@@ -23225,116 +23159,123 @@ defineFunction("bf", "{:rest*}", {
 });
 defineFunction(["boldsymbol", "bm", "bold"], "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { variantStyle: "bold" })
+  applyStyle: (style) => ({ ...style, variantStyle: "bold" })
 });
 defineFunction("bfseries", "{:rest*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontSeries: "b" })
+  applyStyle: (style) => ({ ...style, fontSeries: "b" })
 });
 defineFunction("mdseries", "{:rest*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontSeries: "m" })
+  applyStyle: (style) => ({ ...style, fontSeries: "m" })
 });
 defineFunction("upshape", "{:rest*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "n" })
+  applyStyle: (style) => ({ ...style, fontShape: "n" })
 });
 defineFunction("slshape", "{:rest*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "sl" })
+  applyStyle: (style) => ({ ...style, fontShape: "sl" })
 });
 defineFunction("scshape", "{:rest*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "sc" })
+  applyStyle: (style) => ({ ...style, fontShape: "sc" })
 });
 defineFunction("textbf", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontSeries: "b" })
+  applyStyle: (style) => ({ ...style, fontSeries: "b" })
 });
 defineFunction("textmd", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontSeries: "m" })
+  applyStyle: (style) => ({ ...style, fontSeries: "m" })
 });
 defineFunction("textup", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "n" })
+  applyStyle: (style) => ({ ...style, fontShape: "n" })
 });
 defineFunction("textnormal", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "n", fontSeries: "m" })
+  applyStyle: (style) => ({ ...style, fontShape: "n", fontSeries: "m" })
 });
 defineFunction("textsl", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "sl" })
+  applyStyle: (style) => ({ ...style, fontShape: "sl" })
 });
 defineFunction("textit", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "it" })
+  applyStyle: (style) => ({ ...style, fontShape: "it" })
 });
 defineFunction("textsc", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontShape: "sc" })
+  applyStyle: (style) => ({ ...style, fontShape: "sc" })
 });
 defineFunction("textrm", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontFamily: "roman" })
+  applyStyle: (style) => ({ ...style, fontFamily: "roman" })
 });
 defineFunction("textsf", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontFamily: "sans-serif" })
+  applyStyle: (style) => ({ ...style, fontFamily: "sans-serif" })
 });
 defineFunction("texttt", "{:text*}", {
   applyMode: "text",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontFamily: "monospace" })
+  applyStyle: (style) => ({ ...style, fontFamily: "monospace" })
 });
 defineFunction("mathbf", "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "normal",
     variantStyle: "bold"
   })
 });
 defineFunction("mathit", "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "main",
     variantStyle: "italic"
   })
 });
 defineFunction("mathnormal", "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "normal",
     variantStyle: "italic"
   })
 });
 defineFunction("mathbfit", "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "main",
     variantStyle: "bolditalic"
   })
 });
 defineFunction("mathrm", "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { variant: "normal", variantStyle: "up" })
+  applyStyle: (style) => ({ ...style, variant: "normal", variantStyle: "up" })
 });
 defineFunction("mathsf", "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "sans-serif",
     variantStyle: "up"
   })
 });
 defineFunction("mathtt", "{:math*}", {
   applyMode: "math",
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "monospace",
     variantStyle: "up"
   })
 });
 defineFunction("it", "{:rest*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     fontSeries: "m",
     fontShape: "it",
     fontFamily: "roman",
@@ -23343,49 +23284,54 @@ defineFunction("it", "{:rest*}", {
   })
 });
 defineFunction("rmfamily", "{:rest*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontFamily: "roman" })
+  applyStyle: (style) => ({ ...style, fontFamily: "roman" })
 });
 defineFunction("sffamily", "{:rest*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontFamily: "sans-serif" })
+  applyStyle: (style) => ({ ...style, fontFamily: "sans-serif" })
 });
 defineFunction("ttfamily", "{:rest*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), { fontFamily: "monospace" })
+  applyStyle: (style) => ({ ...style, fontFamily: "monospace" })
 });
 defineFunction(["Bbb", "mathbb"], "{:math*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "double-struck",
     variantStyle: removeItalic(style.variantStyle)
   })
 });
 defineFunction(["frak", "mathfrak"], "{:math*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "fraktur",
     variantStyle: removeItalic(style.variantStyle)
   })
 });
 defineFunction("mathcal", "{:math*}", {
   // Note that in LaTeX, \mathcal forces the 'up' variant. Use \bm to get bold
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "calligraphic",
     variantStyle: removeItalic(style.variantStyle)
   })
 });
 defineFunction("mathscr", "{:math*}", {
-  applyStyle: (style) => __spreadProps(__spreadValues({}, style), {
+  applyStyle: (style) => ({
+    ...style,
     variant: "script",
     variantStyle: removeItalic(style.variantStyle)
   })
 });
 defineFunction("mbox", "{:text}", {
   ifMode: "math",
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new Atom({
+    ...options,
     type: "mord",
     body: argAtoms(options.args[0]),
     mode: "math"
-  })),
+  }),
   serialize: (atom, options) => latexCommand(
     "\\mbox",
-    atom.bodyToLatex(__spreadProps(__spreadValues({}, options), { defaultMode: "text" }))
+    atom.bodyToLatex({ ...options, defaultMode: "text" })
   )
 });
 defineFunction("text", "{:text}", {
@@ -23393,86 +23339,76 @@ defineFunction("text", "{:text}", {
   applyMode: "text"
 });
 defineFunction(["class", "htmlClass"], "{name:string}{content:auto*}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { type: "mord", body: argAtoms(options.args[1]) })),
+  createAtom: (options) => new Atom({ ...options, type: "mord", body: argAtoms(options.args[1]) }),
   serialize: (atom, options) => {
     if (!atom.args[0] || options.skipStyles) return atom.bodyToLatex(options);
     return `${atom.command}{${atom.args[0]}}{${atom.bodyToLatex(
       options
     )}}`;
   },
-  render: (atom, context) => {
-    var _a3;
-    return atom.createBox(context, {
-      classes: (_a3 = atom.args[0]) != null ? _a3 : "",
-      boxType: "lift"
-    });
-  }
+  render: (atom, context) => atom.createBox(context, {
+    classes: atom.args[0] ?? "",
+    boxType: "lift"
+  })
 });
 defineFunction(["cssId", "htmlId"], "{id:string}{content:auto*}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { type: "mord", body: argAtoms(options.args[1]) })),
+  createAtom: (options) => new Atom({ ...options, type: "mord", body: argAtoms(options.args[1]) }),
   serialize: (atom, options) => {
-    var _a3;
-    if (!((_a3 = atom.args) == null ? void 0 : _a3[0]) || options.skipStyles) return atom.bodyToLatex(options);
+    if (!atom.args?.[0] || options.skipStyles) return atom.bodyToLatex(options);
     return `${atom.command}{${atom.args[0]}}{${atom.bodyToLatex(
       options
     )}}`;
   },
   render: (atom, context) => {
-    var _a3;
     const box = atom.createBox(context);
-    box.cssId = (_a3 = atom.args[0]) != null ? _a3 : "";
+    box.cssId = atom.args[0] ?? "";
     return box;
   }
 });
 defineFunction("htmlData", "{data:string}{content:auto*}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { type: "mord", body: argAtoms(options.args[1]) })),
+  createAtom: (options) => new Atom({ ...options, type: "mord", body: argAtoms(options.args[1]) }),
   serialize: (atom, options) => {
-    var _a3;
-    if (!((_a3 = atom.args) == null ? void 0 : _a3[0]) || options.skipStyles) return atom.bodyToLatex(options);
+    if (!atom.args?.[0] || options.skipStyles) return atom.bodyToLatex(options);
     return `\\htmlData{${atom.args[0]}}{${atom.bodyToLatex(
       options
     )}}`;
   },
   render: (atom, context) => {
-    var _a3;
     const box = atom.createBox(context);
-    box.htmlData = (_a3 = atom.args[0]) != null ? _a3 : "";
+    box.htmlData = atom.args[0] ?? "";
     return box;
   }
 });
 defineFunction(["style", "htmlStyle"], "{data:string}{content:auto*}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { type: "mord", body: argAtoms(options.args[1]) })),
+  createAtom: (options) => new Atom({ ...options, type: "mord", body: argAtoms(options.args[1]) }),
   serialize: (atom, options) => {
-    var _a3;
-    if (!((_a3 = atom.args) == null ? void 0 : _a3[0]) || options.skipStyles) return atom.bodyToLatex(options);
+    if (!atom.args?.[0] || options.skipStyles) return atom.bodyToLatex(options);
     return `${atom.command}{${atom.args[0]}}{${atom.bodyToLatex(
       options
     )}}`;
   },
   render: (atom, context) => {
-    var _a3;
     const box = atom.createBox(context);
-    box.htmlStyle = (_a3 = atom.args[0]) != null ? _a3 : "";
+    box.htmlStyle = atom.args[0] ?? "";
     return box;
   }
 });
 defineFunction("href", "{url:string}{content:auto*}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { type: "mord", body: argAtoms(options.args[1]) })),
+  createAtom: (options) => new Atom({ ...options, type: "mord", body: argAtoms(options.args[1]) }),
   render: (atom, context) => {
-    var _a3;
     const box = atom.createBox(context);
-    const href = (_a3 = atom.args[0]) != null ? _a3 : "";
+    const href = atom.args[0] ?? "";
     if (href) box.htmlData = `href=${href}`;
     return box;
   }
 });
 defineFunction("em", "{:rest}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { body: argAtoms(options.args[0]) })),
+  createAtom: (options) => new Atom({ ...options, body: argAtoms(options.args[0]) }),
   serialize: (atom, options) => options.skipStyles ? atom.bodyToLatex(options) : `{\\em ${atom.bodyToLatex(options)}}`,
   render: (atom, context) => atom.createBox(context, { classes: "ML__emph", boxType: "lift" })
 });
 defineFunction("emph", "{:auto}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { body: argAtoms(options.args[1]) })),
+  createAtom: (options) => new Atom({ ...options, body: argAtoms(options.args[1]) }),
   serialize: (atom, options) => options.skipStyles ? atom.bodyToLatex(options) : `\\emph{${atom.bodyToLatex(options)}}`,
   render: (atom, context) => atom.createBox(context, { classes: "ML__emph", boxType: "lift" })
 });
@@ -23515,14 +23451,12 @@ defineFunction(
   ],
   "{:delim}",
   {
-    createAtom: (options) => {
-      var _a3;
-      return new SizedDelimAtom(__spreadProps(__spreadValues({}, options), {
-        delim: (_a3 = options.args[0]) != null ? _a3 : ".",
-        size: DELIMITER_SIZES[options.command].size,
-        delimType: DELIMITER_SIZES[options.command].mclass
-      }));
-    },
+    createAtom: (options) => new SizedDelimAtom({
+      ...options,
+      delim: options.args[0] ?? ".",
+      size: DELIMITER_SIZES[options.command].size,
+      delimType: DELIMITER_SIZES[options.command].mclass
+    }),
     // For compatibility with LaTeX, we serialize \bigl{x} as \biglx
     serialize: (atom, options) => joinLatex([
       atom.command,
@@ -23539,21 +23473,17 @@ defineFunction(
   ],
   "{width:value}",
   {
-    createAtom: (options) => {
-      var _a3;
-      return new SpacingAtom(__spreadProps(__spreadValues({}, options), {
-        width: (_a3 = options.args[0]) != null ? _a3 : { dimension: 0 }
-      }));
-    }
+    createAtom: (options) => new SpacingAtom({
+      ...options,
+      width: options.args[0] ?? { dimension: 0 }
+    })
   }
 );
 defineFunction(["mkern", "kern", "mskip", "hskip", "mspace"], "{width:value}", {
-  createAtom: (options) => {
-    var _a3;
-    return new SpacingAtom(__spreadProps(__spreadValues({}, options), {
-      width: (_a3 = options.args[0]) != null ? _a3 : { dimension: 0 }
-    }));
-  }
+  createAtom: (options) => new SpacingAtom({
+    ...options,
+    width: options.args[0] ?? { dimension: 0 }
+  })
 });
 defineFunction("mathchoice", "{:math}{:math}{:math}{:math}", {
   // display, text, script and scriptscript
@@ -23576,18 +23506,18 @@ defineFunction("mathchoice", "{:math}{:math}{:math}{:math}", {
   )}}{${Atom.serialize(atom.args[3], options)}}`
 });
 defineFunction("mathop", "{:auto}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new Atom({
+    ...options,
     type: "mop",
     body: argAtoms(options.args[0]),
     limits: "over-under",
     isFunction: true,
     captureSelection: true
-  })),
+  }),
   render: (atom, context) => {
-    var _a3;
     let base = Atom.createBox(context, atom.body);
     if (atom.superscript || atom.subscript) {
-      const limits = (_a3 = atom.subsupPlacement) != null ? _a3 : "auto";
+      const limits = atom.subsupPlacement ?? "auto";
       base = limits === "over-under" || limits === "auto" && context.isDisplayStyle ? atom.attachLimits(context, { base }) : atom.attachSupsub(context, { base });
     }
     if (atom.caret) base.caret = atom.caret;
@@ -23620,7 +23550,8 @@ defineFunction(
   ],
   "{:auto}",
   {
-    createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), {
+    createAtom: (options) => new Atom({
+      ...options,
       type: {
         "\\mathbin": "mbin",
         "\\mathrel": "mrel",
@@ -23631,16 +23562,15 @@ defineFunction(
         "\\mathinner": "minner"
       }[options.command],
       body: argAtoms(options.args[0])
-    }))
+    })
   }
 );
 defineFunction(["operatorname", "operatorname*"], "{operator:math}", {
   createAtom: (options) => {
     const body = argAtoms(options.args[0]).map((x) => {
-      var _a3;
       if (x.type !== "first") {
         x.type = "mord";
-        x.value = (_a3 = { "\u2217": "*", "\u2212": "-" }[x.value]) != null ? _a3 : x.value;
+        x.value = { "\u2217": "*", "\u2212": "-" }[x.value] ?? x.value;
         x.isFunction = false;
         if (!x.style.variant && !x.style.variantStyle) {
           x.style.variant = "main";
@@ -23649,18 +23579,18 @@ defineFunction(["operatorname", "operatorname*"], "{operator:math}", {
       }
       return x;
     });
-    return new Atom(__spreadProps(__spreadValues({}, options), {
+    return new Atom({
+      ...options,
       type: "mop",
       body,
       isFunction: true,
       limits: options.command === "\\operatorname" ? "adjacent" : "over-under"
-    }));
+    });
   },
   render: (atom, context) => {
-    var _a3;
     let base = Atom.createBox(context, atom.body);
     if (atom.superscript || atom.subscript) {
-      const limits = (_a3 = atom.subsupPlacement) != null ? _a3 : "auto";
+      const limits = atom.subsupPlacement ?? "auto";
       base = limits === "over-under" || limits === "auto" && context.isDisplayStyle ? atom.attachLimits(context, { base }) : atom.attachSupsub(context, { base });
     }
     if (atom.caret) base.caret = atom.caret;
@@ -23682,13 +23612,10 @@ defineFunction(["operatorname", "operatorname*"], "{operator:math}", {
   }
 });
 defineFunction(["char", "unicode"], "{charcode:value}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { type: options.mode === "text" ? "text" : "mord" })),
-  serialize: (atom) => {
-    var _a3;
-    return `${atom.command}${serializeLatexValue(
-      (_a3 = atom.args[0]) != null ? _a3 : { number: 10067, base: "hexadecimal" }
-    )}`;
-  },
+  createAtom: (options) => new Atom({ ...options, type: options.mode === "text" ? "text" : "mord" }),
+  serialize: (atom) => `${atom.command}${serializeLatexValue(
+    atom.args[0] ?? { number: 10067, base: "hexadecimal" }
+  )}`,
   render: (atom, context) => {
     let value = context.evaluate(atom.args[0]);
     if (!value || !("number" in value))
@@ -23700,14 +23627,13 @@ defineFunction(["char", "unicode"], "{charcode:value}", {
 defineFunction("rule", "[raise:value]{width:value}{thickness:value}", {
   createAtom: (options) => new Atom(options),
   render: (atom, context) => {
-    var _a3, _b3, _c2;
     const ctx = new Context(
       { parent: context, mathstyle: "textstyle" },
       atom.style
     );
-    const shift = ctx.toEm((_a3 = atom.args[0]) != null ? _a3 : { dimension: 0 });
-    const width = ctx.toEm((_b3 = atom.args[1]) != null ? _b3 : { dimension: 10 });
-    const height = ctx.toEm((_c2 = atom.args[2]) != null ? _c2 : { dimension: 10 });
+    const shift = ctx.toEm(atom.args[0] ?? { dimension: 0 });
+    const width = ctx.toEm(atom.args[1] ?? { dimension: 10 });
+    const height = ctx.toEm(atom.args[2] ?? { dimension: 10 });
     const result = new Box(null, {
       classes: "ML__rule",
       type: "ord"
@@ -23729,7 +23655,7 @@ defineFunction("rule", "[raise:value]{width:value}{thickness:value}", {
   )}}`
 });
 defineFunction(["overline", "underline"], "{:auto}", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), { body: argAtoms(options.args[0]) })),
+  createAtom: (options) => new Atom({ ...options, body: argAtoms(options.args[0]) }),
   render: (atom, parentContext) => {
     const position = atom.command.substring(1);
     const context = new Context(
@@ -23771,12 +23697,13 @@ defineFunction(["overline", "underline"], "{:auto}", {
 defineFunction("overset", "{:auto}{base:auto}", {
   createAtom: (options) => {
     const body = argAtoms(options.args[1]);
-    return new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+    return new OverunderAtom({
+      ...options,
       above: argAtoms(options.args[0]),
       body,
       skipBoundary: false,
       boxType: atomsBoxType(body)
-    }));
+    });
   },
   serialize: (atom, options) => latexCommand(
     atom.command,
@@ -23787,12 +23714,13 @@ defineFunction("overset", "{:auto}{base:auto}", {
 defineFunction("underset", "{:auto}{base:auto}", {
   createAtom: (options) => {
     const body = argAtoms(options.args[1]);
-    return new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+    return new OverunderAtom({
+      ...options,
       below: argAtoms(options.args[0]),
       body,
       skipBoundary: false,
       boxType: atomsBoxType(body)
-    }));
+    });
   },
   serialize: (atom, options) => latexCommand(
     atom.command,
@@ -23803,13 +23731,14 @@ defineFunction("underset", "{:auto}{base:auto}", {
 defineFunction("overunderset", "{above:auto}{below:auto}{base:auto}", {
   createAtom: (options) => {
     const body = argAtoms(options.args[2]);
-    return new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+    return new OverunderAtom({
+      ...options,
       above: argAtoms(options.args[0]),
       below: argAtoms(options.args[1]),
       body,
       skipBoundary: false,
       boxType: atomsBoxType(body)
-    }));
+    });
   },
   serialize: (atom, options) => latexCommand(
     atom.command,
@@ -23821,13 +23750,14 @@ defineFunction(
   ["stackrel", "stackbin"],
   "[below:auto]{above:auto}{base:auto}",
   {
-    createAtom: (options) => new OverunderAtom(__spreadProps(__spreadValues({}, options), {
+    createAtom: (options) => new OverunderAtom({
+      ...options,
       body: argAtoms(options.args[2]),
       above: argAtoms(options.args[1]),
       below: argAtoms(options.args[0]),
       skipBoundary: false,
       boxType: options.command === "\\stackrel" ? "rel" : "bin"
-    })),
+    }),
     serialize: (atom, options) => latexCommand(
       atom.command,
       atom.aboveToLatex(options),
@@ -23836,54 +23766,57 @@ defineFunction(
   }
 );
 defineFunction("smash", "[:string]{:auto}", {
-  createAtom: (options) => {
-    var _a3, _b3, _c2, _d2;
-    return new PhantomAtom(__spreadProps(__spreadValues({}, options), {
-      body: argAtoms(options.args[1]),
-      smashHeight: (_b3 = (_a3 = options.args[0]) == null ? void 0 : _a3.includes("t")) != null ? _b3 : true,
-      smashDepth: (_d2 = (_c2 = options.args[0]) == null ? void 0 : _c2.includes("b")) != null ? _d2 : true
-    }));
-  }
+  createAtom: (options) => new PhantomAtom({
+    ...options,
+    body: argAtoms(options.args[1]),
+    smashHeight: options.args[0]?.includes("t") ?? true,
+    smashDepth: options.args[0]?.includes("b") ?? true
+  })
 });
 defineFunction("vphantom", "{:auto}", {
-  createAtom: (options) => new PhantomAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new PhantomAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     isInvisible: true,
     smashWidth: true
-  }))
+  })
 });
 defineFunction("hphantom", "{:auto}", {
-  createAtom: (options) => new PhantomAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new PhantomAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     isInvisible: true,
     smashHeight: true,
     smashDepth: true
-  }))
+  })
 });
 defineFunction("phantom", "{:auto}", {
-  createAtom: (options) => new PhantomAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new PhantomAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     isInvisible: true
-  }))
+  })
 });
 defineFunction("mathstrut", "", {
-  createAtom: (options) => new PhantomAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new PhantomAtom({
+    ...options,
     body: [new Atom({ value: "(" })],
     isInvisible: true
-  }))
+  })
 });
 defineFunction("not", "{:math}", {
   createAtom: (options) => {
     const body = argAtoms(options.args[0]);
     if (body.length === 0)
-      return new Atom(__spreadProps(__spreadValues({}, options), { type: "mrel", value: "\uE020" }));
-    return new Atom(__spreadProps(__spreadValues({}, options), {
+      return new Atom({ ...options, type: "mrel", value: "\uE020" });
+    return new Atom({
+      ...options,
       body: [
-        new OverlapAtom(__spreadProps(__spreadValues({}, options), { body: "\uE020", align: "right" })),
+        new OverlapAtom({ ...options, body: "\uE020", align: "right" }),
         ...body
       ],
       captureSelection: true
-    }));
+    });
   },
   serialize: (atom, options) => {
     const arg = atom.args[0];
@@ -23903,99 +23836,90 @@ defineFunction("not", "{:math}", {
   }
 });
 defineFunction(["ne", "neq"], "", {
-  createAtom: (options) => new Atom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new Atom({
+    ...options,
     type: "mrel",
     body: [
-      new OverlapAtom(__spreadProps(__spreadValues({}, options), {
+      new OverlapAtom({
+        ...options,
         body: "\uE020",
         align: "right",
         boxType: "rel"
-      })),
-      new Atom(__spreadProps(__spreadValues({}, options), { value: "=" }))
+      }),
+      new Atom({ ...options, value: "=" })
     ],
     captureSelection: true
-  })),
+  }),
   serialize: (atom) => atom.command
 });
 defineFunction("rlap", "{:auto}", {
-  createAtom: (options) => new OverlapAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OverlapAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     align: "right"
-  }))
+  })
 });
 defineFunction("llap", "{:auto}", {
-  createAtom: (options) => new OverlapAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OverlapAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     align: "left"
-  }))
+  })
 });
 defineFunction("mathrlap", "{:math}", {
-  createAtom: (options) => new OverlapAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OverlapAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     align: "right"
-  }))
+  })
 });
 defineFunction("mathllap", "{:math}", {
-  createAtom: (options) => new OverlapAtom(__spreadProps(__spreadValues({}, options), {
+  createAtom: (options) => new OverlapAtom({
+    ...options,
     body: argAtoms(options.args[0]),
     align: "left"
-  }))
+  })
 });
 defineFunction("raisebox", "{:value}{:text}", {
-  createAtom: (options) => {
-    var _a3;
-    return new BoxAtom(__spreadProps(__spreadValues({}, options), {
-      body: argAtoms(options.args[1]),
-      padding: { dimension: 0 },
-      offset: (_a3 = options.args[0]) != null ? _a3 : { dimension: 0 }
-    }));
-  },
-  serialize: (atom, options) => {
-    var _a3;
-    return latexCommand(
-      "\\raisebox",
-      (_a3 = serializeLatexValue(atom.offset)) != null ? _a3 : "0pt",
-      atom.bodyToLatex(options)
-    );
-  }
+  createAtom: (options) => new BoxAtom({
+    ...options,
+    body: argAtoms(options.args[1]),
+    padding: { dimension: 0 },
+    offset: options.args[0] ?? { dimension: 0 }
+  }),
+  serialize: (atom, options) => latexCommand(
+    "\\raisebox",
+    serializeLatexValue(atom.offset) ?? "0pt",
+    atom.bodyToLatex(options)
+  )
 });
 defineFunction("raise", "{:value}{:auto}", {
-  createAtom: (options) => {
-    var _a3;
-    return new BoxAtom(__spreadProps(__spreadValues({}, options), {
-      body: argAtoms(options.args[1]),
-      padding: { dimension: 0 },
-      offset: (_a3 = options.args[0]) != null ? _a3 : { dimension: 0 }
-    }));
-  },
-  serialize: (atom, options) => {
-    var _a3;
-    return latexCommand(
-      "\\raise",
-      (_a3 = serializeLatexValue(atom.offset)) != null ? _a3 : "0pt",
-      atom.bodyToLatex(options)
-    );
-  }
+  createAtom: (options) => new BoxAtom({
+    ...options,
+    body: argAtoms(options.args[1]),
+    padding: { dimension: 0 },
+    offset: options.args[0] ?? { dimension: 0 }
+  }),
+  serialize: (atom, options) => latexCommand(
+    "\\raise",
+    serializeLatexValue(atom.offset) ?? "0pt",
+    atom.bodyToLatex(options)
+  )
 });
 defineFunction("lower", "{:value}{:auto}", {
-  createAtom: (options) => {
-    var _a3;
-    return new BoxAtom(__spreadProps(__spreadValues({}, options), {
-      body: argAtoms(options.args[1]),
-      padding: { dimension: 0 },
-      offset: (_a3 = multiplyLatexValue(options.args[0], -1)) != null ? _a3 : { dimension: 0 }
-    }));
-  },
-  serialize: (atom, options) => {
-    var _a3, _b3;
-    return latexCommand(
-      "\\lower",
-      (_b3 = serializeLatexValue(
-        multiplyLatexValue((_a3 = atom.offset) != null ? _a3 : { dimension: 0 }, -1)
-      )) != null ? _b3 : "0pt",
-      atom.bodyToLatex(options)
-    );
-  }
+  createAtom: (options) => new BoxAtom({
+    ...options,
+    body: argAtoms(options.args[1]),
+    padding: { dimension: 0 },
+    offset: multiplyLatexValue(options.args[0], -1) ?? { dimension: 0 }
+  }),
+  serialize: (atom, options) => latexCommand(
+    "\\lower",
+    serializeLatexValue(
+      multiplyLatexValue(atom.offset ?? { dimension: 0 }, -1)
+    ) ?? "0pt",
+    atom.bodyToLatex(options)
+  )
 });
 
 // src/latex-commands/symbols.ts
@@ -24734,7 +24658,6 @@ var MathMode = class extends Mode {
     Mode._registry["free-math"] = this;
   }
   createAtom(command, info, style) {
-    var _a3, _b3, _c2, _d2, _e, _f;
     if (info === null) {
       return new Atom({
         type: "mord",
@@ -24746,15 +24669,15 @@ var MathMode = class extends Mode {
     }
     let isFunction;
     try {
-      isFunction = (_c2 = (_b3 = globalThis.MathfieldElement) == null ? void 0 : _b3.isFunction((_a3 = info.command) != null ? _a3 : command)) != null ? _c2 : false;
+      isFunction = globalThis.MathfieldElement?.isFunction(info.command ?? command) ?? false;
     } catch (e) {
       isFunction = false;
     }
     if (info.definitionType === "symbol") {
       const result2 = new Atom({
-        type: (_d2 = info.type) != null ? _d2 : "mord",
+        type: info.type ?? "mord",
         mode: "math",
-        command: (_e = info.command) != null ? _e : command,
+        command: info.command ?? command,
         value: String.fromCodePoint(info.codepoint),
         isFunction,
         style
@@ -24765,7 +24688,7 @@ var MathMode = class extends Mode {
     const result = new Atom({
       type: "mord",
       mode: "math",
-      command: (_f = info.command) != null ? _f : command,
+      command: info.command ?? command,
       value: command,
       isFunction,
       style
@@ -24774,12 +24697,11 @@ var MathMode = class extends Mode {
     return result;
   }
   serialize(run, options) {
-    const result = emitBoldRun(run, __spreadProps(__spreadValues({}, options), { defaultMode: "math" }));
+    const result = emitBoldRun(run, { ...options, defaultMode: "math" });
     if (result.length === 0 || !isTextMode(options.defaultMode)) return result;
     return ["$ ", ...result, " $"];
   }
   getFont(box, style) {
-    var _a3, _b3, _c2;
     console.assert(style.variant !== void 0);
     if (style.fontFamily) {
       let variantKey = style.fontFamily;
@@ -24787,7 +24709,7 @@ var MathMode = class extends Mode {
         variantKey += "-bolditalic";
       else if (style.fontSeries === "b") variantKey += "-bold";
       else if (style.fontShape === "it") variantKey += "-italic";
-      const variant2 = (_a3 = VARIANTS[variantKey]) != null ? _a3 : VARIANTS[style.fontFamily];
+      const variant2 = VARIANTS[variantKey] ?? VARIANTS[style.fontFamily];
       if (!variant2) {
         console.error(`Unknown font family variant: ${variantKey}`);
         return null;
@@ -24805,8 +24727,7 @@ var MathMode = class extends Mode {
     if (variant === "normal" && !variantStyle && box.value.length === 1) {
       let italicize = false;
       LETTER_SHAPE_RANGES.forEach((x, i) => {
-        var _a4;
-        if (x.test(box.value) && LETTER_SHAPE_MODIFIER[(_a4 = style.letterShapeStyle) != null ? _a4 : "tex"][i] === "it")
+        if (x.test(box.value) && LETTER_SHAPE_MODIFIER[style.letterShapeStyle ?? "tex"][i] === "it")
           italicize = true;
       });
       if (italicize) variantStyle = addItalic(variantStyle);
@@ -24818,12 +24739,12 @@ var MathMode = class extends Mode {
     if (VARIANT_REPERTOIRE[variant] && !VARIANT_REPERTOIRE[variant].test(box.value)) {
       let v = mathVariantToUnicode(box.value, variant, variantStyle);
       if (!v) {
-        v = (_b3 = mathVariantToUnicode(box.value, variant)) != null ? _b3 : box.value;
-        box.classes += (_c2 = {
+        v = mathVariantToUnicode(box.value, variant) ?? box.value;
+        box.classes += {
           "bold": " ML__bold",
           "italic": " ML__it",
           "bold-italic": " ML__bold ML__it"
-        }[variantStyle != null ? variantStyle : ""]) != null ? _c2 : "";
+        }[variantStyle ?? ""] ?? "";
       }
       box.value = v;
       return null;
@@ -24839,10 +24760,7 @@ function emitBoldRun(run, options) {
     if (weight !== "bold") return joinLatex(emitVariantRun(x, options));
     if (weightString(x[0].parent) === "bold")
       return joinLatex(emitVariantRun(x, options));
-    const value = joinLatex(x.map((x2) => {
-      var _a3;
-      return (_a3 = x2.value) != null ? _a3 : "";
-    }));
+    const value = joinLatex(x.map((x2) => x2.value ?? ""));
     if (/^[a-zA-Z0-9]+$/.test(value))
       return latexCommand("\\mathbf", joinLatex(emitVariantRun(x, options)));
     return latexCommand("\\bm", joinLatex(emitVariantRun(x, options)));
@@ -24899,7 +24817,7 @@ function emitVariantRun(run, options) {
       x.map((atom, index) => {
         if (hasTrailingSupsub && index === x.length - 1) {
           const def = getDefinition(atom.command, atom.mode);
-          if (def == null ? void 0 : def.serialize) return def.serialize(atom, options);
+          if (def?.serialize) return def.serialize(atom, options);
           if (atom.body && atom.command)
             return latexCommand(atom.command, atom.bodyToLatex(options));
           if (atom.body) return atom.bodyToLatex(options);
@@ -24948,9 +24866,8 @@ function emitFontSeriesTextRun(run, options) {
 }
 function emitSizeTextRun(run, options) {
   return getPropertyRuns(run, "fontSize").map((x) => {
-    var _a3, _b3;
     const s = emitFontSeriesTextRun(x, options);
-    const command = (_b3 = [
+    const command = [
       "",
       "\\tiny",
       "\\scriptsize",
@@ -24962,7 +24879,7 @@ function emitSizeTextRun(run, options) {
       "\\LARGE",
       "\\huge",
       "\\Huge"
-    ][(_a3 = x[0].style.fontSize) != null ? _a3 : ""]) != null ? _b3 : "";
+    ][x[0].style.fontSize ?? ""] ?? "";
     return command ? `${command} ${joinLatex(s)}` : joinLatex(s);
   });
 }
@@ -24980,17 +24897,16 @@ function emitTextDecorationTextRun(run, options, needsWrap) {
 }
 function emitFontFamilyTextRun(run, options, needsWrap) {
   return getPropertyRuns(run, "fontFamily").map((x) => {
-    var _a3;
     needsWrap = needsWrap && !x.every(
       (x2) => x2.style.fontFamily || x2.style.fontShape || x2.style.fontSeries || x2.style.fontSize
     );
     const s = emitSizeTextRun(x, options);
     const { fontFamily } = x[0].style;
-    const command = (_a3 = {
+    const command = {
       "roman": "textrm",
       "monospace": "texttt",
       "sans-serif": "textsf"
-    }[fontFamily != null ? fontFamily : ""]) != null ? _a3 : "";
+    }[fontFamily ?? ""] ?? "";
     if (command) return `\\${command}{${joinLatex(s)}}`;
     if (fontFamily)
       return `{\\fontfamily{${x[0].style.fontFamily}} ${joinLatex(s)}}`;
@@ -25014,7 +24930,7 @@ var TextMode = class extends Mode {
       return new TextAtom(
         command,
         String.fromCodePoint(info.codepoint),
-        style != null ? style : {}
+        style ?? {}
       );
     }
     return null;
@@ -25022,7 +24938,7 @@ var TextMode = class extends Mode {
   serialize(run, options) {
     return emitTextDecorationTextRun(
       run,
-      __spreadProps(__spreadValues({}, options), { defaultMode: "text" }),
+      { ...options, defaultMode: "text" },
       options.defaultMode !== "text" && options.defaultMode !== "free-text"
     );
   }
@@ -25030,7 +24946,6 @@ var TextMode = class extends Mode {
    * Return the font-family name
    */
   getFont(box, style) {
-    var _a3, _b3, _c2, _d2, _e;
     const { fontFamily } = style;
     if (TEXT_FONT_CLASS[fontFamily])
       box.classes += " " + TEXT_FONT_CLASS[fontFamily];
@@ -25039,7 +24954,7 @@ var TextMode = class extends Mode {
     }
     if (style.fontShape) {
       box.classes += " ";
-      box.classes += (_a3 = {
+      box.classes += {
         it: "ML__it",
         sl: "ML__shape_sl",
         // Slanted
@@ -25047,13 +24962,13 @@ var TextMode = class extends Mode {
         // Small caps
         ol: "ML__shape_ol"
         // Outline
-      }[style.fontShape]) != null ? _a3 : "";
+      }[style.fontShape] ?? "";
     }
     if (style.fontSeries) {
       const m = style.fontSeries.match(/(.?[lbm])?(.?[cx])?/);
       if (m) {
         box.classes += " ";
-        box.classes += (_c2 = {
+        box.classes += {
           ul: "ML__series_ul",
           el: "ML__series_el",
           l: "ML__series_l",
@@ -25064,9 +24979,9 @@ var TextMode = class extends Mode {
           b: "ML__bold",
           eb: "ML__series_eb",
           ub: "ML__series_ub"
-        }[(_b3 = m[1]) != null ? _b3 : ""]) != null ? _c2 : "";
+        }[m[1] ?? ""] ?? "";
         box.classes += " ";
-        box.classes += (_e = {
+        box.classes += {
           uc: "ML__series_uc",
           ec: "ML__series_ec",
           c: "ML__series_c",
@@ -25077,7 +24992,7 @@ var TextMode = class extends Mode {
           x: "ML__series_x",
           ex: "ML__series_ex",
           ux: "ML__series_ux"
-        }[(_d2 = m[2]) != null ? _d2 : ""]) != null ? _e : "";
+        }[m[2] ?? ""] ?? "";
       }
     }
     if (style.textDecoration && style.textDecoration !== "none") {
@@ -25110,7 +25025,6 @@ new LatexMode();
 
 // src/ui/events/keyboard.ts
 function getKeybindingMarkup(keybinding) {
-  var _a3;
   const useGlyph = /macos|ios/.test(osPlatform());
   const segments = keybinding.split("+");
   let result = "";
@@ -25123,7 +25037,7 @@ function getKeybindingMarkup(keybinding) {
     else if (segment.startsWith("[Digit")) result += segment.slice(6, 7);
     else if (segment.startsWith("Digit")) result += segment.slice(5, 6);
     else {
-      result += (_a3 = {
+      result += {
         "cmd": "\u2318",
         "meta": useGlyph ? "\u2318" : "Ctrl",
         "shift": useGlyph ? "\u21E7" : "Shift",
@@ -25175,7 +25089,7 @@ function getKeybindingMarkup(keybinding) {
         "[arrowup]": "\u21E1",
         "[arrowright]": "\u21E2",
         "[arrowdown]": "\u21E3"
-      }[segment.toLowerCase()]) != null ? _a3 : segment.toUpperCase();
+      }[segment.toLowerCase()] ?? segment.toUpperCase();
     }
   }
   return result;
@@ -25306,9 +25220,8 @@ function mightProducePrintableCharacter(evt) {
   return PRINTABLE_KEYCODE.has(evt.code);
 }
 function deepActiveElement() {
-  var _a3;
   let a = document.activeElement;
-  while ((_a3 = a == null ? void 0 : a.shadowRoot) == null ? void 0 : _a3.activeElement) a = a.shadowRoot.activeElement;
+  while (a?.shadowRoot?.activeElement) a = a.shadowRoot.activeElement;
   return a;
 }
 
@@ -25338,9 +25251,8 @@ var Scrim = class _Scrim {
    * `lightDismiss` to fallse.
    */
   constructor(options) {
-    var _a3, _b3;
-    this.lightDismiss = (_a3 = options == null ? void 0 : options.lightDismiss) != null ? _a3 : true;
-    this.translucent = (_b3 = options == null ? void 0 : options.translucent) != null ? _b3 : false;
+    this.lightDismiss = options?.lightDismiss ?? true;
+    this.translucent = options?.translucent ?? false;
     this.state = "closed";
   }
   get element() {
@@ -25363,13 +25275,12 @@ var Scrim = class _Scrim {
     return element;
   }
   open(options) {
-    var _a3;
     if (this.state !== "closed") return;
     this.state = "opening";
-    this.onDismiss = options == null ? void 0 : options.onDismiss;
+    this.onDismiss = options?.onDismiss;
     this.savedActiveElement = deepActiveElement();
     const { element } = this;
-    ((_a3 = options == null ? void 0 : options.root) != null ? _a3 : document.body).appendChild(element);
+    (options?.root ?? document.body).appendChild(element);
     element.addEventListener("click", this);
     document.addEventListener("touchmove", this, false);
     document.addEventListener("scroll", this, false);
@@ -25389,11 +25300,10 @@ var Scrim = class _Scrim {
       );
       mlkPlate.style.paddingRight = `${mlkPaddingRight + scrollbarWidth}px`;
     }
-    if (options == null ? void 0 : options.child) element.append(options.child);
+    if (options?.child) element.append(options.child);
     this.state = "open";
   }
   close() {
-    var _a3, _b3, _c2, _d2, _e;
     if (this.state !== "open") {
       console.assert(this.element.parentElement !== null);
       return;
@@ -25406,13 +25316,13 @@ var Scrim = class _Scrim {
     document.removeEventListener("touchmove", this, false);
     document.removeEventListener("scroll", this, false);
     element.remove();
-    document.body.style.overflow = (_a3 = this.savedOverflow) != null ? _a3 : "";
-    document.body.style.marginRight = (_b3 = this.savedMarginRight) != null ? _b3 : "";
+    document.body.style.overflow = this.savedOverflow ?? "";
+    document.body.style.marginRight = this.savedMarginRight ?? "";
     const mlkPlate = document.querySelector(".MLK__plate");
     if (mlkPlate instanceof HTMLElement)
-      mlkPlate.style.paddingRight = (_c2 = this.savedMlkPaddingRight) != null ? _c2 : "";
+      mlkPlate.style.paddingRight = this.savedMlkPaddingRight ?? "";
     if (deepActiveElement() !== this.savedActiveElement)
-      (_e = (_d2 = this.savedActiveElement) == null ? void 0 : _d2.focus) == null ? void 0 : _e.call(_d2);
+      this.savedActiveElement?.focus?.();
     element.innerHTML = "";
     this.state = "closed";
   }
@@ -25498,7 +25408,6 @@ function delegateKeyboardEvents(keyboardSink, element, delegate) {
   keyboardSink.addEventListener(
     "input",
     (ev) => {
-      var _a3;
       if (compositionInProgress) return;
       keyboardSink.textContent = "";
       if (ev.inputType === "insertCompositionText") return;
@@ -25507,7 +25416,7 @@ function delegateKeyboardEvents(keyboardSink, element, delegate) {
         ev.stopPropagation();
         return;
       }
-      delegate.onInput((_a3 = ev.data) != null ? _a3 : "");
+      delegate.onInput(ev.data ?? "");
       ev.preventDefault();
       ev.stopPropagation();
     },
@@ -25534,8 +25443,7 @@ function delegateKeyboardEvents(keyboardSink, element, delegate) {
   keyboardSink.addEventListener(
     "blur",
     (event) => {
-      var _a3, _b3;
-      if (((_b3 = (_a3 = event["relatedTarget"]) == null ? void 0 : _a3["_mathfield"]) == null ? void 0 : _b3["element"]) === element) {
+      if (event["relatedTarget"]?.["_mathfield"]?.["element"] === element) {
         keyboardSink.focus({ preventScroll: true });
         event.preventDefault();
         event.stopPropagation();
@@ -25612,11 +25520,10 @@ function delegateKeyboardEvents(keyboardSink, element, delegate) {
     },
     setAriaLabel: (value) => keyboardSink.setAttribute("aria-label", value),
     setValue: (value) => {
-      var _a3;
       if (keyboardSink.textContent === value) return;
       keyboardSink.textContent = value;
       keyboardSink.style.left = `-1000px`;
-      (_a3 = window.getSelection()) == null ? void 0 : _a3.selectAllChildren(keyboardSink);
+      window.getSelection()?.selectAllChildren(keyboardSink);
     },
     moveTo: (x, y) => {
       keyboardSink.style.top = `${y}px`;
@@ -25625,13 +25532,12 @@ function delegateKeyboardEvents(keyboardSink, element, delegate) {
   };
 }
 function keyboardEventToChar(evt) {
-  var _a3;
   if (!evt || !mightProducePrintableCharacter(evt)) return "";
   let result;
   if (evt.key === "Unidentified") {
     if (evt.target) result = evt.target.value;
   }
-  result = (_a3 = result != null ? result : evt.key) != null ? _a3 : evt.code;
+  result = result ?? evt.key ?? evt.code;
   if (/^(Dead|Return|Enter|Tab|Escape|Delete|PageUp|PageDown|Home|End|Help|ArrowLeft|ArrowRight|ArrowUp|ArrowDown)$/.test(
     result
   ))
@@ -25744,10 +25650,10 @@ function normalizeKeybinding(keybinding, layout) {
   }
   if (platform2 && !matchPlatform(platform2)) return void 0;
   if (/^\[.+\]$/.test(modifiers.key))
-    return __spreadProps(__spreadValues({}, keybinding), { key: keystrokeModifiersToString(modifiers) });
+    return { ...keybinding, key: keystrokeModifiersToString(modifiers) };
   const code = getCodeForKey(modifiers.key, layout);
   if (!code)
-    return __spreadProps(__spreadValues({}, keybinding), { key: keystrokeModifiersToString(modifiers) });
+    return { ...keybinding, key: keystrokeModifiersToString(modifiers) };
   if (code.shift && modifiers.shift || code.alt && modifiers.alt) {
     throw new Error(
       `The keybinding ${keybinding.key} (${selectorToString(
@@ -25761,7 +25667,7 @@ function normalizeKeybinding(keybinding, layout) {
   code.alt = code.alt || modifiers.alt;
   code.meta = modifiers.meta;
   code.ctrl = modifiers.ctrl;
-  return __spreadProps(__spreadValues({}, keybinding), { key: keystrokeModifiersToString(code) });
+  return { ...keybinding, key: keystrokeModifiersToString(code) };
 }
 function selectorToString(selector) {
   if (Array.isArray(selector)) {
@@ -25869,15 +25775,13 @@ function getLatexGroup(model) {
   return model.atoms.find((x) => x.type === "latexgroup");
 }
 function getLatexGroupBody(model) {
-  var _a3, _b3;
   const atom = getLatexGroup(model);
-  return (_b3 = (_a3 = atom == null ? void 0 : atom.body) == null ? void 0 : _a3.filter((x) => x.type === "latex")) != null ? _b3 : [];
+  return atom?.body?.filter((x) => x.type === "latex") ?? [];
 }
 function getCommandSuggestionRange(model, options) {
-  var _a3;
   let start = 0;
   let found = false;
-  const last = Number.isFinite(options == null ? void 0 : options.before) ? (_a3 = options == null ? void 0 : options.before) != null ? _a3 : 0 : model.lastOffset;
+  const last = Number.isFinite(options?.before) ? options?.before ?? 0 : model.lastOffset;
   while (start <= last && !found) {
     const atom = model.at(start);
     found = atom instanceof LatexAtom && atom.isSuggestion;
@@ -25912,7 +25816,7 @@ function applyStyle2(mathfield, inStyle) {
       style.backgroundColor = "none";
     if (style.fontSize && style.fontSize === mathfield.defaultStyle.fontSize)
       style.fontSize = "auto";
-    mathfield.defaultStyle = __spreadValues(__spreadValues({}, mathfield.defaultStyle), style);
+    mathfield.defaultStyle = { ...mathfield.defaultStyle, ...style };
   } else {
     mathfield.model.deferNotifications(
       { content: true, type: "insertText" },
@@ -25935,20 +25839,19 @@ register2(
   }
 );
 function validateStyle(mathfield, style) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h, _i, _j;
   const result = {};
   if (typeof style.color === "string") {
-    const newColor = (_b3 = mathfield.colorMap((_a3 = style.color) != null ? _a3 : style.verbatimColor)) != null ? _b3 : "none";
+    const newColor = mathfield.colorMap(style.color ?? style.verbatimColor) ?? "none";
     if (newColor !== style.color)
-      result.verbatimColor = (_c2 = style.verbatimColor) != null ? _c2 : style.color;
+      result.verbatimColor = style.verbatimColor ?? style.color;
     result.color = newColor;
   }
   if (typeof style.backgroundColor === "string") {
-    const newColor = (_e = mathfield.backgroundColorMap(
-      (_d2 = style.backgroundColor) != null ? _d2 : style.verbatimBackgroundColor
-    )) != null ? _e : "none";
+    const newColor = mathfield.backgroundColorMap(
+      style.backgroundColor ?? style.verbatimBackgroundColor
+    ) ?? "none";
     if (newColor !== style.backgroundColor) {
-      result.verbatimBackgroundColor = (_f = style.verbatimBackgroundColor) != null ? _f : style.backgroundColor;
+      result.verbatimBackgroundColor = style.verbatimBackgroundColor ?? style.backgroundColor;
     }
     result.backgroundColor = newColor;
   }
@@ -25959,11 +25862,11 @@ function validateStyle(mathfield, style) {
   if (typeof style.fontSeries === "string")
     result.fontSeries = style.fontSeries.toLowerCase();
   if (result.fontSeries) {
-    result.fontSeries = (_g = {
+    result.fontSeries = {
       bold: "b",
       medium: "m",
       normal: "m"
-    }[result.fontSeries]) != null ? _g : result.fontSeries;
+    }[result.fontSeries] ?? result.fontSeries;
   }
   if (typeof style.shape === "string")
     result.fontShape = style.shape;
@@ -25972,22 +25875,22 @@ function validateStyle(mathfield, style) {
   if (typeof style.textDecoration === "string")
     result.textDecoration = style.textDecoration;
   if (result.fontShape) {
-    result.fontShape = (_h = {
+    result.fontShape = {
       italic: "it",
       up: "n",
       upright: "n",
       normal: "n"
-    }[result.fontShape]) != null ? _h : result.fontShape;
+    }[result.fontShape] ?? result.fontShape;
   }
   if (style.variant) result.variant = style.variant.toLowerCase();
   if (style.variantStyle !== void 0) {
     result.variantStyle = typeof style.variantStyle === "string" && style.variantStyle !== "" ? style.variantStyle.toLowerCase() : style.variantStyle;
   }
-  const size = (_i = style.size) != null ? _i : style.fontSize;
+  const size = style.size ?? style.fontSize;
   if (typeof size === "number")
     result.fontSize = Math.max(1, Math.min(10, size));
   else if (typeof size === "string") {
-    result.fontSize = (_j = {
+    result.fontSize = {
       size1: 1,
       size2: 2,
       size3: 3,
@@ -25998,7 +25901,7 @@ function validateStyle(mathfield, style) {
       size8: 8,
       size9: 9,
       size10: 10
-    }[size.toLowerCase()]) != null ? _j : {
+    }[size.toLowerCase()] ?? {
       tiny: 1,
       scriptsize: 2,
       footnotesize: 3,
@@ -26015,18 +25918,17 @@ function validateStyle(mathfield, style) {
   return result;
 }
 function defaultInsertStyleHook(mathfield, offset, info) {
-  var _a3, _b3;
   const model = mathfield.model;
   if (model.mode === "latex") return {};
   const bias = mathfield.styleBias;
   if (bias === "none") return mathfield.defaultStyle;
   if (isTextMode(model.mode)) {
-    return (_b3 = (_a3 = model.at(bias === "right" ? info.after : info.before)) == null ? void 0 : _a3.style) != null ? _b3 : mathfield.defaultStyle;
+    return model.at(bias === "right" ? info.after : info.before)?.style ?? mathfield.defaultStyle;
   }
   if (isMathMode(model.mode)) {
     const atom = model.at(bias === "right" ? info.after : info.before);
-    if (!atom) return __spreadValues({ variant: "normal" }, mathfield.defaultStyle);
-    return __spreadValues(__spreadProps(__spreadValues({}, atom.style), { variant: "normal" }), mathfield.defaultStyle);
+    if (!atom) return { variant: "normal", ...mathfield.defaultStyle };
+    return { ...atom.style, variant: "normal", ...mathfield.defaultStyle };
   }
   return {};
 }
@@ -26042,12 +25944,11 @@ function computeInsertStyle(mathfield) {
   return hook(mathfield, model.position, { before, after });
 }
 function ungroup(model, atom, bias) {
-  var _a3;
   if (!atom) return -1;
   if (atom.type === "first" && bias !== "right") return -1;
   if (atom.type !== "group") return model.offsetOf(atom);
   if (!atom.body || atom.body.length < 2) return -1;
-  if (((_a3 = atom.body) == null ? void 0 : _a3.length) === 1) return model.offsetOf(atom.body[0]);
+  if (atom.body?.length === 1) return model.offsetOf(atom.body[0]);
   if (bias !== "right") return model.offsetOf(atom.body[0]);
   return model.offsetOf(atom.body[atom.body.length - 1]);
 }
@@ -26062,7 +25963,6 @@ function removeSuggestion(mathfield) {
   for (const atom of group) atom.parent.removeChild(atom);
 }
 function updateAutocomplete(mathfield, options) {
-  var _a3;
   const { model } = mathfield;
   removeSuggestion(mathfield);
   for (const atom2 of getLatexGroupBody(model)) atom2.isError = false;
@@ -26090,7 +25990,7 @@ function updateAutocomplete(mathfield, options) {
     hideSuggestionPopover(mathfield);
     return;
   }
-  const index = (_a3 = options == null ? void 0 : options.atIndex) != null ? _a3 : 0;
+  const index = options?.atIndex ?? 0;
   mathfield.suggestionIndex = index < 0 ? suggestions.length - 1 : index % suggestions.length;
   const suggestion = suggestions[mathfield.suggestionIndex];
   if (suggestion !== command) {
@@ -26120,7 +26020,6 @@ function acceptCommandSuggestion(model) {
   return result;
 }
 function complete(mathfield, completion = "accept", options) {
-  var _a3, _b3;
   hideSuggestionPopover(mathfield);
   const latexGroup = getLatexGroup(mathfield.model);
   if (!latexGroup) return false;
@@ -26143,15 +26042,15 @@ function complete(mathfield, completion = "accept", options) {
   const newPos = latexGroup.leftSibling;
   latexGroup.parent.removeChild(latexGroup);
   mathfield.model.position = mathfield.model.offsetOf(newPos);
-  mathfield.switchMode((_a3 = options == null ? void 0 : options.mode) != null ? _a3 : "math");
+  mathfield.switchMode(options?.mode ?? "math");
   if (completion === "reject") return true;
-  const style = __spreadValues({}, computeInsertStyle(mathfield));
+  const style = { ...computeInsertStyle(mathfield) };
   if (!/^[a-zA-Z0-9]$/.test(latex) && mathfield.styleBias !== "none") {
     style.variant = "normal";
     style.variantStyle = void 0;
   }
   ModeEditor.insert(mathfield.model, latex, {
-    selectionMode: ((_b3 = options == null ? void 0 : options.selectItem) != null ? _b3 : false) ? "item" : "placeholder",
+    selectionMode: options?.selectItem ?? false ? "item" : "placeholder",
     format: "latex",
     mode: "math",
     style
@@ -26164,11 +26063,10 @@ function complete(mathfield, completion = "accept", options) {
 
 // src/common/shared-element.ts
 function getSharedElement(id) {
-  var _a3;
   let result = document.getElementById(id);
   if (result) {
     result.dataset.refcount = Number(
-      Number.parseInt((_a3 = result.dataset.refcount) != null ? _a3 : "0") + 1
+      Number.parseInt(result.dataset.refcount ?? "0") + 1
     ).toString();
   } else {
     result = document.createElement("div");
@@ -26180,11 +26078,10 @@ function getSharedElement(id) {
   return result;
 }
 function releaseSharedElement(id) {
-  var _a3;
   const element = document.getElementById(id);
   if (!element) return;
   const refcount = Number.parseInt(
-    (_a3 = element.getAttribute("data-refcount")) != null ? _a3 : "0"
+    element.getAttribute("data-refcount") ?? "0"
   );
   if (refcount <= 1) element.remove();
   else element.dataset.refcount = Number(refcount - 1).toString();
@@ -26210,7 +26107,6 @@ function latexToMarkup(mf, latex) {
   return makeStruts(box, { classes: "ML__latex" }).toMarkup();
 }
 function showSuggestionPopover(mf, suggestions) {
-  var _a3;
   if (suggestions.length === 0) {
     hideSuggestionPopover(mf);
     return;
@@ -26229,14 +26125,13 @@ function showSuggestionPopover(mf, suggestions) {
   }
   const panel = createSuggestionPopover(mf, `<ul>${template}</ul>`);
   if (isSuggestionPopoverVisible()) {
-    (_a3 = panel.querySelector(".ML__popover__current")) == null ? void 0 : _a3.scrollIntoView({ block: "nearest", inline: "nearest" });
+    panel.querySelector(".ML__popover__current")?.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
   setTimeout(() => {
-    var _a4;
     if (panel && !isSuggestionPopoverVisible()) {
       panel.classList.add("is-visible");
       updateSuggestionPopoverPosition(mf);
-      (_a4 = panel.querySelector(".ML__popover__current")) == null ? void 0 : _a4.scrollIntoView({ block: "nearest", inline: "nearest" });
+      panel.querySelector(".ML__popover__current")?.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
   }, 32);
 }
@@ -26246,14 +26141,13 @@ function isSuggestionPopoverVisible() {
   return panel.classList.contains("is-visible");
 }
 function updateSuggestionPopoverPosition(mf, options) {
-  var _a3, _b3, _c2;
   if (!mf.element || mf.element.mathfield !== mf) return;
   if (!isSuggestionPopoverVisible()) return;
-  if (((_a3 = mf.model.at(mf.model.position)) == null ? void 0 : _a3.type) !== "latex") {
+  if (mf.model.at(mf.model.position)?.type !== "latex") {
     hideSuggestionPopover(mf);
     return;
   }
-  if (options == null ? void 0 : options.deferred) {
+  if (options?.deferred) {
     setTimeout(() => updateSuggestionPopoverPosition(mf), 32);
     return;
   }
@@ -26263,7 +26157,7 @@ function updateSuggestionPopoverPosition(mf, options) {
   const viewportWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
   const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
   const scrollbarHeight = window.innerHeight - document.documentElement.clientHeight;
-  const virtualkeyboardHeight = (_c2 = (_b3 = window.mathVirtualKeyboard) == null ? void 0 : _b3.boundingRect.height) != null ? _c2 : 0;
+  const virtualkeyboardHeight = window.mathVirtualKeyboard?.boundingRect.height ?? 0;
   const panel = document.getElementById("mathlive-suggestion-popover");
   if (position.x + panel.offsetWidth / 2 > viewportWidth - scrollbarWidth) {
     panel.style.left = `${viewportWidth - panel.offsetWidth - scrollbarWidth}px`;
@@ -26349,8 +26243,7 @@ function getFileUrl() {
   return m[1];
 }
 var gResolvedScriptUrl = null;
-var _a, _b;
-var gScriptUrl = ((_b = (_a = globalThis == null ? void 0 : globalThis.document) == null ? void 0 : _a.currentScript) == null ? void 0 : _b.src) || getFileUrl();
+var gScriptUrl = globalThis?.document?.currentScript?.src || getFileUrl();
 async function resolveUrl(url) {
   if (/^(?:[a-z+]+:)?\/\//i.test(url)) {
     try {
@@ -26378,7 +26271,7 @@ async function resolveUrl(url) {
       console.error(`Invalid URL "${url}" (relative to "${gScriptUrl}")`);
     }
   }
-  return new URL(url, gResolvedScriptUrl != null ? gResolvedScriptUrl : gScriptUrl).href;
+  return new URL(url, gResolvedScriptUrl ?? gScriptUrl).href;
 }
 
 // src/core/fonts.ts
@@ -26395,12 +26288,11 @@ async function reloadFonts() {
   return loadFonts();
 }
 async function loadFonts() {
-  var _a3;
   if (gFontsState !== "not-loaded") return;
   gFontsState = "loading";
-  const useStaticFonts = (_a3 = getComputedStyle(document.documentElement).getPropertyValue(
+  const useStaticFonts = getComputedStyle(document.documentElement).getPropertyValue(
     "--ML__static-fonts"
-  )) != null ? _a3 : false;
+  ) ?? false;
   if (useStaticFonts) {
     gFontsState = "ready";
     return;
@@ -26472,7 +26364,7 @@ async function loadFonts() {
         fonts.map((x) => {
           try {
             return x.load();
-          } catch (e) {
+          } catch {
           }
           return void 0;
         })
@@ -26522,10 +26414,10 @@ function requestUpdate(mathfield, options) {
   });
 }
 function makeBox(mathfield, renderOptions) {
-  var _a3;
-  renderOptions = renderOptions != null ? renderOptions : {};
+  renderOptions = renderOptions ?? {};
   const context = new Context({
-    from: __spreadProps(__spreadValues({}, mathfield.context), {
+    from: {
+      ...mathfield.context,
       atomIdsSettings: {
         // Using the hash as a seed for the ID
         // keeps the IDs the same until the content of the field changes.
@@ -26538,10 +26430,10 @@ function makeBox(mathfield, renderOptions) {
         // The `groupNumbers` flag indicates that extra boxes should be generated
         // to represent group of atoms, for example, a box to group
         // consecutive digits to represent a number.
-        groupNumbers: (_a3 = renderOptions.forHighlighting) != null ? _a3 : false
+        groupNumbers: renderOptions.forHighlighting ?? false
       },
       letterShapeStyle: mathfield.options.letterShapeStyle
-    }),
+    },
     mathstyle: mathfield.options.defaultMode === "inline-math" ? "textstyle" : "displaystyle"
   });
   const base = mathfield.model.root.render(context);
@@ -26593,7 +26485,7 @@ function contentMarkup(mathfield, renderOptions) {
 }
 function render(mathfield, renderOptions) {
   if (!isValidMathfield(mathfield)) return;
-  renderOptions != null ? renderOptions : renderOptions = {};
+  renderOptions ??= {};
   const keyboardToggle = mathfield.element.querySelector(
     "[part=virtual-keyboard-toggle]"
   );
@@ -26628,14 +26520,13 @@ function render(mathfield, renderOptions) {
   mathfield.dirty = false;
 }
 function renderSelection(mathfield, interactive) {
-  var _a3;
   const field = mathfield.field;
   if (!field) return;
   for (const element of field.querySelectorAll(
     ".ML__selection, .ML__contains-highlight"
   ))
     element.remove();
-  if (!(interactive != null ? interactive : false) && gFontsState !== "error" && gFontsState !== "ready") {
+  if (!(interactive ?? false) && gFontsState !== "error" && gFontsState !== "ready") {
     setTimeout(() => {
       if (gFontsState === "ready") renderSelection(mathfield);
       else setTimeout(() => renderSelection(mathfield), 128);
@@ -26643,7 +26534,7 @@ function renderSelection(mathfield, interactive) {
     return;
   }
   const model = mathfield.model;
-  (_a3 = mathfield.atomBoundsCache) == null ? void 0 : _a3.clear();
+  mathfield.atomBoundsCache?.clear();
   let _scaleFactor;
   const scaleFactor = () => {
     if (_scaleFactor !== void 0) return _scaleFactor;
@@ -26658,7 +26549,7 @@ function renderSelection(mathfield, interactive) {
     let atom = model.at(model.position);
     while (atom && atom.type !== "prompt" && !(atom.containsCaret && atom.displayContainsHighlight))
       atom = atom.parent;
-    if ((atom == null ? void 0 : atom.containsCaret) && atom.displayContainsHighlight) {
+    if (atom?.containsCaret && atom.displayContainsHighlight) {
       const s2 = scaleFactor();
       const bounds = adjustForScrolling(
         mathfield,
@@ -26757,17 +26648,18 @@ function reparseAllMathfields() {
 var HAPTIC_FEEDBACK_DURATION = 3;
 var COMMANDS;
 function register2(commands, options) {
-  options = __spreadValues({
+  options = {
     target: "mathfield",
     canUndo: false,
     audioFeedback: void 0,
     changeContent: false,
-    changeSelection: false
-  }, options != null ? options : {});
+    changeSelection: false,
+    ...options ?? {}
+  };
   if (!COMMANDS) COMMANDS = {};
   for (const selector of Object.keys(commands)) {
     console.assert(!COMMANDS[selector], "Selector already defined: ", selector);
-    COMMANDS[selector] = __spreadProps(__spreadValues({}, options), { fn: commands[selector] });
+    COMMANDS[selector] = { ...options, fn: commands[selector] };
   }
 }
 function getCommandInfo(command) {
@@ -26779,11 +26671,9 @@ function getCommandInfo(command) {
   return COMMANDS[selector];
 }
 function getCommandTarget(command) {
-  var _a3;
-  return (_a3 = getCommandInfo(command)) == null ? void 0 : _a3.target;
+  return getCommandInfo(command)?.target;
 }
 function perform(mathfield, command) {
-  var _a3, _b3;
   command = parseCommand(command);
   if (!command) return false;
   let selector;
@@ -26795,9 +26685,9 @@ function perform(mathfield, command) {
     args = command.slice(1);
   } else selector = command;
   const info = COMMANDS[selector];
-  const commandTarget = info == null ? void 0 : info.target;
+  const commandTarget = info?.target;
   if (commandTarget === "model") {
-    if (!mathfield.isSelectionEditable && (info == null ? void 0 : info.changeContent)) {
+    if (!mathfield.isSelectionEditable && info?.changeContent) {
       mathfield.model.announce("plonk");
       return false;
     }
@@ -26811,10 +26701,10 @@ function perform(mathfield, command) {
     dirty = true;
     handled = true;
   } else if (commandTarget === "virtual-keyboard") {
-    dirty = (_b3 = (_a3 = window.mathVirtualKeyboard) == null ? void 0 : _a3.executeCommand(command)) != null ? _b3 : false;
+    dirty = window.mathVirtualKeyboard?.executeCommand(command) ?? false;
     handled = true;
   } else if (COMMANDS[selector]) {
-    if (!mathfield.isSelectionEditable && (info == null ? void 0 : info.changeContent)) {
+    if (!mathfield.isSelectionEditable && info?.changeContent) {
       mathfield.model.announce("plonk");
       return false;
     }
@@ -26823,14 +26713,14 @@ function perform(mathfield, command) {
     handled = true;
   } else throw new Error(`Unknown command "${selector}"`);
   if (commandTarget !== "virtual-keyboard") {
-    if (!mathfield.model.selectionIsCollapsed || (info == null ? void 0 : info.changeSelection) && selector !== "deleteBackward") {
+    if (!mathfield.model.selectionIsCollapsed || info?.changeSelection && selector !== "deleteBackward") {
       mathfield.flushInlineShortcutBuffer();
-      if (!(info == null ? void 0 : info.changeContent)) mathfield.stopCoalescingUndo();
+      if (!info?.changeContent) mathfield.stopCoalescingUndo();
       mathfield.defaultStyle = {};
     }
   }
   if (dirty) {
-    if ((info == null ? void 0 : info.changeSelection) && handled) {
+    if (info?.changeSelection && handled) {
       mathfield.dirty = true;
       mathfield.scrollIntoView();
     } else requestUpdate(mathfield);
@@ -26838,13 +26728,12 @@ function perform(mathfield, command) {
   return handled;
 }
 function performWithFeedback(mathfield, selector) {
-  var _a3;
   if (!mathfield) return false;
   mathfield.focus();
   if (mathfield_element_default.keypressVibration && canVibrate())
     navigator.vibrate(HAPTIC_FEEDBACK_DURATION);
   const info = getCommandInfo(selector);
-  globalThis.MathfieldElement.playSound((_a3 = info == null ? void 0 : info.audioFeedback) != null ? _a3 : "keypress");
+  globalThis.MathfieldElement.playSound(info?.audioFeedback ?? "keypress");
   const result = mathfield.executeCommand(selector);
   mathfield.scrollIntoView();
   return result;
@@ -26872,10 +26761,7 @@ register2(
 );
 register2(
   {
-    dispatchEvent: (mathfield, event, detail) => {
-      var _a3, _b3;
-      return (_b3 = (_a3 = mathfield.host) == null ? void 0 : _a3.dispatchEvent(new CustomEvent(event, { detail }))) != null ? _b3 : false;
-    }
+    dispatchEvent: (mathfield, event, detail) => mathfield.host?.dispatchEvent(new CustomEvent(event, { detail })) ?? false
   },
   { target: "mathfield" }
 );
@@ -26928,10 +26814,9 @@ function parseCommand(command) {
 // src/virtual-keyboard/proxy.ts
 var VIRTUAL_KEYBOARD_MESSAGE = "mathlive#virtual-keyboard-message";
 function isVirtualKeyboardMessage(evt) {
-  var _a3;
   if (evt.type !== "message") return false;
   const msg = evt;
-  return ((_a3 = msg.data) == null ? void 0 : _a3.type) === VIRTUAL_KEYBOARD_MESSAGE;
+  return msg.data?.type === VIRTUAL_KEYBOARD_MESSAGE;
 }
 var VirtualKeyboardProxy = class _VirtualKeyboardProxy {
   constructor() {
@@ -27035,7 +26920,7 @@ var VirtualKeyboardProxy = class _VirtualKeyboardProxy {
       return true;
     this.listeners[event.type].forEach((x) => {
       if (typeof x === "function") x(event);
-      else x == null ? void 0 : x.handleEvent(event);
+      else x?.handleEvent(event);
     });
     return !event.defaultPrevented;
   }
@@ -27080,10 +26965,11 @@ var VirtualKeyboardProxy = class _VirtualKeyboardProxy {
       );
     }
     this.targetWindow.postMessage(
-      __spreadValues({
+      {
         type: VIRTUAL_KEYBOARD_MESSAGE,
-        action
-      }, payload),
+        action,
+        ...payload
+      },
       this.targetOrigin
     );
   }
@@ -27989,18 +27875,17 @@ var VARIANTS2 = {
 };
 var gVariantPanelController;
 function showVariantsPanel(element, onClose) {
-  var _a3, _b3, _c2, _d2, _e;
   const keyboard = VirtualKeyboard.singleton;
   if (!keyboard) return;
   const keycap = parentKeycap(element);
   let variantDef = "";
   if (window.mathVirtualKeyboard.isShifted) {
-    const shiftedDefinition = (_a3 = keyboard.getKeycap(keycap == null ? void 0 : keycap.id)) == null ? void 0 : _a3.shift;
+    const shiftedDefinition = keyboard.getKeycap(keycap?.id)?.shift;
     if (typeof shiftedDefinition === "object" && "variants" in shiftedDefinition)
-      variantDef = (_b3 = shiftedDefinition.variants) != null ? _b3 : "";
-  } else variantDef = (_d2 = (_c2 = keyboard.getKeycap(keycap == null ? void 0 : keycap.id)) == null ? void 0 : _c2.variants) != null ? _d2 : "";
+      variantDef = shiftedDefinition.variants ?? "";
+  } else variantDef = keyboard.getKeycap(keycap?.id)?.variants ?? "";
   if (typeof variantDef === "string" && !hasVariants(variantDef) || Array.isArray(variantDef) && variantDef.length === 0) {
-    onClose == null ? void 0 : onClose();
+    onClose?.();
     return;
   }
   const variants = {};
@@ -28025,12 +27910,12 @@ function showVariantsPanel(element, onClose) {
   variantPanel.style.width = `calc(var(--variant-keycap-length) * ${w} + 12px)`;
   variantPanel.innerHTML = mathfield_element_default.createHTML(markup);
   Scrim.open({
-    root: (_e = keyboard == null ? void 0 : keyboard.container) == null ? void 0 : _e.querySelector(".ML__keyboard"),
+    root: keyboard?.container?.querySelector(".ML__keyboard"),
     child: variantPanel
   });
   gVariantPanelController = new AbortController();
   const { signal } = gVariantPanelController;
-  const position = element == null ? void 0 : element.getBoundingClientRect();
+  const position = element?.getBoundingClientRect();
   if (position) {
     if (position.top - variantPanel.clientHeight < 0) {
       variantPanel.style.width = "auto";
@@ -28054,15 +27939,14 @@ function showVariantsPanel(element, onClose) {
     variantPanel.style.top = `${top}px`;
     variantPanel.classList.add("is-visible");
     requestAnimationFrame(() => {
-      var _a4;
       variantPanel.addEventListener(
         "pointerup",
         (ev) => {
           const target = parentKeycap(ev.target);
-          if (!(target == null ? void 0 : target.id) || !variants[target.id]) return;
+          if (!target?.id || !variants[target.id]) return;
           executeKeycapCommand(variants[target.id]);
           hideVariantsPanel();
-          onClose == null ? void 0 : onClose();
+          onClose?.();
           ev.preventDefault();
         },
         { capture: true, passive: false, signal }
@@ -28071,7 +27955,7 @@ function showVariantsPanel(element, onClose) {
         "pointerenter",
         (ev) => {
           const target = parentKeycap(ev.target);
-          if (!(target == null ? void 0 : target.id) || !variants[target.id]) return;
+          if (!target?.id || !variants[target.id]) return;
           target.classList.add("is-active");
         },
         { capture: true, signal }
@@ -28082,12 +27966,12 @@ function showVariantsPanel(element, onClose) {
           const target = parentKeycap(ev.target);
           if (ev.target && "tagName" in ev.target && typeof ev.target.tagName === "string" && ev.target.tagName.toUpperCase() === "ASIDE")
             return;
-          if (!(target == null ? void 0 : target.id) || !variants[target.id]) return;
+          if (!target?.id || !variants[target.id]) return;
           target.classList.remove("is-active");
         },
         { capture: true, signal }
       );
-      if ((_a4 = keyboard.getKeycap(keycap == null ? void 0 : keycap.id)) == null ? void 0 : _a4.stickyVariantPanel) {
+      if (keyboard.getKeycap(keycap?.id)?.stickyVariantPanel) {
         window.addEventListener(
           "pointerdown",
           (ev) => {
@@ -28095,7 +27979,7 @@ function showVariantsPanel(element, onClose) {
             const isInside = variantPanel.contains(ev.target);
             if (ev.target === variantPanel || isInside) return;
             hideVariantsPanel();
-            onClose == null ? void 0 : onClose();
+            onClose?.();
           },
           { signal }
         );
@@ -28104,7 +27988,7 @@ function showVariantsPanel(element, onClose) {
           "pointercancel",
           () => {
             hideVariantsPanel();
-            onClose == null ? void 0 : onClose();
+            onClose?.();
           },
           { signal }
         );
@@ -28112,7 +27996,7 @@ function showVariantsPanel(element, onClose) {
           "pointerup",
           () => {
             hideVariantsPanel();
-            onClose == null ? void 0 : onClose();
+            onClose?.();
           },
           { signal }
         );
@@ -28122,7 +28006,7 @@ function showVariantsPanel(element, onClose) {
   return;
 }
 function hideVariantsPanel() {
-  gVariantPanelController == null ? void 0 : gVariantPanelController.abort();
+  gVariantPanelController?.abort();
   gVariantPanelController = null;
   if (Scrim.state === "open") Scrim.close();
 }
@@ -28155,9 +28039,8 @@ function hasVariants(id) {
   return VARIANTS2[id] !== void 0;
 }
 function getVariants(id) {
-  var _a3;
   if (typeof id !== "string") return id;
-  if (!VARIANTS2[id]) VARIANTS2[id] = (_a3 = makeVariants(id)) != null ? _a3 : [];
+  if (!VARIANTS2[id]) VARIANTS2[id] = makeVariants(id) ?? [];
   return VARIANTS2[id];
 }
 
@@ -28197,8 +28080,7 @@ function stripTags(value) {
   return value.replace(/<\/?[^>]+(>|$)/g, " ");
 }
 function getKeycapAriaLabel(keycap) {
-  var _a3, _b3, _c2, _d2;
-  const candidate = (_d2 = (_c2 = (_b3 = (_a3 = keycap.tooltip) != null ? _a3 : typeof keycap.label === "string" ? stripTags(keycap.label) : void 0) != null ? _b3 : keycap.insert) != null ? _c2 : keycap.latex) != null ? _d2 : keycap.key;
+  const candidate = keycap.tooltip ?? (typeof keycap.label === "string" ? stripTags(keycap.label) : void 0) ?? keycap.insert ?? keycap.latex ?? keycap.key;
   if (!candidate) return null;
   const label = candidate.replace(/\s+/g, " ").trim();
   return label || null;
@@ -28207,33 +28089,30 @@ function serializeKeycapCommand(command) {
   if (typeof command === "undefined" || command === null) return null;
   try {
     return JSON.stringify(command);
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 function getKeycapValue(keycap) {
-  var _a3, _b3;
-  const value = (_b3 = (_a3 = keycap.insert) != null ? _a3 : keycap.latex) != null ? _b3 : keycap.key;
-  return value != null ? value : null;
+  const value = keycap.insert ?? keycap.latex ?? keycap.key;
+  return value ?? null;
 }
 function normalizeLayer(layer) {
-  var _a3;
   if (Array.isArray(layer)) return layer.map((x) => normalizeLayer(x)).flat();
   const result = typeof layer === "string" ? { markup: layer } : layer;
   if ("rows" in result && Array.isArray(result.rows))
     result.rows = result.rows.map((row) => row.map((x) => normalizeKeycap(x)));
-  (_a3 = result.id) != null ? _a3 : result.id = "ML__layer_" + Date.now().toString(36).slice(-2) + Math.floor(Math.random() * 1e5).toString(36);
+  result.id ??= "ML__layer_" + Date.now().toString(36).slice(-2) + Math.floor(Math.random() * 1e5).toString(36);
   return [result];
 }
 function alphabeticLayout() {
-  var _a3, _b3;
   const keyboard = window.mathVirtualKeyboard;
   let layoutName = keyboard.alphabeticLayout;
   if (layoutName === "auto") {
     const activeLayout = getActiveKeyboardLayout();
     if (activeLayout) layoutName = activeLayout.virtualLayout;
     if (!layoutName || layoutName === "auto") {
-      layoutName = (_a3 = {
+      layoutName = {
         fr: "azerty",
         be: "azerty",
         al: "qwertz",
@@ -28243,7 +28122,7 @@ function alphabeticLayout() {
         hu: "qwertz",
         sk: "qwertz",
         ch: "qwertz"
-      }[l10n.locale.slice(0, 2)]) != null ? _a3 : "qwerty";
+      }[l10n.locale.slice(0, 2)] ?? "qwerty";
     }
   }
   const ALPHABETIC_TEMPLATE = {
@@ -28253,7 +28132,7 @@ function alphabeticLayout() {
     dvorak: ["^  pyfgcrl ", "aoeuidhtns", "qjkxbmwvz~"],
     colemak: [" qwfpgjluy ", "arstdhneio", "^zxcvbkm~"]
   };
-  const template = (_b3 = ALPHABETIC_TEMPLATE[layoutName]) != null ? _b3 : ALPHABETIC_TEMPLATE.qwerty;
+  const template = ALPHABETIC_TEMPLATE[layoutName] ?? ALPHABETIC_TEMPLATE.qwerty;
   const rows = layoutName === "azerty" ? [
     [
       { label: "1", variants: "1" },
@@ -28340,17 +28219,19 @@ function normalizeLayout(layout) {
       !("layers" in layout || "markup" in layout),
       `MathLive {{SDK_VERSION}}: when providing a "rows" property, "layers" and "markup" are ignored`
     );
-    const _a3 = layout, { rows } = _a3, partialLayout = __objRest(_a3, ["rows"]);
-    result = __spreadProps(__spreadValues({}, partialLayout), {
+    const { rows, ...partialLayout } = layout;
+    result = {
+      ...partialLayout,
       layers: normalizeLayer({ rows: layout.rows })
-    });
+    };
   } else if ("markup" in layout && typeof layout.markup === "string") {
-    const _b3 = layout, { markup } = _b3, partialLayout = __objRest(_b3, ["markup"]);
-    result = __spreadProps(__spreadValues({}, partialLayout), {
+    const { markup, ...partialLayout } = layout;
+    result = {
+      ...partialLayout,
       layers: normalizeLayer(layout.markup)
-    });
+    };
   } else {
-    result = __spreadValues({}, layout);
+    result = { ...layout };
     if ("layers" in layout) result.layers = normalizeLayer(layout.layers);
     else {
       console.error(
@@ -28377,7 +28258,6 @@ function normalizeLayout(layout) {
   return result;
 }
 function makeLayoutsToolbar(keyboard, index) {
-  var _a3, _b3;
   let markup = `<div class="left">`;
   if (keyboard.normalizedLayouts.length > 1) {
     for (const [i, l] of keyboard.normalizedLayouts.entries()) {
@@ -28387,10 +28267,10 @@ function makeLayoutsToolbar(keyboard, index) {
       if (layout.labelClass) classes.push(...layout.labelClass.split(" "));
       markup += `<div class="${classes.join(" ")}"`;
       if (layout.tooltip) {
-        markup += " data-tooltip='" + ((_a3 = localize(layout.tooltip)) != null ? _a3 : layout.tooltip) + "' ";
+        markup += " data-tooltip='" + (localize(layout.tooltip) ?? layout.tooltip) + "' ";
       }
       if (i !== index) markup += `data-layer="${layout.layers[0].id}"`;
-      markup += `>${(_b3 = layout.label) != null ? _b3 : "untitled"}</div>`;
+      markup += `>${layout.label ?? "untitled"}</div>`;
     }
   }
   markup += "</div>";
@@ -28562,12 +28442,11 @@ function makeKeyboardElement(keyboard) {
   if (toolbars) {
     for (const toolbar of toolbars) {
       toolbar.addEventListener("click", (ev) => {
-        var _a3, _b3;
         let target = ev.target;
         let command = "";
         while (target && !command) {
-          command = (_a3 = target == null ? void 0 : target.getAttribute("data-command")) != null ? _a3 : "";
-          target = (_b3 = target == null ? void 0 : target.parentElement) != null ? _b3 : null;
+          command = target?.getAttribute("data-command") ?? "";
+          target = target?.parentElement ?? null;
         }
         if (command) keyboard.executeCommand(JSON.parse(command));
       });
@@ -28586,7 +28465,6 @@ function makeKeyboardElement(keyboard) {
   return result;
 }
 function makeLayout(keyboard, layout, index) {
-  var _a3;
   const markup = [];
   if (!("layers" in layout)) return "";
   for (const layer of layout.layers) {
@@ -28594,7 +28472,7 @@ function makeLayout(keyboard, layout, index) {
     if (keyboard.normalizedLayouts.length > 1 || layout.displayEditToolbar) {
       markup.push(`<div class='MLK__toolbar' role='toolbar'>`);
       markup.push(makeLayoutsToolbar(keyboard, index));
-      if ((_a3 = layout.displayEditToolbar) != null ? _a3 : true)
+      if (layout.displayEditToolbar ?? true)
         markup.push(`<div class="ML__edit-toolbar right"></div>`);
       markup.push(`</div>`);
     }
@@ -28652,26 +28530,25 @@ function makeLayer(keyboard, layer) {
   return layerMarkup;
 }
 function renderKeycap(keycap, options = { shifted: false }) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g;
   let markup = "";
-  let cls = (_a3 = keycap.class) != null ? _a3 : "";
+  let cls = keycap.class ?? "";
   if (options.shifted && isShiftKey(keycap)) cls += " is-active";
   if (options.shifted && "shift" in keycap) {
     if (typeof keycap.shift === "string") markup = latexToMarkup2(keycap.shift);
     else if (typeof keycap.shift === "object") {
-      markup = keycap.shift.label ? keycap.shift.label : (_b3 = latexToMarkup2(keycap.shift.latex || keycap.shift.insert || "") || keycap.shift.key) != null ? _b3 : "";
+      markup = keycap.shift.label ? keycap.shift.label : (latexToMarkup2(keycap.shift.latex || keycap.shift.insert || "") || keycap.shift.key) ?? "";
     }
     if (typeof keycap.shift === "object")
-      cls = (_d2 = (_c2 = keycap.shift.class) != null ? _c2 : keycap.class) != null ? _d2 : "";
+      cls = keycap.shift.class ?? keycap.class ?? "";
   } else {
-    markup = keycap.label ? keycap.label : (_e = latexToMarkup2(keycap.latex || keycap.insert || "") || keycap.key) != null ? _e : "";
+    markup = keycap.label ? keycap.label : (latexToMarkup2(keycap.latex || keycap.insert || "") || keycap.key) ?? "";
     if (keycap.shift) {
       let shiftLabel;
       if (typeof keycap.shift === "string")
         shiftLabel = latexToMarkup2(keycap.shift);
       else if (keycap.shift.label) shiftLabel = keycap.shift.label;
       else {
-        shiftLabel = (_f = latexToMarkup2(keycap.shift.latex || keycap.shift.insert || "") || keycap.shift.key) != null ? _f : "";
+        shiftLabel = (latexToMarkup2(keycap.shift.latex || keycap.shift.insert || "") || keycap.shift.key) ?? "";
       }
       markup += `<span class="MLK__shift">${shiftLabel}</span>`;
     }
@@ -28681,7 +28558,7 @@ function renderKeycap(keycap, options = { shifted: false }) {
   if (!/(^|\s)(separator|action|shift|fnbutton|bigfnbutton)($|\s)/.test(cls))
     cls += " MLK__keycap";
   if (!/\bw[0-9]+\b/.test(cls) && keycap.width) {
-    cls += (_g = { 0: " w0", 0.5: " w5", 1.5: " w15", 2: " w20", 5: " w50" }[keycap.width]) != null ? _g : "";
+    cls += { 0: " w0", 0.5: " w5", 1.5: " w15", 2: " w20", 5: " w50" }[keycap.width] ?? "";
   }
   return [markup, cls || "MLK__keycap"];
 }
@@ -28959,7 +28836,6 @@ var KEYCAP_SHORTCUTS = {
   }
 };
 function normalizeKeycap(keycap) {
-  var _a3;
   if (typeof keycap === "string") {
     if (keycap === "[.]" && globalThis.MathfieldElement.decimalSeparator === ",")
       keycap = "[,]";
@@ -28968,18 +28844,22 @@ function normalizeKeycap(keycap) {
   }
   let shortcut = void 0;
   if ("label" in keycap && keycap.label && KEYCAP_SHORTCUTS[keycap.label]) {
-    shortcut = __spreadProps(__spreadValues(__spreadValues({}, KEYCAP_SHORTCUTS[keycap.label]), keycap), {
+    shortcut = {
+      ...KEYCAP_SHORTCUTS[keycap.label],
+      ...keycap,
       label: KEYCAP_SHORTCUTS[keycap.label].label
-    });
+    };
   }
   if ("key" in keycap && keycap.key && KEYCAP_SHORTCUTS[keycap.key]) {
-    shortcut = __spreadProps(__spreadValues(__spreadValues({}, KEYCAP_SHORTCUTS[keycap.key]), keycap), {
+    shortcut = {
+      ...KEYCAP_SHORTCUTS[keycap.key],
+      ...keycap,
       key: KEYCAP_SHORTCUTS[keycap.key].key
-    });
+    };
   }
   if (!shortcut) return keycap;
   if (shortcut.command === "insertDecimalSeparator")
-    shortcut.label = (_a3 = globalThis.MathfieldElement.decimalSeparator) != null ? _a3 : ".";
+    shortcut.label = globalThis.MathfieldElement.decimalSeparator ?? ".";
   if (shortcut.tooltip === void 0 || shortcut.tooltip === null || shortcut.tooltip === false)
     delete shortcut.tooltip;
   if (shortcut.tooltip === void 0 || shortcut.tooltip === null || shortcut.tooltip === false)
@@ -28994,7 +28874,6 @@ function normalizeKeycap(keycap) {
 }
 var pressAndHoldTimer;
 function handlePointerDown(ev) {
-  var _a3, _b3, _c2, _d2;
   if (ev.button !== 0) return;
   const keyboard = VirtualKeyboard.singleton;
   if (!keyboard) return;
@@ -29002,20 +28881,20 @@ function handlePointerDown(ev) {
   while (layerButton && !layerButton.getAttribute("data-layer"))
     layerButton = layerButton.parentElement;
   if (layerButton) {
-    keyboard.currentLayer = (_a3 = layerButton.getAttribute("data-layer")) != null ? _a3 : "";
+    keyboard.currentLayer = layerButton.getAttribute("data-layer") ?? "";
     ev.preventDefault();
     return;
   }
   const target = parentKeycap(ev.target);
-  if (!(target == null ? void 0 : target.id)) return;
+  if (!target?.id) return;
   const keycap = keyboard.getKeycap(target.id);
   if (!keycap) return;
   console.assert(ev.type === "pointerdown");
   const vk = keyboard;
   if (!vk.connectedMathfieldWindow) {
-    const focusedMf = (_b3 = window.focusedMathfield) == null ? void 0 : _b3.call(window);
+    const focusedMf = window.focusedMathfield?.();
     if (focusedMf) {
-      const mfWindow = (_d2 = (_c2 = focusedMf.element) == null ? void 0 : _c2.ownerDocument) == null ? void 0 : _d2.defaultView;
+      const mfWindow = focusedMf.element?.ownerDocument?.defaultView;
       if (mfWindow && mfWindow !== window)
         vk.connectedMathfieldWindow = mfWindow;
     }
@@ -29056,7 +28935,7 @@ function handlePointerDown(ev) {
             ev.target.releasePointerCapture(ev.pointerId);
           showVariantsPanel(target, () => {
             controller.abort();
-            target == null ? void 0 : target.classList.remove("is-active");
+            target?.classList.remove("is-active");
           });
         }
       },
@@ -29068,7 +28947,7 @@ function handlePointerDown(ev) {
 function handleVirtualKeyboardEvent(controller) {
   return (ev) => {
     const target = parentKeycap(ev.target);
-    if (!(target == null ? void 0 : target.id)) return;
+    if (!target?.id) return;
     const keyboard = VirtualKeyboard.singleton;
     if (!keyboard) return;
     const keycap = keyboard.getKeycap(target.id);
@@ -29178,7 +29057,7 @@ function parentKeycap(el) {
   if (!el) return void 0;
   let node = el;
   while (node && !isKeycapElement(node)) node = node.parentElement;
-  return node != null ? node : void 0;
+  return node ?? void 0;
 }
 function isShiftKey(k) {
   return !!k.class && /(^|\s)shift($|\s)/.test(k.class);
@@ -29196,7 +29075,6 @@ var VirtualKeyboard = class _VirtualKeyboard {
      */
     this._shiftPressCount = 0;
     this.isSandbox = false;
-    var _a3;
     this.targetOrigin = window.origin;
     this.originValidator = "none";
     this._alphabeticLayout = "auto";
@@ -29212,14 +29090,14 @@ var VirtualKeyboard = class _VirtualKeyboard {
     });
     this.listeners = {};
     try {
-      (_a3 = window.top) == null ? void 0 : _a3.addEventListener("message", this);
+      window.top?.addEventListener("message", this);
     } catch (e) {
       window.addEventListener("message", this);
     }
     if (isTouchCapable()) {
       document.addEventListener("focusin", (event) => {
         const target = event.target;
-        if (!(target == null ? void 0 : target.isConnected)) return;
+        if (!target?.isConnected) return;
         setTimeout(() => {
           const mf = focusedMathfield();
           if (!mf) return;
@@ -29238,11 +29116,9 @@ var VirtualKeyboard = class _VirtualKeyboard {
     });
   }
   get currentLayer() {
-    var _a3, _b3, _c2;
-    return (_c2 = (_b3 = (_a3 = this._element) == null ? void 0 : _a3.querySelector(".MLK__layer.is-visible")) == null ? void 0 : _b3.id) != null ? _c2 : "";
+    return this._element?.querySelector(".MLK__layer.is-visible")?.id ?? "";
   }
   set currentLayer(id) {
-    var _a3;
     if (!this._element) {
       this.latentLayer = id;
       return;
@@ -29250,7 +29126,7 @@ var VirtualKeyboard = class _VirtualKeyboard {
     let newActive = id ? this._element.querySelector(`#${id}.MLK__layer`) : null;
     if (!newActive) newActive = this._element.querySelector(".MLK__layer");
     if (newActive) {
-      (_a3 = this._element.querySelector(".MLK__layer.is-visible")) == null ? void 0 : _a3.classList.remove("is-visible");
+      this._element.querySelector(".MLK__layer.is-visible")?.classList.remove("is-visible");
       newActive.classList.add("is-visible");
     }
     this.render();
@@ -29259,9 +29135,8 @@ var VirtualKeyboard = class _VirtualKeyboard {
     return this._shiftPressCount;
   }
   set shiftPressCount(count) {
-    var _a3;
     this._shiftPressCount = count > 2 || count < 0 ? 0 : count;
-    (_a3 = this._element) == null ? void 0 : _a3.classList.toggle("is-caps-lock", this.shiftPressCount === 2);
+    this._element?.classList.toggle("is-caps-lock", this.shiftPressCount === 2);
     this.render();
   }
   get isShifted() {
@@ -29280,8 +29155,7 @@ var VirtualKeyboard = class _VirtualKeyboard {
     this.rebuild();
   }
   getKeycap(id) {
-    var _a3;
-    return id ? (_a3 = KEYCAP_SHORTCUTS[id]) != null ? _a3 : this.keycapRegistry[id] : void 0;
+    return id ? KEYCAP_SHORTCUTS[id] ?? this.keycapRegistry[id] : void 0;
   }
   getLayer(id) {
     const layouts = this.normalizedLayouts;
@@ -29361,7 +29235,7 @@ var VirtualKeyboard = class _VirtualKeyboard {
       return true;
     this.listeners[event.type].forEach((x) => {
       if (typeof x === "function") x(event);
-      else x == null ? void 0 : x.handleEvent(event);
+      else x?.handleEvent(event);
     });
     return !event.defaultPrevented;
   }
@@ -29372,9 +29246,8 @@ var VirtualKeyboard = class _VirtualKeyboard {
     return this._element;
   }
   set element(val) {
-    var _a3;
     if (this._element === val) return;
-    (_a3 = this._element) == null ? void 0 : _a3.remove();
+    this._element?.remove();
     this._element = val;
   }
   get visible() {
@@ -29385,9 +29258,8 @@ var VirtualKeyboard = class _VirtualKeyboard {
     else this.hide();
   }
   get boundingRect() {
-    var _a3;
     if (!this._visible) return new DOMRect();
-    const plate = (_a3 = this._element) == null ? void 0 : _a3.getElementsByClassName("MLK__plate")[0];
+    const plate = this._element?.getElementsByClassName("MLK__plate")[0];
     if (plate) return plate.getBoundingClientRect();
     return new DOMRect();
   }
@@ -29442,7 +29314,6 @@ var VirtualKeyboard = class _VirtualKeyboard {
   }
   /** Update the keycaps to account for the current state */
   render() {
-    var _a3;
     if (!this._element) return;
     const layer = this.getLayer(this.currentLayer);
     this._element.classList.toggle(
@@ -29460,7 +29331,7 @@ var VirtualKeyboard = class _VirtualKeyboard {
         const [markup, cls] = renderKeycap(keycap, { shifted });
         keycapElement.innerHTML = globalThis.MathfieldElement.createHTML(markup);
         keycapElement.className = cls;
-        if (shifted && typeof keycap.shift === "object" && ((_a3 = keycap.shift) == null ? void 0 : _a3.tooltip))
+        if (shifted && typeof keycap.shift === "object" && keycap.shift?.tooltip)
           keycapElement.dataset.tooltip = keycap.shift.tooltip;
         else if (!shifted && keycap.tooltip)
           keycapElement.dataset.tooltip = keycap.tooltip;
@@ -29468,7 +29339,6 @@ var VirtualKeyboard = class _VirtualKeyboard {
     }
   }
   show(options) {
-    var _a3;
     if (this._visible) return;
     const container = this.container;
     if (!container) return;
@@ -29493,23 +29363,20 @@ var VirtualKeyboard = class _VirtualKeyboard {
       window.addEventListener("blur", this);
       window.addEventListener("keydown", this, { capture: true });
       window.addEventListener("keyup", this, { capture: true });
-      (_a3 = this._element) == null ? void 0 : _a3.classList.toggle(
+      this._element?.classList.toggle(
         "is-caps-lock",
         this.shiftPressCount === 2
       );
       this.currentLayer = this.latentLayer;
     }
     this._visible = true;
-    if (options == null ? void 0 : options.animate) {
+    if (options?.animate) {
       requestAnimationFrame(() => {
         if (this._element) {
           this._element.classList.add("animate");
           this._element.addEventListener(
             "transitionend",
-            () => {
-              var _a4;
-              return (_a4 = this._element) == null ? void 0 : _a4.classList.remove("animate");
-            },
+            () => this._element?.classList.remove("animate"),
             { once: true }
           );
           this._element.classList.add("is-visible");
@@ -29522,7 +29389,6 @@ var VirtualKeyboard = class _VirtualKeyboard {
     }
   }
   hide(_options) {
-    var _a3;
     const container = this.container;
     if (!container) return;
     if (!this._visible) return;
@@ -29539,7 +29405,7 @@ var VirtualKeyboard = class _VirtualKeyboard {
       window.removeEventListener("contextmenu", this, { capture: true });
       hideVariantsPanel();
       releaseStylesheets();
-      (_a3 = this._element) == null ? void 0 : _a3.remove();
+      this._element?.remove();
       this._element = void 0;
       if (this.originalContainerBottomPadding !== null)
         container.style.paddingBottom = this.originalContainerBottomPadding;
@@ -29547,11 +29413,9 @@ var VirtualKeyboard = class _VirtualKeyboard {
     this.stateChanged();
   }
   get height() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this.element) == null ? void 0 : _a3.offsetHeight) != null ? _b3 : 0;
+    return this.element?.offsetHeight ?? 0;
   }
   buildAndAttachElement() {
-    var _a3;
     console.assert(!this.element);
     this.element = makeKeyboardElement(this);
     window.addEventListener("contextmenu", this, { capture: true });
@@ -29567,7 +29431,7 @@ var VirtualKeyboard = class _VirtualKeyboard {
       },
       { capture: true }
     );
-    (_a3 = this.container) == null ? void 0 : _a3.appendChild(this.element);
+    this.container?.appendChild(this.element);
   }
   handleEvent(evt) {
     if (isVirtualKeyboardMessage(evt)) {
@@ -29682,20 +29546,22 @@ var VirtualKeyboard = class _VirtualKeyboard {
         new MessageEvent("message", {
           source: window,
           origin: window.origin,
-          data: __spreadValues({
+          data: {
             type: VIRTUAL_KEYBOARD_MESSAGE,
-            action
-          }, payload)
+            action,
+            ...payload
+          }
         })
       );
       return;
     }
     if (target) {
       target.postMessage(
-        __spreadValues({
+        {
           type: VIRTUAL_KEYBOARD_MESSAGE,
-          action
-        }, payload),
+          action,
+          ...payload
+        },
         { targetOrigin: this.targetOrigin }
       );
     } else {
@@ -29877,7 +29743,7 @@ function update(updates) {
       default:
         if (isArray(updates[key])) result[key] = [...updates[key]];
         else if (typeof updates[key] === "object" && !(updates[key] instanceof Element) && key !== "computeEngine")
-          result[key] = __spreadValues({}, updates[key]);
+          result[key] = { ...updates[key] };
         else result[key] = updates[key];
     }
   }
@@ -29893,7 +29759,7 @@ function get(config, keys) {
     if (config[x] === null) result[x] = null;
     else if (isArray(config[x])) result[x] = [...config[x]];
     else if (typeof config[x] === "object" && !(config[x] instanceof Element) && x !== "computeEngine") {
-      result[x] = __spreadValues({}, config[x]);
+      result[x] = { ...config[x] };
     } else result[x] = config[x];
   }
   if (typeof keys === "string") return result[keys];
@@ -30003,7 +29869,7 @@ function cellSiblings(model) {
 function parentArray(model, where) {
   let atom = model.at(model.position);
   while (atom && !(atom.parent instanceof ArrayAtom)) atom = atom.parent;
-  if ((atom == null ? void 0 : atom.type) === "array") {
+  if (atom?.type === "array") {
     const array = atom;
     if (array.environmentName === "lines") {
     }
@@ -30074,7 +29940,7 @@ function parentArray(model, where) {
 }
 function isPlaceholderCell(array, row, column) {
   const cell = array.getCell(row, column);
-  if ((cell == null ? void 0 : cell.length) !== 2) return false;
+  if (cell?.length !== 2) return false;
   return cell[1].type === "placeholder";
 }
 function cellRange(model, array, row, column) {
@@ -30124,14 +29990,13 @@ function addCell(model, where) {
   }
 }
 function addRowAfter(model) {
-  var _a3;
   const cursor = model.at(model.position);
   if (!isCellBranch(cursor.parentBranch) && cursor.parent !== model.root && model.root.type !== "root") {
     model.announce("plonk");
     return false;
   }
   if (!model.contentWillChange({ inputType: "insertText" })) return false;
-  if ((_a3 = model.parentEnvironment) == null ? void 0 : _a3.isMultiline) {
+  if (model.parentEnvironment?.isMultiline) {
     if (!model.selectionIsCollapsed) model.deleteAtoms(range(model.selection));
     const [first, last] = cellSiblings(model);
     const after = model.extractAtoms([model.position, model.offsetOf(last)]);
@@ -30223,7 +30088,7 @@ function removeCell(model, where) {
   let atom = model.at(model.position);
   while (atom && !(Array.isArray(atom.parentBranch) && atom.parent instanceof ArrayAtom))
     atom = atom.parent;
-  if (Array.isArray(atom == null ? void 0 : atom.parentBranch) && (atom == null ? void 0 : atom.parent) instanceof ArrayAtom) {
+  if (Array.isArray(atom?.parentBranch) && atom?.parent instanceof ArrayAtom) {
     const arrayAtom = atom.parent;
     const treeBranch = atom.parentBranch;
     let pos;
@@ -30286,11 +30151,15 @@ function placeholderCell() {
 }
 
 // src/editor/undo.ts
-var _UndoManager = class _UndoManager {
+var UndoManager = class _UndoManager {
   constructor(model) {
     this.recording = false;
     this.model = model;
     this.reset();
+  }
+  static {
+    // Maximum number of undo/redo states
+    this.maximumDepth = 1e3;
   }
   reset() {
     this.stack = [];
@@ -30354,17 +30223,26 @@ var _UndoManager = class _UndoManager {
       this.stack.shift();
       this.index -= 1;
     }
-    this.lastOp = op != null ? op : "";
+    this.lastOp = op ?? "";
     return true;
   }
 };
-// Maximum number of undo/redo states
-_UndoManager.maximumDepth = 1e3;
-var UndoManager = _UndoManager;
 
 // src/editor-model/delete.ts
+function isEmptyBoundedOperator(atom) {
+  if (!atom || atom.type !== "extensible-symbol") return false;
+  const boundedSlots = atom.boundedArgumentSlots;
+  const isEmptySlot = (branch) => {
+    const children = atom.branch(branch);
+    if (!children || children.length !== 2) return false;
+    const argument = children[1];
+    return argument instanceof PlaceholderAtom || argument instanceof BoundedArgumentAtom && argument.body?.length === 2 && argument.body[1] instanceof PlaceholderAtom;
+  };
+  return Boolean(
+    boundedSlots?.subscript && boundedSlots.superscript && isEmptySlot("subscript") && isEmptySlot("superscript")
+  );
+}
 function onDelete(model, direction, atom, branch) {
-  var _a3, _b3, _c2, _d2, _e, _f;
   const parent = atom.parent;
   if (isCellBranch(branch) && atom instanceof ArrayAtom && atom.isMultiline) {
     if (deleteRow(model, atom, branch[0], direction)) return true;
@@ -30458,7 +30336,7 @@ function onDelete(model, direction, atom, branch) {
     if (!branch && direction === "forward") return false;
     if (!branch) {
       if (atom.subscript || atom.superscript) {
-        const pos = direction === "forward" ? (_c2 = (_a3 = atom.superscript) == null ? void 0 : _a3[0]) != null ? _c2 : (_b3 = atom.subscript) == null ? void 0 : _b3[0] : (_f = (_d2 = atom.subscript) == null ? void 0 : _d2[0].lastSibling) != null ? _f : (_e = atom.superscript) == null ? void 0 : _e[0].lastSibling;
+        const pos = direction === "forward" ? atom.superscript?.[0] ?? atom.subscript?.[0] : atom.subscript?.[0].lastSibling ?? atom.superscript?.[0].lastSibling;
         if (pos) model.position = model.offsetOf(pos);
         return true;
       }
@@ -30471,6 +30349,12 @@ function onDelete(model, direction, atom, branch) {
       return true;
     }
     if (branch && atom.hasEmptyBranch(branch)) {
+      const boundedSlots = atom.boundedArgumentSlots;
+      if (boundedSlots && (branch === "subscript" && boundedSlots.subscript || branch === "superscript" && boundedSlots.superscript)) {
+        atom.setChildren([new PlaceholderAtom()], branch);
+        model.position = model.offsetOf(atom.firstChild);
+        return true;
+      }
       atom.removeBranch(branch);
       if (atom.type === "subsup" && !atom.subscript && !atom.superscript) {
         const pos = direction === "forward" ? model.offsetOf(atom) : Math.max(0, model.offsetOf(atom) - 1);
@@ -30506,7 +30390,7 @@ function onDelete(model, direction, atom, branch) {
     }
     return true;
   }
-  if ((parent == null ? void 0 : parent.type) === "genfrac" && !branch && atom.type !== "first") {
+  if (parent?.type === "genfrac" && !branch && atom.type !== "first") {
     let pos = model.offsetOf(atom.leftSibling);
     parent.removeChild(atom);
     if (parent.hasEmptyBranch("above") && parent.hasEmptyBranch("below")) {
@@ -30520,7 +30404,7 @@ function onDelete(model, direction, atom, branch) {
     model.position = pos;
     return true;
   }
-  if (direction === "backward" && ((parent == null ? void 0 : parent.command) === "\\ln" || (parent == null ? void 0 : parent.command) === "\\log") && atom.parentBranch !== "body") {
+  if (direction === "backward" && (parent?.command === "\\ln" || parent?.command === "\\log") && atom.parentBranch !== "body") {
     const pos = model.offsetOf(parent.leftSibling);
     parent.parent.removeChild(parent);
     model.announce("delete", void 0, [parent]);
@@ -30538,10 +30422,20 @@ function deleteBackward(model) {
   return model.deferNotifications(
     { content: true, selection: true, type: "deleteContentBackward" },
     () => {
-      var _a3;
       let target = model.at(model.position);
       if (target && onDelete(model, "backward", target)) return;
-      if (target == null ? void 0 : target.isFirstSibling) {
+      if (target?.isFirstSibling) {
+        const next = target.rightSibling;
+        if (isEmptyBoundedOperator(next)) {
+          const parent = next.parent;
+          if (parent) {
+            const position = model.offsetOf(next.leftSibling);
+            parent.removeChild(next);
+            model.position = position;
+            model.announce("delete", void 0, [next]);
+            return;
+          }
+        }
         if (onDelete(model, "backward", target.parent, target.parentBranch))
           return;
         target = null;
@@ -30551,12 +30445,20 @@ function deleteBackward(model) {
         return;
       }
       const targetParent = target.parent;
+      const deletedBranch = target.parentBranch;
       model.position = model.offsetOf(target.leftSibling);
       targetParent.removeChild(target);
+      if (targetParent instanceof BoundedArgumentAtom && targetParent.hasEmptyBranch("body")) {
+        targetParent.setChildren([new PlaceholderAtom()], "body");
+      }
+      const boundedSlots = targetParent.boundedArgumentSlots;
+      if (boundedSlots && (deletedBranch === "subscript" || deletedBranch === "superscript") && (deletedBranch === "subscript" && boundedSlots.subscript || deletedBranch === "superscript" && boundedSlots.superscript) && targetParent.hasEmptyBranch(deletedBranch)) {
+        targetParent.setChildren([new PlaceholderAtom()], deletedBranch);
+      }
       model.announce("delete", void 0, [target]);
       if (targetParent.type === "latexgroup" && targetParent.hasEmptyBranch("body")) {
         const pos = model.offsetOf(targetParent.leftSibling);
-        (_a3 = targetParent.parent) == null ? void 0 : _a3.removeChild(targetParent);
+        targetParent.parent?.removeChild(targetParent);
         model.position = Math.max(0, pos);
       }
       if (model.root.hasEmptyBranch("body"))
@@ -30573,7 +30475,6 @@ function deleteForward(model) {
   return model.deferNotifications(
     { content: true, selection: true, type: "deleteContentForward" },
     () => {
-      var _a3, _b3, _c2;
       let target = model.at(model.position).rightSibling;
       if (target && onDelete(model, "forward", target)) return;
       if (!target) {
@@ -30589,15 +30490,15 @@ function deleteForward(model) {
       }
       const targetParent = target.parent;
       targetParent.removeChild(target);
-      let sibling = (_a3 = model.at(model.position)) == null ? void 0 : _a3.rightSibling;
-      while ((sibling == null ? void 0 : sibling.type) === "subsup") {
+      let sibling = model.at(model.position)?.rightSibling;
+      while (sibling?.type === "subsup") {
         sibling.parent.removeChild(sibling);
-        sibling = (_b3 = model.at(model.position)) == null ? void 0 : _b3.rightSibling;
+        sibling = model.at(model.position)?.rightSibling;
       }
       model.announce("delete", void 0, [target]);
       if (targetParent.type === "latexgroup" && targetParent.hasEmptyBranch("body")) {
         const pos = model.offsetOf(targetParent.leftSibling);
-        (_c2 = targetParent.parent) == null ? void 0 : _c2.removeChild(targetParent);
+        targetParent.parent?.removeChild(targetParent);
         model.position = Math.max(0, pos);
       }
       if (model.root.hasEmptyBranch("body"))
@@ -30627,7 +30528,6 @@ function deleteRange(model, range2, type) {
           return model.deferNotifications(
             { content: true, selection: true, type },
             () => {
-              var _a3;
               const startCell = parentArray2.getCell(startRow, startColumn);
               const endCell = parentArray2.getCell(endRow, endColumn);
               if (!startCell || !endCell) return;
@@ -30654,7 +30554,7 @@ function deleteRange(model, range2, type) {
               if (mergedCell) {
                 const targetIndex = remainingStart ? remainingStart.filter((x) => x.type !== "first").length : 0;
                 model.position = model.offsetOf(
-                  (_a3 = mergedCell[targetIndex]) != null ? _a3 : mergedCell[0]
+                  mergedCell[targetIndex] ?? mergedCell[0]
                 );
               } else model.position = startOffset;
               parentArray2.isDirty = true;
@@ -30682,14 +30582,13 @@ function deleteRange(model, range2, type) {
       return model.deferNotifications(
         { content: true, selection: true, type },
         () => {
-          var _a3, _b3;
           const numer = genfrac.removeBranch(branch);
           if (!(numer.length === 1 && numer[0].type === "placeholder")) {
             const lastAtom = genfrac.parent.addChildrenAfter(numer, genfrac);
-            (_a3 = genfrac.parent) == null ? void 0 : _a3.removeChild(genfrac);
+            genfrac.parent?.removeChild(genfrac);
             model.position = model.offsetOf(lastAtom);
           } else {
-            (_b3 = genfrac.parent) == null ? void 0 : _b3.removeChild(genfrac);
+            genfrac.parent?.removeChild(genfrac);
             model.position = Math.max(0, pos);
           }
         }
@@ -30832,7 +30731,6 @@ function deleteRow(model, atom, row, direction) {
 
 // src/editor-model/commands.ts
 function wordBoundaryOffset(model, offset, direction) {
-  var _a3, _b3;
   if (model.at(offset).mode !== "text") return offset;
   const dir = direction === "backward" ? -1 : 1;
   let result;
@@ -30846,7 +30744,7 @@ function wordBoundaryOffset(model, offset, direction) {
     result = model.at(i) ? i - 2 * dir : i - dir;
   } else if (/\s/.test(model.at(offset).value)) {
     let i = offset;
-    while (((_a3 = model.at(i)) == null ? void 0 : _a3.mode) === "text" && /\s/.test(model.at(i).value))
+    while (model.at(i)?.mode === "text" && /\s/.test(model.at(i).value))
       i += dir;
     if (!model.at(i)) {
       result = i - dir;
@@ -30860,7 +30758,7 @@ function wordBoundaryOffset(model, offset, direction) {
     }
   } else {
     let i = offset;
-    while (((_b3 = model.at(i)) == null ? void 0 : _b3.mode) === "text" && !/\s/.test(model.at(i).value))
+    while (model.at(i)?.mode === "text" && !/\s/.test(model.at(i).value))
       i += dir;
     result = model.at(i) ? i : i - dir;
     let match = true;
@@ -30874,9 +30772,8 @@ function wordBoundaryOffset(model, offset, direction) {
   return result - (dir > 0 ? 0 : 1);
 }
 function skip(model, direction, options) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h;
   const previousPosition = model.position;
-  if (!((_a3 = options == null ? void 0 : options.extend) != null ? _a3 : false)) model.collapseSelection(direction);
+  if (!(options?.extend ?? false)) model.collapseSelection(direction);
   let atom = model.at(model.position);
   if (direction === "forward") {
     if (atom.type === "subsup") {
@@ -30948,9 +30845,9 @@ function skip(model, direction, options) {
         offset = model.offsetOf(model.at(offset).leftSibling);
       }
       offset -= 1;
-      let nextType = (_b3 = model.at(offset)) == null ? void 0 : _b3.type;
+      let nextType = model.at(offset)?.type;
       while (offset >= 0 && nextType === type) {
-        if (((_c2 = model.at(offset)) == null ? void 0 : _c2.type) === "subsup")
+        if (model.at(offset)?.type === "subsup")
           offset = model.offsetOf(model.at(offset).leftSibling);
         else offset -= 1;
         nextType = model.at(offset).type;
@@ -30958,17 +30855,17 @@ function skip(model, direction, options) {
     }
   } else {
     const { type } = atom;
-    let nextType = (_d2 = model.at(offset)) == null ? void 0 : _d2.type;
+    let nextType = model.at(offset)?.type;
     const { lastOffset } = model;
     while (offset <= lastOffset && (nextType === type || nextType === "subsup")) {
-      while (((_e = model.at(offset).rightSibling) == null ? void 0 : _e.type) === "subsup")
+      while (model.at(offset).rightSibling?.type === "subsup")
         offset = model.offsetOf(model.at(offset).rightSibling);
       offset += 1;
-      nextType = (_f = model.at(offset)) == null ? void 0 : _f.type;
+      nextType = model.at(offset)?.type;
     }
     offset -= 1;
   }
-  if ((_g = options == null ? void 0 : options.extend) != null ? _g : false) {
+  if (options?.extend ?? false) {
     if (!model.setSelection(model.anchor, offset)) {
       model.announce("plonk");
       return false;
@@ -30979,7 +30876,7 @@ function skip(model, direction, options) {
       model.announce("plonk");
       return false;
     }
-    if ((_h = options == null ? void 0 : options.delete) != null ? _h : false) {
+    if (options?.delete ?? false) {
       if (direction === "forward")
         deleteRange(model, [previousPosition, offset], "deleteWordForward");
       else {
@@ -30995,8 +30892,7 @@ function skip(model, direction, options) {
   return true;
 }
 function move(model, direction, options) {
-  var _a3, _b3;
-  options = options != null ? options : { extend: false };
+  options = options ?? { extend: false };
   model.mathfield.styleBias = direction === "backward" ? "right" : "left";
   if (direction !== "forward") {
     const [from, to] = getCommandSuggestionRange(model);
@@ -31028,14 +30924,14 @@ function move(model, direction, options) {
   if (pos < 0 || pos > model.lastOffset) {
     let success = true;
     if (!model.silenceNotifications) {
-      success = (_b3 = (_a3 = model.mathfield.host) == null ? void 0 : _a3.dispatchEvent(
+      success = model.mathfield.host?.dispatchEvent(
         new CustomEvent("move-out", {
           detail: { direction },
           cancelable: true,
           bubbles: true,
           composed: true
         })
-      )) != null ? _b3 : true;
+      ) ?? true;
     }
     if (success) model.announce("plonk");
     return success;
@@ -31053,12 +30949,11 @@ function nextValidPosition(model, pos, direction) {
   return pos;
 }
 function isValidPosition(model, pos) {
-  var _a3;
   const atom = model.at(pos);
   let parent = atom.parent;
   while (parent && !parent.inCaptureSelection) parent = parent.parent;
-  if (parent == null ? void 0 : parent.inCaptureSelection) return false;
-  if ((_a3 = atom.parent) == null ? void 0 : _a3.skipBoundary) {
+  if (parent?.inCaptureSelection) return false;
+  if (atom.parent?.skipBoundary) {
     if (!atom.isFirstSibling && atom.isLastSibling) return false;
     if (atom.type === "first") return false;
   }
@@ -31111,21 +31006,19 @@ function moveToClosestAtomVertically(model, fromAtom, toAtoms, extend, direction
   model.announce(`move ${direction}`);
 }
 function moveUpward(model, options) {
-  var _a3, _b3;
-  const extend = (_a3 = options == null ? void 0 : options.extend) != null ? _a3 : false;
+  const extend = options?.extend ?? false;
   if (!extend) model.collapseSelection("backward");
   const handleDeadEnd = () => {
-    var _a4, _b4;
     let success = true;
     if (!model.silenceNotifications) {
-      success = (_b4 = (_a4 = model.mathfield.host) == null ? void 0 : _a4.dispatchEvent(
+      success = model.mathfield.host?.dispatchEvent(
         new CustomEvent("move-out", {
           detail: { direction: "upward" },
           cancelable: true,
           bubbles: true,
           composed: true
         })
-      )) != null ? _b4 : true;
+      ) ?? true;
     }
     model.announce(success ? "line" : "plonk");
     return success;
@@ -31134,7 +31027,7 @@ function moveUpward(model, options) {
   let atom = baseAtom;
   while (atom && atom.parentBranch !== "below" && !(Array.isArray(atom.parentBranch) && atom.parent instanceof ArrayAtom))
     atom = atom.parent;
-  if (Array.isArray(atom == null ? void 0 : atom.parentBranch) && atom.parent instanceof ArrayAtom) {
+  if (Array.isArray(atom?.parentBranch) && atom.parent instanceof ArrayAtom) {
     const arrayAtom = atom.parent;
     if (atom.parentBranch[0] < 1) return handleDeadEnd();
     const rowAbove = atom.parentBranch[0] - 1;
@@ -31146,7 +31039,7 @@ function moveUpward(model, options) {
       return handleDeadEnd();
     moveToClosestAtomVertically(model, baseAtom, aboveCell, extend, "up");
   } else if (atom) {
-    const branch = (_b3 = atom.parent.branch("above")) != null ? _b3 : atom.parent.createBranch("above");
+    const branch = atom.parent.branch("above") ?? atom.parent.createBranch("above");
     const branchHasPrompt = branch.some(
       (a) => a.type === "prompt" && a.placeholderId
     );
@@ -31158,21 +31051,19 @@ function moveUpward(model, options) {
   return true;
 }
 function moveDownward(model, options) {
-  var _a3, _b3;
-  const extend = (_a3 = options == null ? void 0 : options.extend) != null ? _a3 : false;
+  const extend = options?.extend ?? false;
   if (!extend) model.collapseSelection("forward");
   const handleDeadEnd = () => {
-    var _a4, _b4;
     let success = true;
     if (!model.silenceNotifications) {
-      success = (_b4 = (_a4 = model.mathfield.host) == null ? void 0 : _a4.dispatchEvent(
+      success = model.mathfield.host?.dispatchEvent(
         new CustomEvent("move-out", {
           detail: { direction: "downward" },
           cancelable: true,
           bubbles: true,
           composed: true
         })
-      )) != null ? _b4 : true;
+      ) ?? true;
     }
     model.announce(success ? "line" : "plonk");
     return success;
@@ -31181,7 +31072,7 @@ function moveDownward(model, options) {
   let atom = baseAtom;
   while (atom && atom.parentBranch !== "above" && !(isCellBranch(atom.parentBranch) && atom.parent instanceof ArrayAtom))
     atom = atom.parent;
-  if (isCellBranch(atom == null ? void 0 : atom.parentBranch) && atom.parent instanceof ArrayAtom) {
+  if (isCellBranch(atom?.parentBranch) && atom.parent instanceof ArrayAtom) {
     const arrayAtom = atom.parent;
     if (atom.parentBranch[0] + 1 > arrayAtom.rows.length - 1)
       return handleDeadEnd();
@@ -31194,7 +31085,7 @@ function moveDownward(model, options) {
       return handleDeadEnd();
     moveToClosestAtomVertically(model, baseAtom, belowCell, extend, "down");
   } else if (atom) {
-    const branch = (_b3 = atom.parent.branch("below")) != null ? _b3 : atom.parent.createBranch("below");
+    const branch = atom.parent.branch("below") ?? atom.parent.createBranch("below");
     const branchHasPrompt = branch.some((a) => a.type === "prompt");
     if (!branchHasPrompt && model.mathfield.hasEditablePrompts)
       return handleDeadEnd();
@@ -31207,7 +31098,7 @@ function moveDownward(model, options) {
 function moveAfterParent(model) {
   const previousPosition = model.position;
   const parent = model.at(previousPosition).parent;
-  if (!(parent == null ? void 0 : parent.parent)) {
+  if (!parent?.parent) {
     model.announce("plonk");
     return false;
   }
@@ -31251,7 +31142,7 @@ function moveToSuperscript(model) {
   let target = model.at(model.position);
   if (target.subsupPlacement === void 0) {
     let subsup = target.rightSibling;
-    if ((subsup == null ? void 0 : subsup.type) !== "subsup") {
+    if (subsup?.type !== "subsup") {
       subsup = new SubsupAtom({ style: target.style });
       target.parent.addChildAfter(subsup, target);
     }
@@ -31272,7 +31163,7 @@ function moveToSubscript(model) {
   let target = model.at(model.position);
   if (target.subsupPlacement === void 0) {
     let subsup = target.rightSibling;
-    if ((subsup == null ? void 0 : subsup.type) !== "subsup") {
+    if (subsup?.type !== "subsup") {
       subsup = new SubsupAtom({ style: target.style });
       target.parent.addChildAfter(subsup, target);
     }
@@ -31319,9 +31210,8 @@ function getTabbableElements() {
     return true;
   }
   function getTabindex(node) {
-    var _a3;
     const tabindexAttr = Number.parseInt(
-      (_a3 = node.getAttribute("tabindex")) != null ? _a3 : "NaN",
+      node.getAttribute("tabindex") ?? "NaN",
       10
     );
     if (!Number.isNaN(tabindexAttr)) return tabindexAttr;
@@ -31339,9 +31229,8 @@ function getTabbableElements() {
     return null;
   }
   function isTabbableRadio(node) {
-    var _a3;
     if (!node.name) return true;
-    const radioScope = (_a3 = node.form) != null ? _a3 : node.ownerDocument;
+    const radioScope = node.form ?? node.ownerDocument;
     const radioSet = radioScope.querySelectorAll(
       'input[type="radio"][name="' + node.name + '"]'
     );
@@ -31397,7 +31286,6 @@ function leapTo(model, target) {
   return true;
 }
 function leap(model, dir) {
-  var _a3, _b3;
   const dist = dir === "forward" ? 1 : -1;
   if (model.at(model.anchor).type === "placeholder") move(model, dir);
   let origin;
@@ -31408,14 +31296,14 @@ function leap(model, dir) {
   } else origin = Math.max(model.position + dist, 0);
   const target = leapTarget(model, origin, dir);
   if (!target || dir === "forward" && model.offsetOf(target) < origin || dir === "backward" && model.offsetOf(target) > origin) {
-    const success = (_b3 = (_a3 = model.mathfield.host) == null ? void 0 : _a3.dispatchEvent(
+    const success = model.mathfield.host?.dispatchEvent(
       new CustomEvent("move-out", {
         detail: { direction: dir },
         cancelable: true,
         bubbles: true,
         composed: true
       })
-    )) != null ? _b3 : true;
+    ) ?? true;
     if (!success) {
       model.announce("plonk");
       return false;
@@ -31513,7 +31401,6 @@ register2(
       return true;
     },
     moveToNextGroup: (model) => {
-      var _a3, _b3, _c2, _d2;
       if (model.position === model.lastOffset && model.anchor === model.lastOffset)
         return leap(model, "forward");
       const atom = model.at(model.position);
@@ -31521,16 +31408,16 @@ register2(
       if (mode === "text") {
         if (model.selectionIsCollapsed) {
           let first = atom;
-          while ((first == null ? void 0 : first.mode) === "text") first = first.leftSibling;
+          while (first?.mode === "text") first = first.leftSibling;
           let last = atom;
-          while (((_a3 = last.rightSibling) == null ? void 0 : _a3.mode) === "text") last = last.rightSibling;
+          while (last.rightSibling?.mode === "text") last = last.rightSibling;
           if (first && last) return select(model, [first, last]);
         }
         if (atom.rightSibling.mode === "text") {
           let next = atom;
-          while ((next == null ? void 0 : next.mode) === "text") next = next.rightSibling;
+          while (next?.mode === "text") next = next.rightSibling;
           if (next) {
-            leapTo(model, (_b3 = next.leftSibling) != null ? _b3 : next);
+            leapTo(model, next.leftSibling ?? next);
             model.mathfield.switchMode("math");
             return true;
           }
@@ -31552,10 +31439,10 @@ register2(
       if (sibling) {
         if (sibling.mode === "text") {
           let last = sibling;
-          while ((last == null ? void 0 : last.mode) === "text") last = last.rightSibling;
+          while (last?.mode === "text") last = last.rightSibling;
           return select(model, [
-            (_c2 = sibling.leftSibling) != null ? _c2 : sibling,
-            (_d2 = last.leftSibling) != null ? _d2 : last
+            sibling.leftSibling ?? sibling,
+            last.leftSibling ?? last
           ]);
         }
         return select(model, sibling);
@@ -31576,7 +31463,6 @@ register2(
       return leapTo(model, model.lastOffset);
     },
     moveToPreviousGroup: (model) => {
-      var _a3;
       if (model.position === 0 && model.anchor === 0)
         return leap(model, "backward");
       let atom = model.at(model.position);
@@ -31584,12 +31470,12 @@ register2(
       if (mode === "text") {
         if (model.selectionIsCollapsed) {
           let first = atom;
-          while ((first == null ? void 0 : first.mode) === "text") first = first.leftSibling;
+          while (first?.mode === "text") first = first.leftSibling;
           let last = atom;
-          while (((_a3 = last.rightSibling) == null ? void 0 : _a3.mode) === "text") last = last.rightSibling;
+          while (last.rightSibling?.mode === "text") last = last.rightSibling;
           if (first && last) return select(model, [first, last]);
         }
-        while ((atom == null ? void 0 : atom.mode) === "text") atom = atom.leftSibling;
+        while (atom?.mode === "text") atom = atom.leftSibling;
         if (atom) return leapTo(model, atom);
         return leapTo(model, 0);
       }
@@ -31609,7 +31495,7 @@ register2(
         if (sibling) {
           if (sibling.mode === "text") {
             let first = sibling;
-            while ((first == null ? void 0 : first.mode) === "text") first = first.leftSibling;
+            while (first?.mode === "text") first = first.leftSibling;
             return select(model, [sibling, first]);
           }
           return select(model, sibling);
@@ -31719,9 +31605,8 @@ function convertLastAtomsToMath(model, count, until) {
   model.contentDidChange({ data: joinLatex(data), inputType: "insertText" });
 }
 function removeIsolatedSpace(model) {
-  var _a3;
   let i = model.position - 1;
-  while (i >= 0 && ((_a3 = model.at(i)) == null ? void 0 : _a3.mode) === "math") i -= 1;
+  while (i >= 0 && model.at(i)?.mode === "math") i -= 1;
   if (i < 0) return;
   if (model.at(i).mode === "text" && model.at(i).value === " " && model.at(i - 1).mode === "math") {
     model.at(i - 1).parent.removeChild(model.at(i - 1));
@@ -31895,7 +31780,6 @@ function disposeKeystrokeCaption() {
 
 // src/editor-mathfield/keyboard-input.ts
 function onKeystroke(mathfield, evt) {
-  var _a3, _b3, _c2, _d2;
   const { model } = mathfield;
   const keystroke = keyboardEventToString(evt);
   if ((mathfield.options.defaultMode === "free-text" || mathfield.options.defaultMode === "free-math") && keyboardEventToChar(evt) === "\\" && !evt.ctrlKey && !evt.metaKey && !evt.altKey) {
@@ -31942,7 +31826,7 @@ function onKeystroke(mathfield, evt) {
       } else {
         const c = keyboardEventToChar(evt);
         const keystrokes = [
-          ...(_b3 = (_a3 = buffer[buffer.length - 1]) == null ? void 0 : _a3.keystrokes) != null ? _b3 : [],
+          ...buffer[buffer.length - 1]?.keystrokes ?? [],
           c
         ];
         buffer.push({
@@ -32013,8 +31897,8 @@ function onKeystroke(mathfield, evt) {
           evt.preventDefault();
           evt.stopPropagation();
         } else {
-          if ((_c2 = model.parentEnvironment) == null ? void 0 : _c2.isMultiline) {
-            const freeTextLineStyle = (mathfield.options.defaultMode === "free-text" || mathfield.options.defaultMode === "free-math") && (model.mode === "free-text" || model.mode === "free-math") ? __spreadValues({}, computeInsertStyle(mathfield)) : void 0;
+          if (model.parentEnvironment?.isMultiline) {
+            const freeTextLineStyle = (mathfield.options.defaultMode === "free-text" || mathfield.options.defaultMode === "free-math") && (model.mode === "free-text" || model.mode === "free-math") ? { ...computeInsertStyle(mathfield) } : void 0;
             const continueListPrefix = mathfield.options.defaultMode === "free-text" && model.mode === "free-text" && currentLineListPrefix(model);
             mathfield.executeCommand("addRowAfter");
             if (isFreeLinesRoot(model.root))
@@ -32023,7 +31907,10 @@ function onKeystroke(mathfield, evt) {
                 mathfield.options.defaultMode === "free-math" ? "free-math" : "free-text"
               );
             if (freeTextLineStyle) {
-              mathfield.defaultStyle = __spreadValues(__spreadValues({}, mathfield.defaultStyle), freeTextLineStyle);
+              mathfield.defaultStyle = {
+                ...mathfield.defaultStyle,
+                ...freeTextLineStyle
+              };
               mathfield.styleBias = "none";
             }
             if ((mathfield.options.defaultMode === "free-text" || mathfield.options.defaultMode === "free-math") && model.mode !== mathfield.options.defaultMode)
@@ -32075,7 +31962,7 @@ function onKeystroke(mathfield, evt) {
         }
         const nextSibling = model.at(model.position + 1);
         const previousSibling = model.at(model.position - 1);
-        if ((nextSibling == null ? void 0 : nextSibling.mode) === "text" || (previousSibling == null ? void 0 : previousSibling.mode) === "text") {
+        if (nextSibling?.mode === "text" || previousSibling?.mode === "text") {
           ModeEditor.insert(model, " ", { mode: "text" });
           mathfield.snapshot("insert-space");
           mathfield.dirty = true;
@@ -32083,7 +31970,7 @@ function onKeystroke(mathfield, evt) {
           return false;
         }
       }
-      if (((_d2 = model.at(model.position)) == null ? void 0 : _d2.isDigit()) && globalThis.MathfieldElement.decimalSeparator === "," && keyboardEventToChar(evt) === ",")
+      if (model.at(model.position)?.isDigit() && globalThis.MathfieldElement.decimalSeparator === "," && keyboardEventToChar(evt) === ",")
         selector = "insertDecimalSeparator";
     }
   }
@@ -32194,7 +32081,6 @@ function onKeystroke(mathfield, evt) {
   return false;
 }
 function detectScientificNotation(model) {
-  var _a3, _b3;
   const { position } = model;
   let offset = position;
   const atoms = [];
@@ -32208,7 +32094,7 @@ function detectScientificNotation(model) {
   }
   if (atoms.length === 0) return null;
   const text = atoms.map((a) => a.value).join("");
-  const separator = (_b3 = (_a3 = globalThis.MathfieldElement) == null ? void 0 : _a3.decimalSeparator) != null ? _b3 : ".";
+  const separator = globalThis.MathfieldElement?.decimalSeparator ?? ".";
   const separatorRegex = separator === "." ? "\\." : ",";
   const pattern = new RegExp(
     `^(\\d+(?:${separatorRegex}\\d*)?)[eE]([+\\-\u2212]?)(\\d+)$`
@@ -32227,8 +32113,7 @@ function detectScientificNotation(model) {
   };
 }
 function applyScientificNotationTemplate(significand, exponent) {
-  var _a3;
-  const template = (_a3 = globalThis.MathfieldElement) == null ? void 0 : _a3.scientificNotationTemplate;
+  const template = globalThis.MathfieldElement?.scientificNotationTemplate;
   if (!template || template === "" || !template.includes("#1") || !template.includes("#2"))
     return null;
   let result = template.replace("#1", significand);
@@ -32269,7 +32154,7 @@ function onInput(mathfield, text, options) {
     model.announce("plonk");
     return;
   }
-  options != null ? options : options = {};
+  options ??= {};
   if (options.focus) mathfield.focus();
   if (options.feedback) globalThis.MathfieldElement.playSound("keypress");
   if (typeof options.mode === "string") {
@@ -32278,7 +32163,7 @@ function onInput(mathfield, text, options) {
   }
   let graphemes = splitGraphemes(text);
   const keyboard = window.mathVirtualKeyboard;
-  if (keyboard == null ? void 0 : keyboard.isShifted) {
+  if (keyboard?.isShifted) {
     graphemes = typeof graphemes === "string" ? graphemes.toUpperCase() : graphemes.map((c) => c.toUpperCase());
   }
   if (options.simulateKeystroke) {
@@ -32307,7 +32192,7 @@ function onInput(mathfield, text, options) {
       if (commandMatch) {
         const commandName = "\\" + commandMatch[1];
         const def = getDefinition(commandName, "math");
-        if ((def == null ? void 0 : def.definitionType) === "function") {
+        if (def?.definitionType === "function") {
           const mandatoryArgCount = def.params.filter(
             (p) => !p.isOptional
           ).length;
@@ -32339,7 +32224,7 @@ function onInput(mathfield, text, options) {
       }
     }
   } else if (model.mode === "text" || model.mode === "free-text") {
-    const style = __spreadValues(__spreadValues({}, getSelectionStyle(model)), mathfield.defaultStyle);
+    const style = { ...getSelectionStyle(model), ...mathfield.defaultStyle };
     for (const c of graphemes)
       ModeEditor.insert(model, c, { style, insertionMode: "replaceSelection" });
     mathfield.snapshot("insert-text");
@@ -32358,10 +32243,7 @@ function currentLineListPrefix(model) {
   const [row, column] = atom.parentBranch;
   const cell = environment.getCell(row, column);
   if (!cell) return void 0;
-  const text = cell.filter((x) => x.type !== "first" && x.mode === "text").map((x) => {
-    var _a3;
-    return (_a3 = x.value) != null ? _a3 : "";
-  }).join("");
+  const text = cell.filter((x) => x.type !== "first" && x.mode === "text").map((x) => x.value ?? "").join("");
   if (text.startsWith(String.fromCodePoint(8226) + " ")) return "\u2022 ";
   const numbered = /^(\d+)([.)])\s/.exec(text);
   if (numbered) return `${Number(numbered[1]) + 1}${numbered[2]} `;
@@ -32422,7 +32304,7 @@ function insertMathModeChar(mathfield, c) {
     mathfield.executeCommand(selector);
     return;
   }
-  const style = __spreadValues({}, computeInsertStyle(mathfield));
+  const style = { ...computeInsertStyle(mathfield) };
   if (!/[a-zA-Z0-9]/.test(c) && mathfield.styleBias !== "none") {
     style.variant = "normal";
     style.variantStyle = void 0;
@@ -32467,13 +32349,11 @@ function insertMathModeChar(mathfield, c) {
   }
 }
 function getSelectionStyle(model) {
-  var _a3, _b3, _c2, _d2;
-  if (model.selectionIsCollapsed) return (_b3 = (_a3 = model.at(model.position)) == null ? void 0 : _a3.style) != null ? _b3 : {};
+  if (model.selectionIsCollapsed) return model.at(model.position)?.style ?? {};
   const first = range(model.selection)[0];
-  return (_d2 = (_c2 = model.at(first + 1)) == null ? void 0 : _c2.style) != null ? _d2 : {};
+  return model.at(first + 1)?.style ?? {};
 }
 function insertSmartFence(model, key, style) {
-  var _a3;
   if (!key) return false;
   if (!isMathMode(model.mode)) return false;
   const atom = model.at(model.position);
@@ -32604,7 +32484,7 @@ function insertSmartFence(model, key, style) {
             i2 -= 1;
             continue;
           }
-          if (atom2.type === "group" && ((_a3 = atom2.body) == null ? void 0 : _a3.length) === 2 && atom2.body[0].type === "first" && atom2.body[1].value === ",") {
+          if (atom2.type === "group" && atom2.body?.length === 2 && atom2.body[0].type === "first" && atom2.body[1].value === ",") {
             hasDecimalPoint = true;
             break;
           }
@@ -32808,14 +32688,13 @@ register2(
     // A 'commit' command is used to simulate pressing the return/enter key,
     // e.g. when using a virtual keyboard
     commit: (mathfield) => {
-      var _a3, _b3;
       const model = mathfield.model;
       const freeMode = mathfield.options.defaultMode === "free-math" ? "free-math" : mathfield.options.defaultMode === "free-text" ? "free-text" : void 0;
       if (model.contentWillChange({ inputType: "insertLineBreak" })) {
-        (_a3 = mathfield.host) == null ? void 0 : _a3.dispatchEvent(
+        mathfield.host?.dispatchEvent(
           new Event("change", { bubbles: true, composed: true })
         );
-        if ((_b3 = model.parentEnvironment) == null ? void 0 : _b3.isMultiline) {
+        if (model.parentEnvironment?.isMultiline) {
           mathfield.executeCommand("addRowAfter");
           if (freeMode) {
             if (isFreeLinesRoot(model.root))
@@ -32840,7 +32719,7 @@ register2(
         prospectiveId = "prompt-" + Date.now().toString(36).slice(-2) + Math.floor(Math.random() * 1e5).toString(36);
         i++;
       }
-      mathfield.insert(`\\placeholder[${id != null ? id : prospectiveId}]{}`, options);
+      mathfield.insert(`\\placeholder[${id ?? prospectiveId}]{}`, options);
       return true;
     }
   },
@@ -32942,7 +32821,6 @@ function selectGroup(model) {
   return true;
 }
 function boundary(model, pos, direction) {
-  var _a3;
   let atom = model.at(pos);
   if (!atom) return pos;
   const dir = direction === "forward" ? 1 : -1;
@@ -32957,19 +32835,19 @@ function boundary(model, pos, direction) {
   if (atom.mode === "latex") {
     if (/[a-zA-Z\\*]/.test(atom.value)) {
       if (direction === "backward") {
-        while ((atom == null ? void 0 : atom.mode) === "latex" && atom.value !== "\\" && /[a-zA-Z]/.test(atom.value)) {
+        while (atom?.mode === "latex" && atom.value !== "\\" && /[a-zA-Z]/.test(atom.value)) {
           pos += dir;
           atom = model.at(pos);
         }
       } else {
-        while ((atom == null ? void 0 : atom.mode) === "latex" && /[a-zA-Z\\*]/.test(atom.value)) {
+        while (atom?.mode === "latex" && /[a-zA-Z\\*]/.test(atom.value)) {
           pos += dir;
           atom = model.at(pos);
         }
       }
     } else if (atom.value === "{") {
       if (direction === "forward") {
-        while ((atom == null ? void 0 : atom.mode) === "latex" && atom.value !== "}") {
+        while (atom?.mode === "latex" && atom.value !== "}") {
           pos += dir;
           atom = model.at(pos);
         }
@@ -32978,7 +32856,7 @@ function boundary(model, pos, direction) {
       return pos - 1;
     } else if (atom.value === "}") {
       if (direction === "backward") {
-        while ((atom == null ? void 0 : atom.mode) === "latex" && atom.value !== "{") {
+        while (atom?.mode === "latex" && atom.value !== "{") {
           pos += dir;
           atom = model.at(pos);
         }
@@ -32990,7 +32868,7 @@ function boundary(model, pos, direction) {
   }
   if (atom.mode === "math") {
     if (atom.isDigit()) {
-      while ((_a3 = model.at(pos + dir)) == null ? void 0 : _a3.isDigit()) pos += dir;
+      while (model.at(pos + dir)?.isDigit()) pos += dir;
       return direction === "backward" ? pos - 1 : pos;
     }
     if (atom.style.variant || atom.style.variantStyle) {
@@ -33074,9 +32952,8 @@ var gLastTap = null;
 var gTapCount = 0;
 var PointerTracker = class _PointerTracker {
   static start(element, evt, onMove, onCancel) {
-    var _a3;
     _PointerTracker.element = element;
-    (_a3 = _PointerTracker.controller) == null ? void 0 : _a3.abort();
+    _PointerTracker.controller?.abort();
     _PointerTracker.controller = new AbortController();
     const options = { signal: _PointerTracker.controller.signal };
     if ("PointerEvent" in window) {
@@ -33094,8 +32971,7 @@ var PointerTracker = class _PointerTracker {
     }
   }
   static stop() {
-    var _a3;
-    (_a3 = _PointerTracker.controller) == null ? void 0 : _a3.abort();
+    _PointerTracker.controller?.abort();
     _PointerTracker.controller = void 0;
     if (typeof _PointerTracker.pointerId === "number") {
       _PointerTracker.element.releasePointerCapture(_PointerTracker.pointerId);
@@ -33115,7 +32991,6 @@ function clamp(value, min, max) {
   return value;
 }
 function onPointerDown(mathfield, evt) {
-  var _a3, _b3, _c2, _d2, _e, _f;
   if (evt.buttons > 1) return;
   if (!mathfield.atomBoundsCache)
     mathfield.atomBoundsCache = /* @__PURE__ */ new Map();
@@ -33187,8 +33062,8 @@ function onPointerDown(mathfield, evt) {
     gTapCount = 1;
   }
   const bounds = field.getBoundingClientRect();
-  const containerBounds = (_b3 = (_a3 = mathfield.container) == null ? void 0 : _a3.getBoundingClientRect()) != null ? _b3 : mathfield.element.getBoundingClientRect();
-  const hostBounds = (_d2 = (_c2 = mathfield.element) == null ? void 0 : _c2.getBoundingClientRect()) != null ? _d2 : containerBounds;
+  const containerBounds = mathfield.container?.getBoundingClientRect() ?? mathfield.element.getBoundingClientRect();
+  const hostBounds = mathfield.element?.getBoundingClientRect() ?? containerBounds;
   const anchorInsideField = pointInRect(anchorX, anchorY, bounds);
   const anchorInsideContainer = !anchorInsideField && containerBounds ? pointInRect(anchorX, anchorY, containerBounds) : false;
   const anchorInsideHost = !anchorInsideField && !anchorInsideContainer && hostBounds ? pointInRect(anchorX, anchorY, hostBounds) : false;
@@ -33218,7 +33093,7 @@ function onPointerDown(mathfield, evt) {
           mathfield.model.position = mathfield.model.offsetOf(atom.firstChild);
         else mathfield.model.setSelection(anchor - 1, anchor);
         dirty = "selection";
-      } else if (((_e = mathfield.model.at(anchor).rightSibling) == null ? void 0 : _e.type) === "placeholder" || ((_f = mathfield.model.at(anchor).rightSibling) == null ? void 0 : _f.type) === "prompt") {
+      } else if (mathfield.model.at(anchor).rightSibling?.type === "placeholder" || mathfield.model.at(anchor).rightSibling?.type === "prompt") {
         const atom = mathfield.model.at(anchor).rightSibling;
         if (atom.hasChildren && atom.firstChild)
           mathfield.model.position = mathfield.model.offsetOf(atom.firstChild);
@@ -33383,14 +33258,13 @@ function nearestAtomFromPoint(mathfield, x, y) {
   return atom;
 }
 function offsetFromPoint(mathfield, x, y, options) {
-  var _a3;
   const bounds = mathfield.field.querySelector(".ML__latex").getBoundingClientRect();
   if (!bounds) return 0;
   if (x > bounds.right || y > bounds.bottom + 8)
     return mathfield.model.lastOffset;
   if (x < bounds.left || y < bounds.top - 8) return 0;
-  options = options != null ? options : {};
-  options.bias = (_a3 = options.bias) != null ? _a3 : 0;
+  options = options ?? {};
+  options.bias = options.bias ?? 0;
   let atom = nearestAtomFromPoint(mathfield, x, y);
   const parents = [];
   let parent = atom;
@@ -33419,6 +33293,12 @@ function offsetFromPoint(mathfield, x, y, options) {
 }
 
 // src/editor-mathfield/mode-editor-math.ts
+function normalizeCasesRowSeparators(latex) {
+  return latex.replace(
+    /\\begin\\{(cases|dcases|rcases)\\}([\\s\\S]*?)\\end\\{\\1\\}/g,
+    (_match, name, body) => `\\begin{${name}}${body.replace(/\\\\/g, "\\\\cr")}\\end{${name}}`
+  );
+}
 var MathModeEditor = class extends ModeEditor {
   constructor() {
     super("math");
@@ -33483,7 +33363,7 @@ var MathModeEditor = class extends ModeEditor {
           requestUpdate(mathfield);
           return true;
         }
-      } catch (e) {
+      } catch {
       }
     }
     json = typeof data !== "string" ? data.getData("application/json") : "";
@@ -33497,7 +33377,7 @@ var MathModeEditor = class extends ModeEditor {
           if (box && !box.has("Error")) text = box.latex;
         }
         if (!text) format = "latex";
-      } catch (e) {
+      } catch {
       }
     }
     if (!text && typeof data !== "string") {
@@ -33523,10 +33403,9 @@ var MathModeEditor = class extends ModeEditor {
     return false;
   }
   insert(model, input, options) {
-    var _a3, _b3, _c2, _d2;
     if (model.mode === "free-math" && (input.includes("\n") || input.includes("\r") || input.includes("	")))
       return insertFreeMath(this, model, input, options);
-    const data = typeof input === "string" ? input : (_b3 = (_a3 = globalThis.MathfieldElement.computeEngine) == null ? void 0 : _a3.box(input).latex) != null ? _b3 : "";
+    const data = typeof input === "string" ? input : globalThis.MathfieldElement.computeEngine?.box(input).latex ?? "";
     if (!options.silenceNotifications && !model.contentWillChange({ data, inputType: "insertText" }))
       return false;
     if (!options.insertionMode) options.insertionMode = "replaceSelection";
@@ -33549,9 +33428,9 @@ var MathModeEditor = class extends ModeEditor {
     else if (options.insertionMode === "insertAfter")
       model.collapseSelection("forward");
     const currentAtom = model.at(model.position);
-    if (currentAtom && !currentAtom.isLastSibling && ((_c2 = model.at(model.position + 1)) == null ? void 0 : _c2.type) === "placeholder") {
+    if (currentAtom && !currentAtom.isLastSibling && model.at(model.position + 1)?.type === "placeholder") {
       model.deleteAtoms([model.position, model.position + 1]);
-    } else if ((currentAtom == null ? void 0 : currentAtom.type) === "placeholder") {
+    } else if (currentAtom?.type === "placeholder") {
       model.deleteAtoms([model.position - 1, model.position]);
     }
     let implicitArgumentOffset = -1;
@@ -33596,7 +33475,7 @@ var MathModeEditor = class extends ModeEditor {
     if (newAtoms.length === 1 && newAtoms[0].isRoot) model.root = newAtoms[0];
     else {
       const atom = model.at(model.position);
-      const parent = (_d2 = atom == null ? void 0 : atom.parent) != null ? _d2 : model.root;
+      const parent = atom?.parent ?? model.root;
       const hadEmptyBody = parent.hasEmptyBranch("body");
       if (insertingFraction && format !== "latex" && model.mathfield.options.removeExtraneousParentheses && parent instanceof LeftRightAtom && parent.leftDelim === "(" && hadEmptyBody) {
         const newParent = parent.parent;
@@ -33609,7 +33488,7 @@ var MathModeEditor = class extends ModeEditor {
         cursor.parent.addChildrenAfter(newAtoms, cursor);
       } else {
         const body = parent.branch("body");
-        const firstAtom = body == null ? void 0 : body[0];
+        const firstAtom = body?.[0];
         if (firstAtom) {
           parent.addChildrenAfter(newAtoms, firstAtom);
         } else {
@@ -33629,7 +33508,7 @@ var MathModeEditor = class extends ModeEditor {
         }
       }
       if (format === "latex" && typeof input === "string") {
-        if ((parent == null ? void 0 : parent.type) === "root" && hadEmptyBody && !usedArg)
+        if (parent?.type === "root" && hadEmptyBody && !usedArg)
           parent.verbatimLatex = input;
       }
     }
@@ -33639,10 +33518,10 @@ var MathModeEditor = class extends ModeEditor {
       let placeholder;
       if (newAtoms.length === 1 && newAtoms[0].type === "genfrac") {
         const numerator = newAtoms[0].branch("above");
-        placeholder = numerator == null ? void 0 : numerator.find((x) => x.type === "placeholder");
+        placeholder = numerator?.find((x) => x.type === "placeholder");
         if (!placeholder) {
           const denominator = newAtoms[0].branch("below");
-          placeholder = denominator == null ? void 0 : denominator.find((x) => x.type === "placeholder");
+          placeholder = denominator?.find((x) => x.type === "placeholder");
         }
       }
       if (!placeholder) {
@@ -33675,7 +33554,6 @@ var MathModeEditor = class extends ModeEditor {
   }
 };
 function convertStringToAtoms(model, s, args, options) {
-  var _a3;
   let format = void 0;
   let result = [];
   if (typeof s !== "string" || options.format === "math-json") {
@@ -33691,13 +33569,14 @@ function convertStringToAtoms(model, s, args, options) {
     result = parseLatex(s, { context: model.mathfield.context });
     if (format !== "latex" && model.mathfield.options.removeExtraneousParentheses)
       result = result.map((x) => removeExtraneousParenthesis(x));
-  } else if (options.format === "auto" || ((_a3 = options.format) == null ? void 0 : _a3.startsWith("latex"))) {
+  } else if (options.format === "auto" || options.format?.startsWith("latex")) {
     if (options.format === "auto") {
       [format, s] = parseMathString(s, {
         format: "auto",
         inlineShortcuts: model.mathfield.options.inlineShortcuts
       });
     }
+    if (typeof s === "string") s = normalizeCasesRowSeparators(s);
     if (options.format === "latex") [, s] = trimModeShiftCommand(s);
     result = parseLatex(s, {
       context: model.mathfield.context,
@@ -33707,13 +33586,12 @@ function convertStringToAtoms(model, s, args, options) {
       result = result.map((x) => removeExtraneousParenthesis(x));
   }
   applyStyleToUnstyledAtoms(result, options.style);
-  return [format != null ? format : "latex", result];
+  return [format ?? "latex", result];
 }
 function removeExtraneousParenthesis(atom) {
-  var _a3;
   if (atom instanceof LeftRightAtom && atom.leftDelim !== "(" && atom.rightDelim === ")") {
-    const children = (_a3 = atom.body) == null ? void 0 : _a3.filter((x) => x.type !== "first");
-    if ((children == null ? void 0 : children.length) === 1 && children[0].type === "genfrac")
+    const children = atom.body?.filter((x) => x.type !== "first");
+    if (children?.length === 1 && children[0].type === "genfrac")
       return children[0];
   }
   for (const branch of atom.branches) {
@@ -33790,7 +33668,7 @@ function isPartOfScientificNotation(atom) {
   if (atom.type === "mbin" && (atom.value === "+" || atom.value === "-" || atom.value === "\u2212")) {
     const left = atom.leftSibling;
     const right = atom.rightSibling;
-    if ((left == null ? void 0 : left.type) === "mord" && left.value === "e" && right && right.isDigit()) {
+    if (left?.type === "mord" && left.value === "e" && right && right.isDigit()) {
       const leftLeft = left.leftSibling;
       if (leftLeft && leftLeft.isDigit()) return true;
     }
@@ -33801,7 +33679,7 @@ function isPartOfScientificNotation(atom) {
       const left2 = left1.leftSibling;
       if (left2 && left2.isDigit() && left2.value === "1") {
         const left3 = left2.leftSibling;
-        if ((left3 == null ? void 0 : left3.type) === "mbin" && (left3.value === "\xD7" || left3.value === "\\times")) {
+        if (left3?.type === "mbin" && (left3.value === "\xD7" || left3.value === "\\times")) {
           const left4 = left3.leftSibling;
           if (left4 && left4.isDigit()) return true;
         }
@@ -33811,9 +33689,9 @@ function isPartOfScientificNotation(atom) {
   if (atom.isDigit() && atom.value === "0") {
     const left = atom.leftSibling;
     const right = atom.rightSibling;
-    if (left && left.isDigit() && left.value === "1" && (right == null ? void 0 : right.type) === "subsup") {
+    if (left && left.isDigit() && left.value === "1" && right?.type === "subsup") {
       const left2 = left.leftSibling;
-      if ((left2 == null ? void 0 : left2.type) === "mbin" && (left2.value === "\xD7" || left2.value === "\\times")) {
+      if (left2?.type === "mbin" && (left2.value === "\xD7" || left2.value === "\\times")) {
         const left3 = left2.leftSibling;
         if (left3 && left3.isDigit()) return true;
       }
@@ -33823,9 +33701,9 @@ function isPartOfScientificNotation(atom) {
     const right1 = atom.rightSibling;
     if (right1 && right1.isDigit() && right1.value === "0") {
       const right2 = right1.rightSibling;
-      if ((right2 == null ? void 0 : right2.type) === "subsup") {
+      if (right2?.type === "subsup") {
         const left = atom.leftSibling;
-        if ((left == null ? void 0 : left.type) === "mbin" && (left.value === "\xD7" || left.value === "\\times")) {
+        if (left?.type === "mbin" && (left.value === "\xD7" || left.value === "\\times")) {
           const left2 = left.leftSibling;
           if (left2 && left2.isDigit()) return true;
         }
@@ -33839,7 +33717,7 @@ function isPartOfScientificNotation(atom) {
       const right2 = right1.rightSibling;
       if (right2 && right2.isDigit() && right2.value === "0") {
         const right3 = right2.rightSibling;
-        if ((right3 == null ? void 0 : right3.type) === "subsup") return true;
+        if (right3?.type === "subsup") return true;
       }
     }
   }
@@ -33857,7 +33735,6 @@ function isImplicitArg(atom) {
 new MathModeEditor();
 ModeEditor._modes["free-math"] = ModeEditor._modes["math"];
 function insertFreeMath(editor, model, input, options) {
-  var _a3;
   const lines = input.split(/\r\n|\n|\r/);
   let changed = false;
   if (options.insertionMode === "replaceSelection" && !model.selectionIsCollapsed)
@@ -33871,7 +33748,7 @@ function insertFreeMath(editor, model, input, options) {
     for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
       if (segmentIndex > 0) {
         const cursor = model.at(model.position);
-        const tab = new TextAtom("	", "	", (_a3 = options.style) != null ? _a3 : {});
+        const tab = new TextAtom("	", "	", options.style ?? {});
         cursor.parent.addChildrenAfter([tab], cursor);
         model.position = model.offsetOf(tab);
         model.mode = "free-math";
@@ -33879,10 +33756,11 @@ function insertFreeMath(editor, model, input, options) {
       }
       const segment = segments[segmentIndex];
       if (segment) {
-        editor.insert(model, segment, __spreadProps(__spreadValues({}, options), {
+        editor.insert(model, segment, {
+          ...options,
           insertionMode: "insertAfter",
           selectionMode: "after"
-        }));
+        });
         changed = true;
       }
     }
@@ -34071,11 +33949,10 @@ function makeProxy(mf) {
   };
 }
 function commonStyle(model) {
-  var _a3;
-  if (model.selectionIsCollapsed) return (_a3 = model.at(model.position)) == null ? void 0 : _a3.style;
+  if (model.selectionIsCollapsed) return model.at(model.position)?.style;
   const selectedAtoms = model.getAtoms(model.selection);
   if (selectedAtoms.length === 0) return {};
-  const style = __spreadValues({}, selectedAtoms[0].style);
+  const style = { ...selectedAtoms[0].style };
   for (const atom of selectedAtoms) {
     for (const [key, value] of Object.entries(atom.style))
       if (style[key] !== value) delete style[key];
@@ -34242,8 +34119,7 @@ var rcases = (className) => `
 var matrixButtons = { matrix, pmatrix, bmatrix, Bmatrix, vmatrix, Vmatrix };
 var casesButtons = { cases: cases2, rcases, Bmatrix };
 function showEnvironmentPopover(mf) {
-  var _a3, _d2;
-  const rows = (_a3 = mf.model.parentEnvironment) == null ? void 0 : _a3.rows;
+  const rows = mf.model.parentEnvironment?.rows;
   if (!rows) return;
   let columnCount = 0;
   rows.forEach((column) => {
@@ -34279,14 +34155,14 @@ function showEnvironmentPopover(mf) {
   if (isMatrixEnvironment(environment)) {
     const normalizedEnvironment = normalizeMatrixName(environment);
     activeDelimeter = matrixButtons[normalizedEnvironment]("active");
-    const _b3 = matrixButtons, { [normalizedEnvironment]: _ } = _b3, filteredDelimeters = __objRest(_b3, [__restKey(normalizedEnvironment)]);
+    const { [normalizedEnvironment]: _, ...filteredDelimeters } = matrixButtons;
     delimiterOptions = Object.values(filteredDelimeters).map(
       (f) => f("inactive")
     );
   } else if (isCasesEnvironment(environment)) {
     const normalizedEnvironment = normalizeCasesName(environment);
     activeDelimeter = casesButtons[normalizedEnvironment]("active");
-    const _c2 = casesButtons, { [normalizedEnvironment]: _ } = _c2, filteredDelimeters = __objRest(_c2, [__restKey(normalizedEnvironment)]);
+    const { [normalizedEnvironment]: _, ...filteredDelimeters } = casesButtons;
     delimiterOptions = Object.values(filteredDelimeters).map(
       (f) => f("inactive")
     );
@@ -34320,7 +34196,7 @@ function showEnvironmentPopover(mf) {
     if (command)
       control.addEventListener("click", () => mf.executeCommand(command));
   });
-  const position = (_d2 = mf.field) == null ? void 0 : _d2.getBoundingClientRect();
+  const position = mf.field?.getBoundingClientRect();
   if (position) {
     panel.style.top = `${window.scrollY + (position.top - panel.clientHeight - 15)}px`;
     panel.style.left = `${position.left + 20}px`;
@@ -34329,7 +34205,7 @@ function showEnvironmentPopover(mf) {
 }
 function hideEnvironmentPopover() {
   const panel = document.getElementById("mathlive-environment-popover");
-  panel == null ? void 0 : panel.classList.remove("is-visible");
+  panel?.classList.remove("is-visible");
 }
 function disposeEnvironmentPopover() {
   if (!document.getElementById("mathlive-environment-popover")) return;
@@ -34342,7 +34218,7 @@ function updateEnvironmentPopover(mf) {
   let visible = false;
   if (mf.model.mode === "math") {
     const env = mf.model.parentEnvironment;
-    if (!!(env == null ? void 0 : env.rows) && isTabularEnvironment(env.environmentName)) {
+    if (!!env?.rows && isTabularEnvironment(env.environmentName)) {
       const policy = mf.options.environmentPopoverPolicy;
       visible = policy === "auto" || policy === "on";
     }
@@ -34384,8 +34260,7 @@ function getOppositeEffectivePos(pos, length, placement, dir) {
   return pos - length;
 }
 function fitInViewport(element, options) {
-  var _a3, _b3, _c2;
-  const dir = (_a3 = getComputedDir(element)) != null ? _a3 : "ltr";
+  const dir = getComputedDir(element) ?? "ltr";
   element.style.position = "fixed";
   element.style.left = "";
   element.style.top = "";
@@ -34395,7 +34270,7 @@ function fitInViewport(element, options) {
   element.style.width = "";
   const elementBounds = element.getBoundingClientRect();
   const maxHeight = Number.isFinite(options.maxHeight) ? Math.min(options.maxHeight, window.innerHeight) : window.innerHeight;
-  let height = Math.min(maxHeight, (_b3 = options.height) != null ? _b3 : elementBounds.height);
+  let height = Math.min(maxHeight, options.height ?? elementBounds.height);
   let top = getEffectivePos(
     options.location.y,
     height,
@@ -34421,7 +34296,7 @@ function fitInViewport(element, options) {
   }
   height = Math.min(top + height, window.innerHeight - 8) - top;
   const maxWidth = Number.isFinite(options.maxWidth) ? Math.min(options.maxWidth, window.innerWidth) : window.innerWidth;
-  let width = Math.min(maxWidth, (_c2 = options.width) != null ? _c2 : elementBounds.width);
+  let width = Math.min(maxWidth, options.width ?? elementBounds.width);
   let left = getEffectivePos(
     options.location.x,
     width,
@@ -34516,7 +34391,6 @@ var _MenuItemState = class {
     this._className = "";
     /** The DOM element the menu item is rendered as */
     this._element = null;
-    var _a3;
     this.parentMenu = parentMenu;
     this._declaration = declaration;
     Object.freeze(this._declaration);
@@ -34527,7 +34401,7 @@ var _MenuItemState = class {
         submenuClass: declaration.submenuClass,
         columnCount: declaration.columnCount
       });
-    } else this.type = (_a3 = declaration.type) != null ? _a3 : "command";
+    } else this.type = declaration.type ?? "command";
     this.hasCheck = isCommand(declaration) && declaration.checked !== void 0;
   }
   get rootMenu() {
@@ -34538,10 +34412,9 @@ var _MenuItemState = class {
     return this._abortController;
   }
   dispose() {
-    var _a3, _b3;
-    (_a3 = this._abortController) == null ? void 0 : _a3.abort();
+    this._abortController?.abort();
     this._abortController = void 0;
-    (_b3 = this._element) == null ? void 0 : _b3.remove();
+    this._element?.remove();
     this._element = null;
     if (this.submenu) this.submenu.dispose();
     this.submenu = void 0;
@@ -34550,8 +34423,7 @@ var _MenuItemState = class {
     return this._declaration;
   }
   get label() {
-    var _a3;
-    return (_a3 = this._label) != null ? _a3 : "";
+    return this._label ?? "";
   }
   set label(value) {
     if (value === void 0) value = "";
@@ -34602,15 +34474,13 @@ var _MenuItemState = class {
     this.dirty = true;
   }
   get active() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this.element) == null ? void 0 : _a3.classList.contains("active")) != null ? _b3 : false;
+    return this.element?.classList.contains("active") ?? false;
   }
   set active(value) {
     if (!this.element) return;
     this.element.classList.toggle("active", value);
   }
   updateState(modifiers) {
-    var _a3, _b3, _c2;
     const declaration = this._declaration;
     if (isDivider(declaration)) {
       this.enabled = false;
@@ -34623,11 +34493,11 @@ var _MenuItemState = class {
       this.visible = true;
     }
     if (isCommand(declaration)) {
-      this.checked = (_a3 = dynamicValue(declaration.checked, modifiers)) != null ? _a3 : false;
+      this.checked = dynamicValue(declaration.checked, modifiers) ?? false;
     }
     if (isCommand(declaration) || isSubmenu(declaration)) {
-      this.enabled = (_b3 = dynamicValue(declaration.enabled, modifiers)) != null ? _b3 : true;
-      this.visible = (_c2 = dynamicValue(declaration.visible, modifiers)) != null ? _c2 : true;
+      this.enabled = dynamicValue(declaration.enabled, modifiers) ?? true;
+      this.visible = dynamicValue(declaration.visible, modifiers) ?? true;
       if (this.visible && this.enabled && this.submenu) {
         this.submenu.updateState(modifiers);
         if (!this.submenu.visible) this.visible = false;
@@ -34646,12 +34516,11 @@ var _MenuItemState = class {
     if (value && this.parentMenu) this.parentMenu.dirty = true;
   }
   updateElement() {
-    var _a3;
     if (!this.visible || !this.element) return;
     const li = this.element;
     li.textContent = "";
     li.className = "";
-    li.className = (_a3 = this._className) != null ? _a3 : "";
+    li.className = this._className ?? "";
     if (!this.enabled) li.setAttribute("aria-disabled", "true");
     else li.removeAttribute("aria-disabled");
     if (this.checked === true) {
@@ -34708,7 +34577,6 @@ var _MenuItemState = class {
    * `onMenuSelect()` hook if defined.
    */
   dispatchSelect() {
-    var _a3;
     if (!isCommand(this._declaration)) return;
     const ev = new CustomEvent("menu-select", {
       cancelable: true,
@@ -34722,7 +34590,7 @@ var _MenuItemState = class {
     const success = this.parentMenu.dispatchEvent(ev);
     if (success && typeof this._declaration.onMenuSelect === "function") {
       this._declaration.onMenuSelect({
-        target: (_a3 = this.parentMenu.host) != null ? _a3 : void 0,
+        target: this.parentMenu.host ?? void 0,
         modifiers: this.rootMenu.modifiers,
         id: this._declaration.id,
         data: this._declaration.data
@@ -34730,7 +34598,6 @@ var _MenuItemState = class {
     }
   }
   handleEvent(event) {
-    var _a3;
     if (!this.visible || !this.enabled) return;
     if (event.type === "click") {
       if (this.rootMenu.state === "modal") this.select();
@@ -34741,7 +34608,7 @@ var _MenuItemState = class {
     if (event.type === "pointerenter") {
       const ev = event;
       this.rootMenu.cancelDelayedOperation();
-      if (this.parentMenu.isSubmenuOpen && ((_a3 = this.parentMenu.activeMenuItem) == null ? void 0 : _a3.movingTowardSubmenu(ev))) {
+      if (this.parentMenu.isSubmenuOpen && this.parentMenu.activeMenuItem?.movingTowardSubmenu(ev)) {
         this.rootMenu.scheduleOperation(() => {
           this.parentMenu.activeMenuItem = this;
           this.openSubmenu();
@@ -34790,9 +34657,8 @@ var _MenuItemState = class {
    * This delay improves targeting of submenus with the mouse.
    */
   openSubmenu(options) {
-    var _a3;
     if (this.type !== "submenu" || !this.element) return;
-    if ((_a3 = options == null ? void 0 : options.withDelay) != null ? _a3 : false) {
+    if (options?.withDelay ?? false) {
       this.rootMenu.scheduleOperation(() => this.openSubmenu());
       return;
     }
@@ -34833,7 +34699,7 @@ function speed(dx, dy, dt) {
 function dynamicValue(value, modifiers) {
   if (value === void 0 || typeof value !== "function")
     return value;
-  modifiers != null ? modifiers : modifiers = { alt: false, control: false, shift: false, meta: false };
+  modifiers ??= { alt: false, control: false, shift: false, meta: false };
   return value(modifiers);
 }
 
@@ -34846,10 +34712,9 @@ var _MenuListState = class __MenuListState {
     this._activeMenuItem = null;
     /** @private */
     this._dirty = true;
-    var _a3, _b3;
-    this.parentMenu = (_a3 = options == null ? void 0 : options.parentMenu) != null ? _a3 : null;
-    this._submenuClass = options == null ? void 0 : options.submenuClass;
-    this.columnCount = (_b3 = options == null ? void 0 : options.columnCount) != null ? _b3 : 1;
+    this.parentMenu = options?.parentMenu ?? null;
+    this._submenuClass = options?.submenuClass;
+    this.columnCount = options?.columnCount ?? 1;
     this.isSubmenuOpen = false;
     this.menuItems = items;
   }
@@ -34871,11 +34736,10 @@ var _MenuListState = class __MenuListState {
     this.dirty = true;
   }
   dispose() {
-    var _a3;
     this.hide();
     if (this._element) this._element.remove();
     if (this._abortController) this._abortController.abort();
-    (_a3 = this._menuItems) == null ? void 0 : _a3.forEach((x) => x.dispose());
+    this._menuItems?.forEach((x) => x.dispose());
     this._menuItems = [];
     this._activeMenuItem = null;
     this.parentMenu = null;
@@ -34900,7 +34764,6 @@ var _MenuListState = class __MenuListState {
    * Update the 'model' of this menu (i.e. list of menu items)
    */
   updateState(modifiers) {
-    var _a3, _b3, _c2;
     this._menuItems.forEach((x) => x.updateState(modifiers));
     const previousHasCheck = this.hasCheck;
     this.hasCheck = this._menuItems.some((x) => x.visible && x.hasCheck);
@@ -34928,8 +34791,8 @@ var _MenuListState = class __MenuListState {
         wasDivider = true;
       } else if (item.visible) wasDivider = false;
     }
-    if (!((_a3 = this.activeMenuItem) == null ? void 0 : _a3.visible)) this.activeMenuItem = null;
-    if (!((_b3 = this.activeMenuItem) == null ? void 0 : _b3.enabled) && ((_c2 = this.activeMenuItem) == null ? void 0 : _c2.type) === "submenu")
+    if (!this.activeMenuItem?.visible) this.activeMenuItem = null;
+    if (!this.activeMenuItem?.enabled && this.activeMenuItem?.type === "submenu")
       this._activeMenuItem.submenu.hide();
     this._dirty = false;
   }
@@ -34958,12 +34821,11 @@ var _MenuListState = class __MenuListState {
    * the current state of the menu items
    */
   updateElement() {
-    var _a3;
     if (!this._element) return;
     this._element.textContent = "";
     for (const { element, visible } of this._menuItems)
       if (element && visible) this._element.append(element);
-    (_a3 = this._element.querySelector("li:first-of-type")) == null ? void 0 : _a3.setAttribute("tabindex", "0");
+    this._element.querySelector("li:first-of-type")?.setAttribute("tabindex", "0");
   }
   /**
    * Construct (or return a cached version) of an element representing
@@ -34999,23 +34861,22 @@ var _MenuListState = class __MenuListState {
    * Call `item.submenu.openSubmenu()` to open the submenu.
    */
   set activeMenuItem(value) {
-    var _a3, _b3, _c2, _d2;
     this.rootMenu.cancelDelayedOperation();
     if (value !== this._activeMenuItem) {
       if (this.activeMenuItem) {
         const item = this.activeMenuItem;
         item.active = false;
-        (_a3 = item.submenu) == null ? void 0 : _a3.hide();
+        item.submenu?.hide();
       }
-      if (!((_b3 = value == null ? void 0 : value.visible) != null ? _b3 : true)) {
+      if (!(value?.visible ?? true)) {
         this._activeMenuItem = null;
         return;
       }
       this._activeMenuItem = value;
       if (value) value.active = true;
     }
-    if (value) (_c2 = value.element) == null ? void 0 : _c2.focus({ preventScroll: true });
-    else (_d2 = this._element) == null ? void 0 : _d2.focus({ preventScroll: true });
+    if (value) value.element?.focus({ preventScroll: true });
+    else this._element?.focus({ preventScroll: true });
   }
   /** First activable menu item */
   get firstMenuItem() {
@@ -35081,7 +34942,6 @@ var _MenuListState = class __MenuListState {
     return __MenuListState._collator;
   }
   findMenuItem(text) {
-    var _a3;
     this.updateIfDirty();
     const candidates = this._menuItems.filter(
       (x) => x.type !== "divider" && x.visible && x.enabled
@@ -35092,12 +34952,12 @@ var _MenuListState = class __MenuListState {
     let result = null;
     let i = 0;
     while (i < last && !result) {
-      result = (_a3 = candidates.find(
+      result = candidates.find(
         (x) => __MenuListState.collator.compare(
           text,
           x.label.substring(i, text.length)
         ) === 0
-      )) != null ? _a3 : null;
+      ) ?? null;
       i++;
     }
     return result;
@@ -35131,15 +34991,14 @@ var _MenuListState = class __MenuListState {
     return true;
   }
   hide() {
-    var _a3, _b3, _c2, _d2, _e, _f;
     this.openSubmenu = null;
     this.activeMenuItem = null;
     if (this.parentMenu) this.parentMenu.openSubmenu = null;
-    if (!((_a3 = this._element) == null ? void 0 : _a3.isConnected) || !this._element.parentElement) return;
-    if (supportPopover() && ((_b3 = this._element) == null ? void 0 : _b3.popover)) this._element.hidePopover();
+    if (!this._element?.isConnected || !this._element.parentElement) return;
+    if (supportPopover() && this._element?.popover) this._element.hidePopover();
     suppressFocusEvents();
-    (_d2 = (_c2 = this.parentMenu) == null ? void 0 : _c2.element) == null ? void 0 : _d2.focus();
-    (_f = (_e = this._element) == null ? void 0 : _e.parentNode) == null ? void 0 : _f.removeChild(this._element);
+    this.parentMenu?.element?.focus();
+    this._element?.parentNode?.removeChild(this._element);
     enableFocusEvents();
   }
   /**
@@ -35148,15 +35007,14 @@ var _MenuListState = class __MenuListState {
    * or show() on the submenu.
    */
   set openSubmenu(submenu) {
-    var _a3, _b3, _c2, _d2;
     const expanded = submenu !== null;
-    if (((_a3 = this.activeMenuItem) == null ? void 0 : _a3.type) === "submenu") {
-      (_b3 = this.activeMenuItem.element) == null ? void 0 : _b3.setAttribute(
+    if (this.activeMenuItem?.type === "submenu") {
+      this.activeMenuItem.element?.setAttribute(
         "aria-expanded",
         expanded.toString()
       );
     }
-    (_d2 = (_c2 = this.activeMenuItem) == null ? void 0 : _c2.element) == null ? void 0 : _d2.classList.toggle("is-submenu-open", expanded);
+    this.activeMenuItem?.element?.classList.toggle("is-submenu-open", expanded);
     this.isSubmenuOpen = expanded;
   }
 };
@@ -35178,13 +35036,12 @@ function enableFocusEvents() {
 }
 
 // src/ui/menu/menu.ts
-var _Menu = class _Menu extends _MenuListState {
+var Menu = class _Menu extends _MenuListState {
   /**
    * The host is the element that the events will be dispatched from
    *
    */
   constructor(menuItems, options) {
-    var _a3;
     super(menuItems);
     /**
      * - 'closed': the menu is not visible
@@ -35197,7 +35054,7 @@ var _Menu = class _Menu extends _MenuListState {
     this.hysteresisTimer = 0;
     /** @private */
     this._updating = false;
-    this._host = (_a3 = options == null ? void 0 : options.host) != null ? _a3 : null;
+    this._host = options?.host ?? null;
     this.isDynamic = menuItems.some(isDynamic);
     this._modifiers = {
       shift: false,
@@ -35207,6 +35064,15 @@ var _Menu = class _Menu extends _MenuListState {
     };
     this.typingBuffer = "";
     this.state = "closed";
+  }
+  static {
+    /**
+     * Delay (in milliseconds) before displaying a submenu.
+     *
+     * Prevents distracting flashing of submenus when moving quickly
+     * through the options in a menu.
+     */
+    this.SUBMENU_DELAY = 120;
   }
   get modifiers() {
     return this._modifiers;
@@ -35238,7 +35104,7 @@ var _Menu = class _Menu extends _MenuListState {
   }
   updateState(modifiers) {
     this._updating = true;
-    this.modifiers = modifiers != null ? modifiers : this.modifiers;
+    this.modifiers = modifiers ?? this.modifiers;
     super.updateState(this.modifiers);
     this._updating = false;
   }
@@ -35247,7 +35113,6 @@ var _Menu = class _Menu extends _MenuListState {
     ev.stopImmediatePropagation();
   }
   handleKeydownEvent(ev) {
-    var _a3, _b3, _c2;
     if (ev.key === "Tab" || ev.key === "Escape") {
       this.hide();
       return;
@@ -35261,16 +35126,16 @@ var _Menu = class _Menu extends _MenuListState {
       case "Space":
       case "Return":
       case "Enter":
-        menuItem == null ? void 0 : menuItem.select(keyboardModifiersFromEvent(ev));
+        menuItem?.select(keyboardModifiersFromEvent(ev));
         break;
       case "ArrowRight":
-        if ((menuItem == null ? void 0 : menuItem.type) === "submenu") {
+        if (menuItem?.type === "submenu") {
           menuItem.select(keyboardModifiersFromEvent(ev));
           this.activeSubmenu.activeMenuItem = this.activeSubmenu.firstMenuItem;
         } else if (!menuItem) menu.activeMenuItem = menu.firstMenuItem;
         else {
-          const col = (_a3 = menu.getMenuItemColumn(menuItem)) != null ? _a3 : -1;
-          if (col >= 0 && col < ((_b3 = menu.columnCount) != null ? _b3 : 1) - 1) {
+          const col = menu.getMenuItemColumn(menuItem) ?? -1;
+          if (col >= 0 && col < (menu.columnCount ?? 1) - 1) {
             const next = menu.nextMenuItem(1);
             if (next) menu.activeMenuItem = next;
           }
@@ -35280,14 +35145,14 @@ var _Menu = class _Menu extends _MenuListState {
         if (menu === this.rootMenu) {
           if (!menuItem) menu.activeMenuItem = menu.firstMenuItem;
         } else {
-          const col = menuItem ? (_c2 = menu.getMenuItemColumn(menuItem)) != null ? _c2 : -1 : -1;
+          const col = menuItem ? menu.getMenuItemColumn(menuItem) ?? -1 : -1;
           if (col <= 0 || !menuItem) {
             menu.hide();
             const activeMenu = menu.parentMenu.activeMenuItem;
             if (activeMenu) {
               const { element } = activeMenu;
-              element == null ? void 0 : element.focus();
-              element == null ? void 0 : element.classList.remove("is-submenu-open");
+              element?.focus();
+              element?.classList.remove("is-submenu-open");
             }
           } else {
             const next = menu.nextMenuItem(-1);
@@ -35393,11 +35258,11 @@ var _Menu = class _Menu extends _MenuListState {
   }
   /** Locations are in viewport coordinate. */
   show(options) {
-    this._onDismiss = options == null ? void 0 : options.onDismiss;
-    if (options == null ? void 0 : options.modifiers) this.modifiers = options.modifiers;
+    this._onDismiss = options?.onDismiss;
+    if (options?.modifiers) this.modifiers = options.modifiers;
     this.updateState();
-    this.connectScrim(options == null ? void 0 : options.target);
-    if (!super.show(__spreadProps(__spreadValues({}, options), { container: this.scrim }))) {
+    this.connectScrim(options?.target);
+    if (!super.show({ ...options, container: this.scrim })) {
       this.disconnectScrim();
       return false;
     }
@@ -35440,14 +35305,6 @@ var _Menu = class _Menu extends _MenuListState {
     }
   }
 };
-/**
- * Delay (in milliseconds) before displaying a submenu.
- *
- * Prevents distracting flashing of submenus when moving quickly
- * through the options in a menu.
- */
-_Menu.SUBMENU_DELAY = 120;
-var Menu = _Menu;
 function isDynamic(item) {
   if (isDivider(item)) return false;
   if (typeof item.label === "function" || typeof item.ariaLabel === "function" || typeof item.tooltip === "function")
@@ -35461,11 +35318,15 @@ function isDynamic(item) {
 
 // src/ui/events/longpress.ts
 var LongPress = class {
+  static {
+    this.DELAY = 300;
+  }
+  static {
+    // Amount of time before showing the context menu, in ms
+    this.MAX_DISTANCE = 10;
+  }
   // Maximum distance between the start and end of the gesture, in pixels
 };
-LongPress.DELAY = 300;
-// Amount of time before showing the context menu, in ms
-LongPress.MAX_DISTANCE = 10;
 function onLongPress(triggerEvent) {
   return new Promise((resolve, _reject) => {
     const startPoint = eventLocation(triggerEvent);
@@ -35513,7 +35374,7 @@ async function onContextMenu(event, target, menu) {
   if (event.type === "keydown") {
     const evt = event;
     if (evt.code === "ContextMenu" || evt.code === "F10" && evt.shiftKey) {
-      const bounds = target == null ? void 0 : target.getBoundingClientRect();
+      const bounds = target?.getBoundingClientRect();
       if (acceptContextMenu(target) && bounds && menu.show({
         target,
         location: {
@@ -35559,17 +35420,16 @@ function makeID(id, options) {
   return ` extid="${id}"`;
 }
 function scanIdentifier(stream, final, options) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h;
   let result = false;
-  final = final != null ? final : stream.atoms.length;
+  final = final ?? stream.atoms.length;
   let mathML = "";
   let body = "";
   let atom = stream.atoms[stream.index];
-  const variant = (_a3 = atom.style) == null ? void 0 : _a3.variant;
-  const variantStyle = (_b3 = atom.style) == null ? void 0 : _b3.variantStyle;
+  const variant = atom.style?.variant;
+  const variantStyle = atom.style?.variantStyle;
   let variantProp = "";
   if (atom.value && (variant || variantStyle)) {
-    const unicodeVariant = (_c2 = mathVariantToUnicode(atom.value, variant, variantStyle)) != null ? _c2 : atom.value;
+    const unicodeVariant = mathVariantToUnicode(atom.value, variant, variantStyle) ?? atom.value;
     if (unicodeVariant !== atom.value) {
       stream.index += 1;
       mathML = `<mi${makeID(atom.id, options)}>${unicodeVariant}</mi>`;
@@ -35579,7 +35439,7 @@ function scanIdentifier(stream, final, options) {
       }
       return true;
     }
-    variantProp = (_d2 = {
+    variantProp = {
       "upnormal": "normal",
       "boldnormal": "bold",
       "italicmain": "italic",
@@ -35598,7 +35458,7 @@ function scanIdentifier(stream, final, options) {
       "italicsans-serif": "sans-serif-italic",
       "bolditalicsans-serif": "sans-serif-bold-italic",
       "monospace": "monospace"
-    }[(variantStyle != null ? variantStyle : "") + (variant != null ? variant : "")]) != null ? _d2 : "";
+    }[(variantStyle ?? "") + (variant ?? "")] ?? "";
     if (variantProp) variantProp = ` mathvariant="${variantProp}"`;
   }
   const SPECIAL_IDENTIFIERS = {
@@ -35645,7 +35505,7 @@ function scanIdentifier(stream, final, options) {
     stream.index += 1;
   } else {
     if (variant || variantStyle) {
-      while (stream.index < final && (atom.type === "mord" || atom.type === "macro") && !atom.isDigit() && variant === ((_f = (_e = atom.style) == null ? void 0 : _e.variant) != null ? _f : "") && variantStyle === ((_h = (_g = atom.style) == null ? void 0 : _g.variantStyle) != null ? _h : "")) {
+      while (stream.index < final && (atom.type === "mord" || atom.type === "macro") && !atom.isDigit() && variant === (atom.style?.variant ?? "") && variantStyle === (atom.style?.variantStyle ?? "")) {
         body += toString2([atom]);
         stream.index += 1;
         atom = stream.atoms[stream.index];
@@ -35689,11 +35549,10 @@ function indexOfSuperscriptInNumber(stream) {
   return result;
 }
 function parseSubsup(base, stream, options) {
-  var _a3;
   let atom = stream.atoms[stream.index - 1];
   if (!atom) return false;
   if (!atom.superscript && !atom.subscript) {
-    if (((_a3 = stream.atoms[stream.index]) == null ? void 0 : _a3.type) === "subsup") {
+    if (stream.atoms[stream.index]?.type === "subsup") {
       atom = stream.atoms[stream.index];
       stream.index += 1;
     } else return false;
@@ -35715,7 +35574,7 @@ function parseSubsup(base, stream, options) {
   return true;
 }
 function scanText(stream, final, options) {
-  final = final != null ? final : stream.atoms.length;
+  final = final ?? stream.atoms.length;
   const savedIndex = stream.index;
   while (stream.index < final && stream.atoms[stream.index].type === "first")
     stream.index += 1;
@@ -35753,7 +35612,7 @@ function scanText(stream, final, options) {
   return false;
 }
 function scanNumber(stream, final, options) {
-  final = final != null ? final : stream.atoms.length;
+  final = final ?? stream.atoms.length;
   const initial = stream.index;
   let mathML = "";
   let superscript = indexOfSuperscriptInNumber(stream);
@@ -35776,7 +35635,7 @@ function scanNumber(stream, final, options) {
 }
 function scanFence(stream, final, options) {
   let result = false;
-  final = final != null ? final : stream.atoms.length;
+  final = final ?? stream.atoms.length;
   let mathML = "";
   let lastType = "";
   if (stream.index < final && stream.atoms[stream.index].type === "mopen") {
@@ -35820,7 +35679,7 @@ function scanFence(stream, final, options) {
 }
 function scanOperator(stream, final, options) {
   let result = false;
-  final = final != null ? final : stream.atoms.length;
+  final = final ?? stream.atoms.length;
   let mathML = "";
   let lastType = "";
   const atom = stream.atoms[stream.index];
@@ -35908,10 +35767,10 @@ function scanOperator(stream, final, options) {
   return result;
 }
 function toMathML(input, options, initial, final) {
-  options != null ? options : options = {};
+  options ??= {};
   const result = {
     atoms: [],
-    index: initial != null ? initial : 0,
+    index: initial ?? 0,
     mathML: "",
     lastType: ""
   };
@@ -35965,7 +35824,6 @@ function toString2(atoms) {
   return xmlEscape(result);
 }
 function atomToMathML(atom, options) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
   if (atom.type === "first") return "";
   if (isTextMode(atom.mode))
     return `<mtext${makeID(atom.id, options)}>${xmlEscape(atom.value)}</mtext>`;
@@ -36169,14 +36027,14 @@ function atomToMathML(atom, options) {
       result = "<mrow>";
       if (lDelim && lDelim !== ".") {
         result += `<mo${makeID(atom.id, options)}>${xmlEscape(
-          (_a3 = SPECIAL_DELIMS[lDelim]) != null ? _a3 : lDelim
+          SPECIAL_DELIMS[lDelim] ?? lDelim
         )}</mo>`;
       }
       if (atom.body) result += toMathML(atom.body, options);
       const rDelim = leftrightAtom.matchingRightDelim();
       if (rDelim && rDelim !== ".") {
         result += `<mo${makeID(atom.id, options)}>${xmlEscape(
-          (_b3 = SPECIAL_DELIMS[rDelim]) != null ? _b3 : rDelim
+          SPECIAL_DELIMS[rDelim] ?? rDelim
         )}</mo>`;
       }
       result += "</mrow>";
@@ -36205,36 +36063,36 @@ function atomToMathML(atom, options) {
         body = atom.body;
       else if (overscript && overscript.length > 0) {
         body = atom.body;
-        if ((_d2 = (_c2 = atom.body) == null ? void 0 : _c2[0]) == null ? void 0 : _d2.below) {
+        if (atom.body?.[0]?.below) {
           underscript = atom.body[0].below;
           body = atom.body[0].body;
-        } else if (((_f = (_e = atom.body) == null ? void 0 : _e[0]) == null ? void 0 : _f.type) === "first" && ((_h = (_g = atom.body) == null ? void 0 : _g[1]) == null ? void 0 : _h.below)) {
+        } else if (atom.body?.[0]?.type === "first" && atom.body?.[1]?.below) {
           underscript = atom.body[1].below;
           body = atom.body[1].body;
         }
       } else if (underscript && underscript.length > 0) {
         body = atom.body;
-        if ((_j = (_i = atom.body) == null ? void 0 : _i[0]) == null ? void 0 : _j.above) {
+        if (atom.body?.[0]?.above) {
           overscript = atom.body[0].above;
           body = atom.body[0].body;
-        } else if (((_l = (_k = atom.body) == null ? void 0 : _k[0]) == null ? void 0 : _l.type) === "first" && ((_n = (_m = atom.body) == null ? void 0 : _m[1]) == null ? void 0 : _n.above)) {
+        } else if (atom.body?.[0]?.type === "first" && atom.body?.[1]?.above) {
           overscript = atom.body[1].above;
           body = atom.body[1].body;
         }
       }
       if ((overunderAtom.svgAbove || overscript) && (overunderAtom.svgBelow || underscript)) {
         result += `<munderover ${makeID(atom.id, options)}>`;
-        result += (_o = SVG_CODE_POINTS[overunderAtom.svgBody]) != null ? _o : toMathML(body, options);
-        result += (_p = SVG_CODE_POINTS[overunderAtom.svgBelow]) != null ? _p : toMathML(underscript, options);
-        result += (_q = SVG_CODE_POINTS[overunderAtom.svgAbove]) != null ? _q : toMathML(overscript, options);
+        result += SVG_CODE_POINTS[overunderAtom.svgBody] ?? toMathML(body, options);
+        result += SVG_CODE_POINTS[overunderAtom.svgBelow] ?? toMathML(underscript, options);
+        result += SVG_CODE_POINTS[overunderAtom.svgAbove] ?? toMathML(overscript, options);
         result += "</munderover>";
       } else if (overunderAtom.svgAbove || overscript) {
-        result += `<mover ${makeID(atom.id, options)}>` + ((_r = SVG_CODE_POINTS[overunderAtom.svgBody]) != null ? _r : toMathML(body, options));
-        result += (_s = SVG_CODE_POINTS[overunderAtom.svgAbove]) != null ? _s : toMathML(overscript, options);
+        result += `<mover ${makeID(atom.id, options)}>` + (SVG_CODE_POINTS[overunderAtom.svgBody] ?? toMathML(body, options));
+        result += SVG_CODE_POINTS[overunderAtom.svgAbove] ?? toMathML(overscript, options);
         result += "</mover>";
       } else if (overunderAtom.svgBelow || underscript) {
-        result += `<munder ${makeID(atom.id, options)}>` + ((_t = SVG_CODE_POINTS[overunderAtom.svgBody]) != null ? _t : toMathML(body, options));
-        result += (_u = SVG_CODE_POINTS[overunderAtom.svgBelow]) != null ? _u : toMathML(underscript, options);
+        result += `<munder ${makeID(atom.id, options)}>` + (SVG_CODE_POINTS[overunderAtom.svgBody] ?? toMathML(body, options));
+        result += SVG_CODE_POINTS[overunderAtom.svgBelow] ?? toMathML(underscript, options);
         result += "</munder>";
       }
       break;
@@ -36249,7 +36107,7 @@ function atomToMathML(atom, options) {
         } else if (typeof atom.value === "string")
           result = atom.value.charAt(0);
       } else if (atom.command === "\\char") {
-        const val = (_v = atom.args) == null ? void 0 : _v[0];
+        const val = atom.args?.[0];
         if (val !== void 0 && "number" in val) {
           const codepoint = val.number;
           if (typeof codepoint === "number" && codepoint >= 0 && codepoint <= 1114111)
@@ -36301,7 +36159,7 @@ function atomToMathML(atom, options) {
       result += makeID(atom.id, options) + ">" + toMathML(atom.body, options) + "</menclose>";
       break;
     case "spacing":
-      result += '<mspace width="' + ((_w = SPACING[command]) != null ? _w : 0) + 'em"/>';
+      result += '<mspace width="' + (SPACING[command] ?? 0) + 'em"/>';
       break;
     case "enclose":
       const encloseAtom = atom;
@@ -36519,7 +36377,6 @@ function emph(s) {
   return `<emphasis>${s}</emphasis>`;
 }
 function atomsToSpeakableFragment(mode, atom) {
-  var _a3;
   let result = "";
   let isInDigitRun = false;
   let isInTextRun = false;
@@ -36531,7 +36388,7 @@ function atomsToSpeakableFragment(mode, atom) {
       result += emph(atomToSpeakableFragment(mode, atom[i + 1]));
       i += 2;
     } else if (isTextMode(atom[i].mode)) {
-      if (isInTextRun) result += (_a3 = atom[i].value) != null ? _a3 : " ";
+      if (isInTextRun) result += atom[i].value ?? " ";
       else {
         isInTextRun = true;
         result += atomToSpeakableFragment("text", atom[i]);
@@ -36550,7 +36407,6 @@ function atomsToSpeakableFragment(mode, atom) {
   return result;
 }
 function atomToSpeakableFragment(mode, atom) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h;
   function letter(c) {
     if (!globalThis.MathfieldElement.textToSpeechMarkup) {
       if (/[a-z]/.test(c)) return " '" + c.toUpperCase() + "'";
@@ -36608,18 +36464,18 @@ function atomToSpeakableFragment(mode, atom) {
     case "\\underparen":
       return "arc under " + atomToSpeakableFragment(mode, atom.body);
     case "\\mathop":
-      return (_a3 = atomsAsPotentialText(atom.body)) != null ? _a3 : atomToSpeakableFragment(mode, atom.body);
+      return atomsAsPotentialText(atom.body) ?? atomToSpeakableFragment(mode, atom.body);
     case "\\mathit":
-      return (_b3 = atomsAsPotentialText(atom.body)) != null ? _b3 : atomToSpeakableFragment(mode, atom.body);
+      return atomsAsPotentialText(atom.body) ?? atomToSpeakableFragment(mode, atom.body);
     case "\\mathrm":
-      return (_c2 = atomsAsPotentialText(atom.body)) != null ? _c2 : atomToSpeakableFragment(mode, atom.body);
+      return atomsAsPotentialText(atom.body) ?? atomToSpeakableFragment(mode, atom.body);
     case "\\mathbb":
-      return "blackboard" + ((_d2 = atomsAsPotentialText(atom.body)) != null ? _d2 : atomToSpeakableFragment(mode, atom.body));
+      return "blackboard" + (atomsAsPotentialText(atom.body) ?? atomToSpeakableFragment(mode, atom.body));
   }
   switch (atom.type) {
     case "prompt":
       const input = atom.body.length > 1 ? 'start input . <break time="500ms"/> ' + atomToSpeakableFragment(mode, atom.body) + '. <break time="500ms"/> end input' : "blank";
-      result += ' <break time="300ms"/> ' + input + '. <break time="700ms"/>' + ((_e = atom.correctness) != null ? _e : "") + ' . <break time="700ms"/> ';
+      result += ' <break time="300ms"/> ' + input + '. <break time="700ms"/>' + (atom.correctness ?? "") + ' . <break time="700ms"/> ';
       break;
     case "array":
       const array = atom.rows;
@@ -36713,9 +36569,9 @@ function atomToSpeakableFragment(mode, atom) {
     case "leftright":
       {
         const delimAtom = atom;
-        result += (_f = delimAtom.leftDelim ? PRONUNCIATION[delimAtom.leftDelim] : void 0) != null ? _f : delimAtom.leftDelim;
+        result += (delimAtom.leftDelim ? PRONUNCIATION[delimAtom.leftDelim] : void 0) ?? delimAtom.leftDelim;
         result += atomToSpeakableFragment("math", atom.body);
-        result += (_g = delimAtom.rightDelim ? PRONUNCIATION[delimAtom.rightDelim] : void 0) != null ? _g : delimAtom.rightDelim;
+        result += (delimAtom.rightDelim ? PRONUNCIATION[delimAtom.rightDelim] : void 0) ?? delimAtom.rightDelim;
       }
       break;
     case "rule":
@@ -36727,7 +36583,7 @@ function atomToSpeakableFragment(mode, atom) {
     case "macro":
       const macroName = command.replace(/^\\/g, "");
       const macro = getMacros()[macroName];
-      if (macro == null ? void 0 : macro.expand) result += atomToSpeakableFragment("math", atom.body);
+      if (macro?.expand) result += atomToSpeakableFragment("math", atom.body);
       else result += `${macroName} `;
       break;
     case "placeholder":
@@ -36812,7 +36668,7 @@ function atomToSpeakableFragment(mode, atom) {
         } else if (trimLatex === "\\operatorname" || trimLatex === "\\operatorname*")
           result += atomsAsText(atom.body) + " ";
         else if (typeof atom.value === "string") {
-          const value = (_h = PRONUNCIATION[atom.value]) != null ? _h : atom.command ? PRONUNCIATION[atom.command] : void 0;
+          const value = PRONUNCIATION[atom.value] ?? (atom.command ? PRONUNCIATION[atom.command] : void 0);
           result += value ? value : " " + atom.value;
         } else if (atom.command) {
           if (atom.command === "\\mathop")
@@ -36862,26 +36718,28 @@ function atomToSpeakableFragment(mode, atom) {
   return result;
 }
 function atomToSpeakableText(atoms) {
-  var _a3, _b3;
   const mfe = globalThis.MathfieldElement;
   if (mfe.textToSpeechRules === "sre" && ("sre" in window || "SRE" in window)) {
     const mathML = toMathML(atoms);
     if (mathML) {
       if (mfe.textToSpeechMarkup) {
-        mfe.textToSpeechRulesOptions = (_a3 = mfe.textToSpeechRulesOptions) != null ? _a3 : {};
-        mfe.textToSpeechRulesOptions = __spreadProps(__spreadValues({}, mfe.textToSpeechRulesOptions), {
+        mfe.textToSpeechRulesOptions = mfe.textToSpeechRulesOptions ?? {};
+        mfe.textToSpeechRulesOptions = {
+          ...mfe.textToSpeechRulesOptions,
           markup: mfe.textToSpeechMarkup
-        });
+        };
         if (mfe.textToSpeechRulesOptions.markup === "ssml") {
-          mfe.textToSpeechRulesOptions = __spreadProps(__spreadValues({}, mfe.textToSpeechRulesOptions), {
+          mfe.textToSpeechRulesOptions = {
+            ...mfe.textToSpeechRulesOptions,
             markup: "ssml_step"
-          });
+          };
         }
-        mfe.textToSpeechRulesOptions = __spreadProps(__spreadValues({}, mfe.textToSpeechRulesOptions), {
+        mfe.textToSpeechRulesOptions = {
+          ...mfe.textToSpeechRulesOptions,
           rate: mfe.speechEngineRate
-        });
+        };
       }
-      const SRE = (_b3 = window["SRE"]) != null ? _b3 : globalThis.sre.System.getInstance();
+      const SRE = window["SRE"] ?? globalThis.sre.System.getInstance();
       if (mfe.textToSpeechRulesOptions)
         SRE.setupEngine(mfe.textToSpeechRulesOptions);
       let result2 = "";
@@ -37065,30 +36923,29 @@ function joinAsciiMath(xs) {
   return result;
 }
 function atomToAsciiMath(atom, options) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
   if (!atom) return "";
   if (isArray(atom)) {
     if (atom.length === 0) return "";
     let first = 0;
-    while (((_a3 = atom[first]) == null ? void 0 : _a3.type) === "first") first += 1;
+    while (atom[first]?.type === "first") first += 1;
     if (first > 0) return atomToAsciiMath(atom.slice(first), options);
     if (atom[0].mode === "latex")
       return atom.map((x) => atomToAsciiMath(x)).join("");
     if (isTextMode(atom[0].mode)) {
       let i2 = 0;
       let text = "";
-      while (((_b3 = atom[i2]) == null ? void 0 : _b3.type) !== "first" && isTextMode((_d2 = (_c2 = atom[i2]) == null ? void 0 : _c2.mode) != null ? _d2 : "")) {
+      while (atom[i2]?.type !== "first" && isTextMode(atom[i2]?.mode ?? "")) {
         text += atom[i2].body ? atomToAsciiMath(atom[i2].body, options) : atom[i2].value;
         i2++;
       }
-      if (options == null ? void 0 : options.plain) return text + atomToAsciiMath(atom.slice(i2), options);
+      if (options?.plain) return text + atomToAsciiMath(atom.slice(i2), options);
       return `"${text}" ${atomToAsciiMath(atom.slice(i2))}`;
     }
     let i = 0;
     const result2 = [];
-    while (((_e = atom[i]) == null ? void 0 : _e.mode) === "math") {
+    while (atom[i]?.mode === "math") {
       let digits = "";
-      while (((_f = atom[i]) == null ? void 0 : _f.type) === "mord" && /\d/.test(atom[i].value))
+      while (atom[i]?.type === "mord" && /\d/.test(atom[i].value))
         digits += atom[i++].value;
       if (digits) result2.push(digits);
       else result2.push(atomToAsciiMath(atom[i++], options));
@@ -37097,7 +36954,7 @@ function atomToAsciiMath(atom, options) {
     return joinAsciiMath(result2);
   }
   if (isTextMode(atom.mode))
-    return (options == null ? void 0 : options.plain) ? atom.value : `"${atom.value}"`;
+    return options?.plain ? atom.value : `"${atom.value}"`;
   let result = "";
   const { command } = atom;
   let m;
@@ -37126,7 +36983,7 @@ function atomToAsciiMath(atom, options) {
         "\\check": "check"
         // non-standard
       }[command];
-      result = `${accent != null ? accent : ""} ${atomToAsciiMath(atom.body, options)} `;
+      result = `${accent ?? ""} ${atomToAsciiMath(atom.body, options)} `;
       break;
     case "first":
       return "";
@@ -37134,7 +36991,7 @@ function atomToAsciiMath(atom, options) {
       return atom.body.map((x) => x.value).join("");
     case "group":
     case "root":
-      result = (_g = IDENTIFIERS[command]) != null ? _g : atomToAsciiMath(atom.body, options);
+      result = IDENTIFIERS[command] ?? atomToAsciiMath(atom.body, options);
       break;
     case "genfrac":
       {
@@ -37191,7 +37048,7 @@ function atomToAsciiMath(atom, options) {
       break;
     case "mord":
       if (IDENTIFIERS[latex]) return IDENTIFIERS[latex];
-      result = (_j = (_i = (_h = IDENTIFIERS[command]) != null ? _h : command) != null ? _i : command) != null ? _j : typeof atom.value === "string" ? atom.value : "";
+      result = IDENTIFIERS[command] ?? command ?? command ?? (typeof atom.value === "string" ? atom.value : "");
       if (result.startsWith("\\")) result += " ";
       m = command ? command.match(/{?\\char"([\dabcdefABCDEF]+)}?/) : null;
       if (m) {
@@ -37204,14 +37061,14 @@ function atomToAsciiMath(atom, options) {
     case "mbin":
     case "mrel":
     case "minner":
-      result = (_m = (_l = (_k = IDENTIFIERS[latex]) != null ? _k : IDENTIFIERS[command]) != null ? _l : OPERATORS[command]) != null ? _m : atom.value;
+      result = IDENTIFIERS[latex] ?? IDENTIFIERS[command] ?? OPERATORS[command] ?? atom.value;
       break;
     case "mopen":
     case "mclose":
       result = atom.value;
       break;
     case "mpunct":
-      result = (_n = OPERATORS[command]) != null ? _n : command;
+      result = OPERATORS[command] ?? command;
       break;
     case "mop":
     case "operator":
@@ -37219,7 +37076,7 @@ function atomToAsciiMath(atom, options) {
       if (atom.value !== "\u200B") {
         if (OPERATORS[command]) result = OPERATORS[command];
         else {
-          result = command === "\\operatorname" ? atomToAsciiMath(atom.body, options) : (_o = atom.value) != null ? _o : command;
+          result = command === "\\operatorname" ? atomToAsciiMath(atom.body, options) : atom.value ?? command;
         }
         result += " ";
       }
@@ -37231,16 +37088,16 @@ function atomToAsciiMath(atom, options) {
         result = lines.map(
           (line) => line.map(
             (cell) => atomToAsciiMath(
-              (cell != null ? cell : []).filter((child) => child.type !== "first"),
+              (cell ?? []).filter((child) => child.type !== "first"),
               options
             )
           ).join("")
         ).join("\n");
       } else {
-        const rowDelim = (_p = {
+        const rowDelim = {
           "bmatrix": ["[", "]"],
           "bmatrix*": ["[", "]"]
-        }[environment]) != null ? _p : ["(", ")"];
+        }[environment] ?? ["(", ")"];
         const rows = [];
         const array = atom.rows;
         for (const row of array) {
@@ -37248,18 +37105,18 @@ function atomToAsciiMath(atom, options) {
           for (const cell of row) cells.push(atomToAsciiMath(cell, options));
           rows.push(rowDelim[0] + cells.join(",") + rowDelim[1]);
         }
-        const delim = (_q = {
+        const delim = {
           "bmatrix": ["[", "]"],
           "bmatrix*": ["[", "]"],
           "cases": ["{", ":}"]
-        }[environment]) != null ? _q : ["(", ")"];
+        }[environment] ?? ["(", ")"];
         result = delim[0] + rows.join(",") + delim[1];
       }
       break;
     case "box":
       break;
     case "spacing":
-      result = (_s = (_r = IDENTIFIERS[latex]) != null ? _r : IDENTIFIERS[command]) != null ? _s : " ";
+      result = IDENTIFIERS[latex] ?? IDENTIFIERS[command] ?? " ";
       break;
     case "enclose":
       result = "(" + atomToAsciiMath(atom.body, options) + ")";
@@ -37271,7 +37128,7 @@ function atomToAsciiMath(atom, options) {
       result = "";
       break;
     case "macro":
-      result = (_v = (_u = (_t = IDENTIFIERS[latex]) != null ? _t : IDENTIFIERS[command]) != null ? _u : OPERATORS[command]) != null ? _v : atomToAsciiMath(atom.body, options);
+      result = IDENTIFIERS[latex] ?? IDENTIFIERS[command] ?? OPERATORS[command] ?? atomToAsciiMath(atom.body, options);
       break;
   }
   if (!atom.hasEmptyBranch("subscript")) {
@@ -37301,19 +37158,19 @@ function asciiStyle(body, style) {
 
 // src/public/mathlive-ssr.ts
 function convertLatexToMarkup(text, options) {
-  var _a3;
-  const from = __spreadProps(__spreadValues({}, getDefaultContext()), {
+  const from = {
+    ...getDefaultContext(),
     renderPlaceholder: () => new Box(160, { maxFontSize: 1 })
-  });
-  if ((options == null ? void 0 : options.letterShapeStyle) && (options == null ? void 0 : options.letterShapeStyle) !== "auto")
+  };
+  if (options?.letterShapeStyle && options?.letterShapeStyle !== "auto")
     from.letterShapeStyle = options.letterShapeStyle;
-  if (options == null ? void 0 : options.macros) {
-    const macros = normalizeMacroDictionary(options == null ? void 0 : options.macros);
+  if (options?.macros) {
+    const macros = normalizeMacroDictionary(options?.macros);
     from.getMacro = (token) => getMacroDefinition(token, macros);
   }
-  if (options == null ? void 0 : options.registers)
-    from.registers = __spreadValues(__spreadValues({}, from.registers), options.registers);
-  const defaultMode = (_a3 = options == null ? void 0 : options.defaultMode) != null ? _a3 : "math";
+  if (options?.registers)
+    from.registers = { ...from.registers, ...options.registers };
+  const defaultMode = options?.defaultMode ?? "math";
   let parseMode = "math";
   let mathstyle = "displaystyle";
   if (defaultMode === "inline-math") mathstyle = "textstyle";
@@ -37335,8 +37192,8 @@ function convertLatexToMarkup(text, options) {
   return struts.toMarkup();
 }
 function validateLatex2(s, options) {
-  const context = __spreadValues({}, getDefaultContext());
-  if (options == null ? void 0 : options.macros) {
+  const context = { ...getDefaultContext() };
+  if (options?.macros) {
     const macros = normalizeMacroDictionary(options.macros);
     context.getMacro = (token) => getMacroDefinition(token, macros);
   }
@@ -37362,9 +37219,8 @@ function convertLatexToSpeakableText(latex) {
 }
 var gComputeEngine;
 function convertMathJsonToLatex(json) {
-  var _a3, _b3;
   if (!gComputeEngine) {
-    const ComputeEngineCtor = (_a3 = globalThis[Symbol.for("io.cortexjs.compute-engine")]) == null ? void 0 : _a3.ComputeEngine;
+    const ComputeEngineCtor = globalThis[Symbol.for("io.cortexjs.compute-engine")]?.ComputeEngine;
     if (ComputeEngineCtor) gComputeEngine = new ComputeEngineCtor();
     else {
       console.error(
@@ -37376,7 +37232,7 @@ function convertMathJsonToLatex(json) {
       );
     }
   }
-  return (_b3 = gComputeEngine == null ? void 0 : gComputeEngine.box(json).latex) != null ? _b3 : "";
+  return gComputeEngine?.box(json).latex ?? "";
 }
 function convertLatexToAsciiMath(latex, parseMode = "math") {
   return atomToAsciiMath(
@@ -37426,7 +37282,7 @@ function parseHex2(hex) {
     };
     if (hex.length === 8) result.a = parseInt(hex[6] + hex[7], 16) / 255;
   }
-  if (typeof (result == null ? void 0 : result.a) === "undefined") result.a = 1;
+  if (typeof result?.a === "undefined") result.a = 1;
   return result;
 }
 function oklchToOklab(_) {
@@ -37555,8 +37411,8 @@ function apca(bgColor, fgColor) {
   return Sapc * 100;
 }
 function contrast(bgColor, dark, light) {
-  light != null ? light : light = "#fff";
-  dark != null ? dark : dark = "#000";
+  light ??= "#fff";
+  dark ??= "#000";
   const lightContrast = apca(bgColor, light);
   const darkContrast = apca(bgColor, dark);
   return Math.abs(lightContrast) > Math.abs(darkContrast) ? light : dark;
@@ -37746,14 +37602,8 @@ function getBackgroundColorSubmenu(mf) {
       id: `background-color-${color}`,
       class: (asHexColor(contrast(BACKGROUND_COLORS[color])) === "#000" ? "dark-contrast" : "light-contrast") + " menu-swatch",
       label: `<span style="background:${BACKGROUND_COLORS[color]} "></span>`,
-      ariaLabel: () => {
-        var _a3;
-        return (_a3 = localize(color)) != null ? _a3 : color;
-      },
-      checked: () => {
-        var _a3;
-        return (_a3 = { some: "mixed", all: true }[mf.queryStyle({ backgroundColor: color })]) != null ? _a3 : false;
-      },
+      ariaLabel: () => localize(color) ?? color,
+      checked: () => ({ some: "mixed", all: true })[mf.queryStyle({ backgroundColor: color })] ?? false,
       onMenuSelect: () => mf.applyStyle({ backgroundColor: color }, { operation: "toggle" })
     });
   }
@@ -37766,14 +37616,8 @@ function getColorSubmenu(mf) {
       id: `color-${color}`,
       class: (contrast(FOREGROUND_COLORS[color]) === "#000" ? "dark-contrast" : "light-contrast") + " menu-swatch",
       label: `<span style="background:${FOREGROUND_COLORS[color]} "></span>`,
-      ariaLabel: () => {
-        var _a3;
-        return (_a3 = localize(color)) != null ? _a3 : color;
-      },
-      checked: () => {
-        var _a3;
-        return (_a3 = { some: "mixed", all: true }[mf.queryStyle({ color })]) != null ? _a3 : false;
-      },
+      ariaLabel: () => localize(color) ?? color,
+      checked: () => ({ some: "mixed", all: true })[mf.queryStyle({ color })] ?? false,
       onMenuSelect: () => mf.applyStyle({ color }, { operation: "toggle" })
     });
   }
@@ -38081,9 +37925,8 @@ function getDefaultMenuItems(mf) {
       id: "ce-simplify",
       visible: () => mf.isSelectionEditable && globalThis.MathfieldElement.computeEngine !== null,
       onMenuSelect: () => {
-        var _a3, _b3;
         if (mf.model.selectionIsCollapsed) {
-          const result = (_a3 = mf.expression) == null ? void 0 : _a3.simplify();
+          const result = mf.expression?.simplify();
           mf.model.position = mf.model.lastOffset;
           if (!result) {
             mf.model.announce("plonk");
@@ -38094,7 +37937,7 @@ function getDefaultMenuItems(mf) {
             selectionMode: "item"
           });
         } else {
-          const result = (_b3 = globalThis.MathfieldElement.computeEngine) == null ? void 0 : _b3.parse(mf.getValue(mf.model.selection)).simplify();
+          const result = globalThis.MathfieldElement.computeEngine?.parse(mf.getValue(mf.model.selection)).simplify();
           if (!result) {
             mf.model.announce("plonk");
             return;
@@ -38108,10 +37951,9 @@ function getDefaultMenuItems(mf) {
     },
     {
       label: () => {
-        var _a3;
         const ce = globalThis.MathfieldElement.computeEngine;
         if (ce === null) return "";
-        const unknown = (_a3 = mf.expression) == null ? void 0 : _a3.unknowns[0];
+        const unknown = mf.expression?.unknowns[0];
         if (unknown) {
           const latex = ce.box(unknown).latex;
           return localize("menu.solve-for", convertLatexToMarkup(latex));
@@ -38119,26 +37961,20 @@ function getDefaultMenuItems(mf) {
         return localize("menu.solve");
       },
       id: "ce-solve",
-      visible: () => {
-        var _a3;
-        return mf.isSelectionEditable && globalThis.MathfieldElement.computeEngine !== null && ((_a3 = mf.expression) == null ? void 0 : _a3.unknowns.length) === 1 && mf.expression.unknowns[0] !== "Nothing";
-      },
+      visible: () => mf.isSelectionEditable && globalThis.MathfieldElement.computeEngine !== null && mf.expression?.unknowns.length === 1 && mf.expression.unknowns[0] !== "Nothing",
       onMenuSelect: () => {
         const expr = mf.expression;
-        const unknown = expr == null ? void 0 : expr.unknowns[0];
+        const unknown = expr?.unknowns[0];
         const solutions = expr.solve(unknown);
         const results = Array.isArray(solutions) ? solutions.map(
-          (x) => {
-            var _a3;
-            return (_a3 = x.simplify().latex) != null ? _a3 : "";
-          }
+          (x) => x.simplify().latex ?? ""
         ) : null;
         if (!results) {
           mf.model.announce("plonk");
           return;
         }
         mf.insert(
-          `${unknown}=${results.length === 1 ? results[0] : "\\left\\lbrace" + (results == null ? void 0 : results.join(", ")) + "\\right\\rbrace"}`,
+          `${unknown}=${results.length === 1 ? results[0] : "\\left\\lbrace" + results?.join(", ") + "\\right\\rbrace"}`,
           {
             insertionMode: "replaceAll",
             selectionMode: "item"
@@ -38203,8 +38039,7 @@ function getDefaultMenuItems(mf) {
   ];
 }
 function inMatrix(mf) {
-  var _a3, _b3;
-  const env = (_b3 = (_a3 = mf.model.parentEnvironment) == null ? void 0 : _a3.environmentName) != null ? _b3 : "";
+  const env = mf.model.parentEnvironment?.environmentName ?? "";
   return [
     "array",
     "matrix",
@@ -38224,8 +38059,7 @@ function isMatrixSelected(mf) {
   return ["matrix", "pmatrix", "bmatrix", "vmatrix", "Bmatrix"].includes(env);
 }
 function shape(mf) {
-  var _a3;
-  const rows = (_a3 = mf.model.parentEnvironment) == null ? void 0 : _a3.rows;
+  const rows = mf.model.parentEnvironment?.rows;
   if (!rows) return [0, 0];
   return [rows.length, rows.reduce((acc, col) => Math.max(acc, col.length), 0)];
 }
@@ -38246,14 +38080,13 @@ function performSetEnvironment(mf, env) {
   requestUpdate(mf);
 }
 function evaluate(mf) {
-  var _a3, _b3;
   let expr;
   if (mf.model.selectionIsCollapsed) {
-    expr = (_a3 = globalThis.MathfieldElement.computeEngine) == null ? void 0 : _a3.parse(mf.getValue(), {
+    expr = globalThis.MathfieldElement.computeEngine?.parse(mf.getValue(), {
       canonical: false
     });
   } else {
-    expr = (_b3 = globalThis.MathfieldElement.computeEngine) == null ? void 0 : _b3.parse(
+    expr = globalThis.MathfieldElement.computeEngine?.parse(
       mf.getValue(mf.model.selection),
       { canonical: false }
     );
@@ -38267,25 +38100,18 @@ function variantMenuItem(mf, variant, command, tooltip) {
   return {
     id: `variant-${variant}`,
     label: () => {
-      var _a3;
       const textSelection = getSelectionPlainString(mf);
       if (textSelection.length < 12) {
         return convertLatexToMarkup(
           `\\${command}{${getSelectionPlainString(mf)}}`
         );
       }
-      return (_a3 = localize(tooltip)) != null ? _a3 : tooltip;
+      return localize(tooltip) ?? tooltip;
     },
     class: "ML__xl",
-    tooltip: () => {
-      var _a3;
-      return (_a3 = localize(tooltip)) != null ? _a3 : tooltip;
-    },
+    tooltip: () => localize(tooltip) ?? tooltip,
     visible: () => validVariantAtom(mf, variant),
-    checked: () => {
-      var _a3;
-      return (_a3 = { some: "mixed", all: true }[mf.queryStyle({ variant })]) != null ? _a3 : false;
-    },
+    checked: () => ({ some: "mixed", all: true })[mf.queryStyle({ variant })] ?? false,
     onMenuSelect: () => mf.applyStyle({ variant }, { operation: "toggle" })
   };
 }
@@ -38293,14 +38119,13 @@ function variantStyleMenuItem(mf, variantStyle, command, tooltip) {
   return {
     id: `variant-style-${variantStyle}`,
     label: () => {
-      var _a3;
       const textSelection = getSelectionPlainString(mf);
       if (textSelection.length > 0 && textSelection.length < 12) {
         return convertLatexToMarkup(
           `\\${command}{${getSelectionPlainString(mf)}}`
         );
       }
-      return (_a3 = localize(tooltip)) != null ? _a3 : tooltip;
+      return localize(tooltip) ?? tooltip;
     },
     class: () => {
       const textSelection = getSelectionPlainString(mf);
@@ -38308,15 +38133,9 @@ function variantStyleMenuItem(mf, variantStyle, command, tooltip) {
         return "ML__xl";
       return "";
     },
-    tooltip: () => {
-      var _a3;
-      return (_a3 = localize(tooltip)) != null ? _a3 : tooltip;
-    },
+    tooltip: () => localize(tooltip) ?? tooltip,
     visible: true,
-    checked: () => {
-      var _a3;
-      return (_a3 = { some: "mixed", all: true }[mf.queryStyle({ variantStyle })]) != null ? _a3 : false;
-    },
+    checked: () => ({ some: "mixed", all: true })[mf.queryStyle({ variantStyle })] ?? false,
     onMenuSelect: () => mf.applyStyle({ variantStyle }, { operation: "toggle" })
   };
 }
@@ -38416,13 +38235,12 @@ function insertLabel(id) {
 
 // src/formats/atom-to-typst.ts
 function typstTextRun(text, style) {
-  var _a3, _b3;
   let result = `"${text.replace(/"/g, '\\"')}"`;
   if (style.fontSeries === "b") result = `#strong[${result}]`;
   if (style.fontShape === "it") result = `#emph[${result}]`;
-  if ((_a3 = style.textDecoration) == null ? void 0 : _a3.includes("underline"))
+  if (style.textDecoration?.includes("underline"))
     result = `#underline[${result}]`;
-  if ((_b3 = style.textDecoration) == null ? void 0 : _b3.includes("line-through"))
+  if (style.textDecoration?.includes("line-through"))
     result = `#strike[${result}]`;
   return result;
 }
@@ -38642,24 +38460,23 @@ function joinAsciiMath2(xs) {
   return result;
 }
 function atomToTypst(atom) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G;
   if (!atom) return "";
   if (isArray(atom)) {
     if (atom.length === 0) return "";
     let first = 0;
-    while (((_a3 = atom[first]) == null ? void 0 : _a3.type) === "first") first += 1;
+    while (atom[first]?.type === "first") first += 1;
     if (first > 0) return atomToTypst(atom.slice(first));
     if (atom[0].mode === "latex")
       return atom.map((x) => atomToTypst(x)).join("");
     if (isTextMode(atom[0].mode)) {
       let i2 = 0;
       const runs = [];
-      while (((_b3 = atom[i2]) == null ? void 0 : _b3.type) !== "first" && isTextMode((_d2 = (_c2 = atom[i2]) == null ? void 0 : _c2.mode) != null ? _d2 : "")) {
+      while (atom[i2]?.type !== "first" && isTextMode(atom[i2]?.mode ?? "")) {
         const style = atom[i2].style;
         const start = i2;
         let text = "";
-        while (isTextMode((_f = (_e = atom[i2]) == null ? void 0 : _e.mode) != null ? _f : "") && ((_g = atom[i2]) == null ? void 0 : _g.style.fontSeries) === style.fontSeries && ((_h = atom[i2]) == null ? void 0 : _h.style.fontShape) === style.fontShape && ((_i = atom[i2]) == null ? void 0 : _i.style.textDecoration) === style.textDecoration) {
-          text += atom[i2].body ? atomToTypst(atom[i2].body) : (_j = atom[i2].value) != null ? _j : "";
+        while (isTextMode(atom[i2]?.mode ?? "") && atom[i2]?.style.fontSeries === style.fontSeries && atom[i2]?.style.fontShape === style.fontShape && atom[i2]?.style.textDecoration === style.textDecoration) {
+          text += atom[i2].body ? atomToTypst(atom[i2].body) : atom[i2].value ?? "";
           i2 += 1;
         }
         if (i2 === start) i2 += 1;
@@ -38669,9 +38486,9 @@ function atomToTypst(atom) {
     }
     let i = 0;
     const result2 = [];
-    while (((_k = atom[i]) == null ? void 0 : _k.mode) === "math") {
+    while (atom[i]?.mode === "math") {
       let digits = "";
-      while (((_l = atom[i]) == null ? void 0 : _l.type) === "mord" && /\d/.test(atom[i].value))
+      while (atom[i]?.type === "mord" && /\d/.test(atom[i].value))
         digits += atom[i++].value;
       if (digits) result2.push(digits);
       else result2.push(atomToTypst(atom[i++]));
@@ -38679,7 +38496,7 @@ function atomToTypst(atom) {
     result2.push(atomToTypst(atom.slice(i)));
     return joinAsciiMath2(result2);
   }
-  if (isTextMode(atom.mode)) return typstTextRun((_m = atom.value) != null ? _m : "", atom.style);
+  if (isTextMode(atom.mode)) return typstTextRun(atom.value ?? "", atom.style);
   let result = "";
   const { command } = atom;
   let m;
@@ -38702,7 +38519,7 @@ function atomToTypst(atom) {
         "\\breve": "breve",
         "\\check": "caron"
       }[command];
-      result = `${accent != null ? accent : ""}(${atomToTypst(atom.body)}) `;
+      result = `${accent ?? ""}(${atomToTypst(atom.body)}) `;
       break;
     case "first":
       return "";
@@ -38710,7 +38527,7 @@ function atomToTypst(atom) {
       return atom.body.map((x) => x.value).join("");
     case "group":
     case "root":
-      result = (_n = IDENTIFIERS2[command]) != null ? _n : atomToTypst(atom.body);
+      result = IDENTIFIERS2[command] ?? atomToTypst(atom.body);
       break;
     case "genfrac":
       {
@@ -38742,10 +38559,10 @@ function atomToTypst(atom) {
         if (lDelim && IDENTIFIERS2[lDelim]) lDelim = IDENTIFIERS2[lDelim];
         let rDelim = leftrightAtom.matchingRightDelim();
         if (rDelim && IDENTIFIERS2[rDelim]) rDelim = IDENTIFIERS2[rDelim];
-        if (lDelim) lDelim = (_o = FENCES3[lDelim]) != null ? _o : lDelim;
-        if (rDelim) rDelim = (_p = FENCES3[rDelim]) != null ? _p : rDelim;
+        if (lDelim) lDelim = FENCES3[lDelim] ?? lDelim;
+        if (rDelim) rDelim = FENCES3[rDelim] ?? rDelim;
         if (lDelim && rDelim) {
-          result = `lr(${(_q = REVERSE_FENCES[lDelim]) != null ? _q : lDelim}${atomToTypst(leftrightAtom.body)}${(_r = REVERSE_FENCES[rDelim]) != null ? _r : rDelim})`;
+          result = `lr(${REVERSE_FENCES[lDelim] ?? lDelim}${atomToTypst(leftrightAtom.body)}${REVERSE_FENCES[rDelim] ?? rDelim})`;
         } else
           result = `lr(${lDelim}${atomToTypst(leftrightAtom.body)}${rDelim})`;
       }
@@ -38758,7 +38575,7 @@ function atomToTypst(atom) {
       break;
     case "mord":
       if (IDENTIFIERS2[latex]) return IDENTIFIERS2[latex];
-      result = (_u = (_t = (_s = IDENTIFIERS2[command]) != null ? _s : command) != null ? _t : command) != null ? _u : typeof atom.value === "string" ? atom.value : "";
+      result = IDENTIFIERS2[command] ?? command ?? command ?? (typeof atom.value === "string" ? atom.value : "");
       if (result.startsWith("\\")) result += " ";
       m = command ? command.match(/{?\\char"([\dabcdefABCDEF]+)}?/) : null;
       if (m) {
@@ -38772,14 +38589,14 @@ function atomToTypst(atom) {
     case "mbin":
     case "mrel":
     case "minner":
-      result = (_x = (_w = (_v = IDENTIFIERS2[latex]) != null ? _v : IDENTIFIERS2[command]) != null ? _w : OPERATORS2[command]) != null ? _x : atom.value;
+      result = IDENTIFIERS2[latex] ?? IDENTIFIERS2[command] ?? OPERATORS2[command] ?? atom.value;
       break;
     case "mopen":
     case "mclose":
-      result = (_y = IDENTIFIERS2[latex]) != null ? _y : atom.value;
+      result = IDENTIFIERS2[latex] ?? atom.value;
       break;
     case "mpunct":
-      result = (_z = OPERATORS2[command]) != null ? _z : command;
+      result = OPERATORS2[command] ?? command;
       break;
     case "mop":
     case "operator":
@@ -38787,7 +38604,7 @@ function atomToTypst(atom) {
       if (atom.value !== "\u200B") {
         if (OPERATORS2[command]) result = OPERATORS2[command];
         else {
-          result = command === "\\operatorname" ? atomToTypst(atom.body) : (_A = atom.value) != null ? _A : command;
+          result = command === "\\operatorname" ? atomToTypst(atom.body) : atom.value ?? command;
         }
         result += " ";
       }
@@ -38820,16 +38637,16 @@ function atomToTypst(atom) {
     case "box":
       break;
     case "spacing":
-      result = (_C = (_B = IDENTIFIERS2[latex]) != null ? _B : IDENTIFIERS2[command]) != null ? _C : " ";
+      result = IDENTIFIERS2[latex] ?? IDENTIFIERS2[command] ?? " ";
       break;
     case "space":
       result = " ";
       break;
     case "subsup":
-      result = ((_D = atom.leftSibling) == null ? void 0 : _D.value) ? "" : '""';
+      result = atom.leftSibling?.value ? "" : '""';
       break;
     case "macro":
-      result = (_G = (_F = (_E = IDENTIFIERS2[latex]) != null ? _E : IDENTIFIERS2[command]) != null ? _F : OPERATORS2[command]) != null ? _G : atomToTypst(atom.body);
+      result = IDENTIFIERS2[latex] ?? IDENTIFIERS2[command] ?? OPERATORS2[command] ?? atomToTypst(atom.body);
       break;
     case "overunder":
       break;
@@ -38872,7 +38689,6 @@ function speakableText(arg1, arg2) {
   return atomToSpeakableText(arg1);
 }
 function relationName(atom) {
-  var _a3;
   let result = void 0;
   if (atom.parent.type === "prompt") {
     if (atom.parentBranch === "body") result = "prompt";
@@ -38890,7 +38706,7 @@ function relationName(atom) {
       else if (atom.superscript) result = "superscript";
       else if (atom.subscript) result = "subscript";
     } else if (atom.type) {
-      result = (_a3 = {
+      result = {
         "accent": "accented",
         "array": "array",
         "box": "box",
@@ -38919,7 +38735,7 @@ function relationName(atom) {
         "root": "math field",
         "mop": "operator"
         // E.g. `\operatorname`, a `mop` with a body
-      }[atom.type]) != null ? _a3 : "parent";
+      }[atom.type] ?? "parent";
     }
   } else if (atom.parent.type === "genfrac") {
     if (atom.parentBranch === "above") return "numerator";
@@ -38928,7 +38744,7 @@ function relationName(atom) {
     if (atom.parentBranch === "above") result = "index";
   } else if (atom.parentBranch === "superscript") result = "superscript";
   else if (atom.parentBranch === "subscript") result = "subscript";
-  return result != null ? result : "parent";
+  return result ?? "parent";
 }
 function defaultAnnounceHook(mathfield, action, previousPosition, atoms) {
   let liveText = "";
@@ -39009,12 +38825,11 @@ var _Model = class {
     };
   }
   setState(state, options) {
-    var _a3;
     const wasSuppressing = this.silenceNotifications;
-    this.silenceNotifications = (_a3 = options == null ? void 0 : options.silenceNotifications) != null ? _a3 : true;
+    this.silenceNotifications = options?.silenceNotifications ?? true;
     let changeOption = {};
-    if ((options == null ? void 0 : options.type) === "undo") changeOption = { inputType: "historyUndo" };
-    if ((options == null ? void 0 : options.type) === "redo") changeOption = { inputType: "historyRedo" };
+    if (options?.type === "undo") changeOption = { inputType: "historyUndo" };
+    if (options?.type === "redo") changeOption = { inputType: "historyRedo" };
     if (this.contentWillChange(changeOption)) {
       const didSuppress = this.silenceNotifications;
       this.silenceNotifications = true;
@@ -39040,19 +38855,18 @@ var _Model = class {
     if (!this.mathfield.contentEditable && this.mathfield.userSelect === "none")
       return false;
     return this.deferNotifications({ selection: true, content: true }, () => {
-      var _a3, _b3, _c2, _d2;
       const value = this.normalizeSelection(arg1, arg2);
       if (value === void 0) throw new TypeError("Invalid selection");
       if (value.ranges.length === 1 && value.ranges[0][0] === value.ranges[0][1]) {
         const pos = value.ranges[0][0];
-        if (!this.mathfield.dirty && !((_a3 = this.at(pos)) == null ? void 0 : _a3.parentPrompt) && this.mathfield.hasEditablePrompts) {
-          if ((_b3 = this.at(pos - 1)) == null ? void 0 : _b3.parentPrompt) {
+        if (!this.mathfield.dirty && !this.at(pos)?.parentPrompt && this.mathfield.hasEditablePrompts) {
+          if (this.at(pos - 1)?.parentPrompt) {
             this._anchor = this.normalizeOffset(pos - 1);
             this._position = this._anchor;
             this._selection = this.normalizeSelection(this._anchor);
             return;
           }
-          if ((_c2 = this.at(pos + 1)) == null ? void 0 : _c2.parentPrompt) {
+          if (this.at(pos + 1)?.parentPrompt) {
             this._anchor = this.normalizeOffset(pos + 1);
             this._position = this._anchor;
             this._selection = this.normalizeSelection(this._anchor);
@@ -39074,12 +38888,12 @@ var _Model = class {
         [this._position, this._anchor] = selRange;
       else [this._anchor, this._position] = selRange;
       let firstIndex = selRange[0] + 1;
-      while (firstIndex <= this.lastOffset && ((_d2 = this.at(firstIndex)) == null ? void 0 : _d2.type) === "first" && firstIndex < selRange[1])
+      while (firstIndex <= this.lastOffset && this.at(firstIndex)?.type === "first" && firstIndex < selRange[1])
         firstIndex += 1;
       const first = firstIndex <= this.lastOffset ? this.at(firstIndex) : this.at(selRange[1]);
       const last = this.at(selRange[1]);
       const commonAncestor = Atom.commonAncestor(first, last);
-      if ((commonAncestor == null ? void 0 : commonAncestor.type) === "array" && first.parent === commonAncestor && last.parent === commonAncestor) {
+      if (commonAncestor?.type === "array" && first.parent === commonAncestor && last.parent === commonAncestor) {
         this._selection = { ranges: [selRange], direction: value.direction };
       } else
         this._selection = { ranges: [selRange], direction: value.direction };
@@ -39088,11 +38902,10 @@ var _Model = class {
     });
   }
   setPositionHandlingPlaceholder(pos) {
-    var _a3;
     const atom = this.at(pos);
-    if ((atom == null ? void 0 : atom.type) === "placeholder") {
+    if (atom?.type === "placeholder") {
       this.setSelection(pos - 1, pos);
-    } else if (((_a3 = atom == null ? void 0 : atom.rightSibling) == null ? void 0 : _a3.type) === "placeholder") {
+    } else if (atom?.rightSibling?.type === "placeholder") {
       this.setSelection(pos, pos + 1);
     } else this.position = pos;
     if (atom instanceof LatexAtom && atom.isSuggestion)
@@ -39154,18 +38967,17 @@ var _Model = class {
   }
   /** If offset is inside a cell, return the range (first and last offset) of the cell */
   getCellRange(offset) {
-    var _a3, _b3;
     const cellIndex = this.getParentCell(offset);
     let atom = this.at(offset);
     if (!atom) return void 0;
-    while (atom && ((_a3 = atom.parent) == null ? void 0 : _a3.type) !== "array") atom = atom.parent;
-    if (((_b3 = atom == null ? void 0 : atom.parent) == null ? void 0 : _b3.type) !== "array") return void 0;
+    while (atom && atom.parent?.type !== "array") atom = atom.parent;
+    if (atom?.parent?.type !== "array") return void 0;
     return [this.offsetOf(atom.firstSibling), this.offsetOf(atom.lastSibling)];
   }
   getAtoms(arg1, arg2, arg3) {
-    let options = arg3 != null ? arg3 : {};
+    let options = arg3 ?? {};
     if (isSelection(arg1)) {
-      options = arg2 != null ? arg2 : {};
+      options = arg2 ?? {};
       if (arg1.ranges.length > 1) {
         return arg1.ranges.reduce(
           (acc, range2) => [...acc, ...this.getAtoms(range2, options)],
@@ -39183,7 +38995,7 @@ var _Model = class {
     } else {
       [start, end] = arg1;
       if (Object.keys(options).length === 0)
-        options = arg2 != null ? arg2 : {};
+        options = arg2 ?? {};
     }
     if (!Number.isFinite(start)) return [];
     if (options.includeChildren === void 0) options.includeChildren = false;
@@ -39248,13 +39060,12 @@ var _Model = class {
    * **WARNING** upon return the selection may now be invalid
    */
   extractAtoms(range2) {
-    var _a3;
     let result = this.getAtoms(range2);
     if (result.length === 1 && !result[0].parent) {
       if (result[0].isRoot) {
         if (result[0] instanceof ArrayAtom)
           result = result[0].rows.flatMap((x) => x.flatMap((y) => y));
-        else result = [...(_a3 = result[0].body) != null ? _a3 : result[0].children];
+        else result = [...result[0].body ?? result[0].children];
         result = result.filter((x) => x.type !== "first");
       }
     }
@@ -39262,7 +39073,7 @@ var _Model = class {
     return result;
   }
   deleteAtoms(range2) {
-    range2 != null ? range2 : range2 = [0, -1];
+    range2 ??= [0, -1];
     this.extractAtoms(range2);
     if (range2[0] === 0 && range2[1] === -1 && this.root instanceof ArrayAtom) {
       while (this.root.rowCount > 1) this.root.removeRow(1);
@@ -39270,7 +39081,7 @@ var _Model = class {
     this.position = range2[0];
   }
   atomToString(atom, inFormat) {
-    const format = inFormat != null ? inFormat : "latex";
+    const format = inFormat ?? "latex";
     if (format.startsWith("latex")) {
       return Atom.serialize([atom], {
         expandMacro: format === "latex-expanded",
@@ -39320,7 +39131,7 @@ var _Model = class {
       ranges = [this.normalizeRange([0, -1])];
       format = arg1;
     }
-    format != null ? format : format = "latex";
+    format ??= "latex";
     if (format === "math-json") {
       if (!globalThis.MathfieldElement.computeEngine) {
         if (!window[Symbol.for("io.cortexjs.compute-engine")]) {
@@ -39378,20 +39189,20 @@ var _Model = class {
         "overunder"
       ]);
       let { parent } = this.at(end);
-      if ((parent == null ? void 0 : parent.type) && expandableTypes.has(parent.type)) {
-        while ((parent == null ? void 0 : parent.type) && expandableTypes.has(parent.type) && childrenInRange(this, parent, [start, end])) {
+      if (parent?.type && expandableTypes.has(parent.type)) {
+        while (parent?.type && expandableTypes.has(parent.type) && childrenInRange(this, parent, [start, end])) {
           end = this.offsetOf(parent);
           parent = parent.parent;
         }
       }
       parent = this.at(start).parent;
-      while ((parent == null ? void 0 : parent.type) && expandableTypes.has(parent.type) && childrenInRange(this, parent, [start, end])) {
+      while (parent?.type && expandableTypes.has(parent.type) && childrenInRange(this, parent, [start, end])) {
         start = this.offsetOf(parent.leftSibling);
         parent = parent.parent;
       }
       parent = this.at(end).parent;
-      if ((parent == null ? void 0 : parent.type) && expandableTypes.has(parent.type)) {
-        while ((parent == null ? void 0 : parent.type) && expandableTypes.has(parent.type) && childrenInRange(this, parent, [start, end])) {
+      if (parent?.type && expandableTypes.has(parent.type)) {
+        while (parent?.type && expandableTypes.has(parent.type) && childrenInRange(this, parent, [start, end])) {
           end = this.offsetOf(parent);
           console.assert(end >= 0);
           parent = parent.parent;
@@ -39419,15 +39230,14 @@ var _Model = class {
    * action, such as the functions in `commands.ts`
    */
   announce(command, previousPosition, atoms = []) {
-    var _a3, _b3;
-    const success = (_b3 = (_a3 = this.mathfield.host) == null ? void 0 : _a3.dispatchEvent(
+    const success = this.mathfield.host?.dispatchEvent(
       new CustomEvent("announce", {
         detail: { command, previousPosition, atoms },
         cancelable: true,
         bubbles: true,
         composed: true
       })
-    )) != null ? _b3 : true;
+    ) ?? true;
     if (success)
       defaultAnnounceHook(this.mathfield, command, previousPosition, atoms);
   }
@@ -39467,7 +39277,6 @@ var _Model = class {
     return start < end ? [start, end] : [end, start];
   }
   normalizeSelection(value, value2) {
-    var _a3;
     let result = void 0;
     if (isOffset(value)) {
       const offset = this.normalizeOffset(value);
@@ -39485,7 +39294,7 @@ var _Model = class {
     } else if (isSelection(value)) {
       result = {
         ranges: value.ranges.map((x) => this.normalizeRange(x)),
-        direction: (_a3 = value.direction) != null ? _a3 : "none"
+        direction: value.direction ?? "none"
       };
     }
     console.assert(result !== void 0);
@@ -39504,11 +39313,10 @@ var _Model = class {
     return this.getParentCell(this.position);
   }
   getParentCell(pos) {
-    var _a3, _b3;
     let atom = this.at(pos);
     if (!atom) return void 0;
-    while (atom && ((_a3 = atom.parent) == null ? void 0 : _a3.type) !== "array") atom = atom.parent;
-    if (((_b3 = atom == null ? void 0 : atom.parent) == null ? void 0 : _b3.type) !== "array") return void 0;
+    while (atom && atom.parent?.type !== "array") atom = atom.parent;
+    if (atom?.parent?.type !== "array") return void 0;
     return atom.parentBranch;
   }
   contentWillChange(options = {}) {
@@ -39520,23 +39328,22 @@ var _Model = class {
     return result;
   }
   contentDidChange(options) {
-    var _a3;
     if (window.mathVirtualKeyboard.visible)
       window.mathVirtualKeyboard.update(makeProxy(this.mathfield));
-    if (this.silenceNotifications || !((_a3 = this.mathfield) == null ? void 0 : _a3.host)) return;
+    if (this.silenceNotifications || !this.mathfield?.host) return;
     const save = this.silenceNotifications;
     this.silenceNotifications = true;
     setTimeout(() => {
-      var _a4;
       if (!this.mathfield || !isValidMathfield(this.mathfield) || !this.mathfield.host)
         return;
       this.mathfield.host.dispatchEvent(
-        new InputEvent("input", __spreadProps(__spreadValues({}, options), {
+        new InputEvent("input", {
+          ...options,
           // To work around a bug in WebKit/Safari (the inputType property gets stripped), include the inputType as the 'data' property. (see #1843)
-          data: options.data ? options.data : (_a4 = options.inputType) != null ? _a4 : "",
+          data: options.data ? options.data : options.inputType ?? "",
           bubbles: true,
           composed: true
-        }))
+        })
       );
     }, 0);
     this.silenceNotifications = save;
@@ -39567,7 +39374,7 @@ function atomIsInRange(model, atom, first, last, includeFirstAtoms) {
   return false;
 }
 function childrenInRange(model, atom, range2) {
-  if (!(atom == null ? void 0 : atom.hasChildren)) return false;
+  if (!atom?.hasChildren) return false;
   const [start, end] = range2;
   const firstChild = firstNonFirstChild(atom);
   if (!firstChild) return false;
@@ -39589,7 +39396,7 @@ function includeAttachedSubsup(model, range2) {
   return [start, end];
 }
 function shouldAttachSubsup(model, atom, start, end) {
-  if ((atom == null ? void 0 : atom.type) !== "subsup") return false;
+  if (atom?.type !== "subsup") return false;
   if (!childrenInRange(model, atom, [start, end])) return false;
   const base = atom.leftSibling;
   if (!base) return false;
@@ -39682,11 +39489,12 @@ var _Mathfield = class __Mathfield {
     this.programmaticFocusInProgress = false;
     /** When true, the mathfield is listening to the virtual keyboard */
     this.connectedToVirtualKeyboard = false;
-    var _a3, _b3, _c2;
-    this.options = __spreadValues(__spreadProps(__spreadValues({}, getDefault()), {
+    this.options = {
+      ...getDefault(),
       macros: getMacros(),
-      registers: getDefaultRegisters()
-    }), update(options));
+      registers: getDefaultRegisters(),
+      ...update(options)
+    };
     this.eventController = new AbortController();
     const signal = this.eventController.signal;
     if (options.eventSink) this.host = options.eventSink;
@@ -39704,7 +39512,7 @@ var _Mathfield = class __Mathfield {
       this.element.classList.add("ML__is-inline");
     else this.element.classList.remove("ML__is-inline");
     this.dirty = false;
-    let elementText = (_b3 = (_a3 = options.value) != null ? _a3 : this.element.textContent) != null ? _b3 : "";
+    let elementText = options.value ?? this.element.textContent ?? "";
     const isFreeMode = options.defaultMode === "free-text" || options.defaultMode === "free-math";
     if (!isFreeMode) elementText = elementText.trim();
     const mode = effectiveMode(this.options);
@@ -39795,7 +39603,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     const virtualKeyboardToggle = this.element.querySelector(
       "[part=virtual-keyboard-toggle]"
     );
-    virtualKeyboardToggle == null ? void 0 : virtualKeyboardToggle.addEventListener(
+    virtualKeyboardToggle?.addEventListener(
       "pointerdown",
       (ev) => {
         if (ev.currentTarget !== virtualKeyboardToggle) return;
@@ -39814,7 +39622,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     );
     this.field.addEventListener("contextmenu", this, { signal });
     const menuToggle = this.element.querySelector("[part=menu-toggle]");
-    menuToggle == null ? void 0 : menuToggle.addEventListener(
+    menuToggle?.addEventListener(
       "pointerdown",
       (ev) => {
         if (ev.currentTarget !== menuToggle) return;
@@ -39835,7 +39643,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     );
     if (this.disabled || this.readOnly && !this.hasEditableContent || this.userSelect === "none")
       menuToggle.style.display = "none";
-    this.ariaLiveText = (_c2 = this.element.querySelector("[role=status]")) != null ? _c2 : void 0;
+    this.ariaLiveText = this.element.querySelector("[role=status]") ?? void 0;
     this.keyboardDelegate = delegateKeyboardEvents(
       this.element.querySelector(".ML__keyboard-sink"),
       this.element,
@@ -39888,35 +39696,25 @@ If you are using Vue, this may be because you are using the runtime-only build o
     hideEnvironmentPopover();
   }
   showMenu(_) {
-    var _a3, _b3;
-    const location = (_b3 = (_a3 = _ == null ? void 0 : _.location) != null ? _a3 : getCaretPoint(this.field)) != null ? _b3 : void 0;
-    const modifiers = _ == null ? void 0 : _.modifiers;
+    const location = _?.location ?? getCaretPoint(this.field) ?? void 0;
+    const modifiers = _?.modifiers;
     const target = this.element.querySelector("[part=container]");
     return this._menu.show({ target, location, modifiers });
   }
   get colorMap() {
-    return (name) => {
-      var _a3, _b3, _c2;
-      return (_c2 = (_b3 = (_a3 = this.options).colorMap) == null ? void 0 : _b3.call(_a3, name)) != null ? _c2 : defaultColorMap(name);
-    };
+    return (name) => this.options.colorMap?.(name) ?? defaultColorMap(name);
   }
   get backgroundColorMap() {
-    return (name) => {
-      var _a3, _b3, _c2, _d2, _e, _f;
-      return (_f = (_e = (_b3 = (_a3 = this.options).backgroundColorMap) == null ? void 0 : _b3.call(_a3, name)) != null ? _e : (_d2 = (_c2 = this.options).colorMap) == null ? void 0 : _d2.call(_c2, name)) != null ? _f : defaultBackgroundColorMap(name);
-    };
+    return (name) => this.options.backgroundColorMap?.(name) ?? this.options.colorMap?.(name) ?? defaultBackgroundColorMap(name);
   }
   get smartFence() {
-    var _a3;
-    return (_a3 = this.options.smartFence) != null ? _a3 : false;
+    return this.options.smartFence ?? false;
   }
   get readOnly() {
-    var _a3;
-    return (_a3 = this.options.readOnly) != null ? _a3 : false;
+    return this.options.readOnly ?? false;
   }
   get disabled() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this.host) == null ? void 0 : _a3["disabled"]) != null ? _b3 : false;
+    return this.host?.["disabled"] ?? false;
   }
   // This reflects the contenteditable attribute.
   // Use hasEditableContent instead to take into account readonly and disabled
@@ -39952,12 +39750,11 @@ If you are using Vue, this may be because you are using the runtime-only build o
     const anchor = this.model.at(this.model.anchor);
     const cursor = this.model.at(this.model.position);
     const ancestor = Atom.commonAncestor(anchor, cursor);
-    if ((ancestor == null ? void 0 : ancestor.type) === "prompt" || (ancestor == null ? void 0 : ancestor.parentPrompt)) return true;
+    if (ancestor?.type === "prompt" || ancestor?.parentPrompt) return true;
     return false;
   }
   get letterShapeStyle() {
-    var _a3;
-    return (_a3 = this.options.letterShapeStyle) != null ? _a3 : "tex";
+    return this.options.letterShapeStyle ?? "tex";
   }
   get minFontScale() {
     return this.options.minFontScale;
@@ -39975,7 +39772,6 @@ If you are using Vue, this may be because you are using the runtime-only build o
    * the current style) matches the `style` argument, 'none' if it does not.
    */
   queryStyle(inStyle) {
-    var _a3;
     const style = validateStyle(this, inStyle);
     if ("verbatimColor" in style) delete style.verbatimColor;
     if ("verbatimBackgroundColor" in style)
@@ -39995,7 +39791,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     if (this.model.selectionIsCollapsed) {
       const currentStyle = computeInsertStyle(this);
       if (prop === "textDecoration" && typeof value === "string") {
-        const currentDecorations = String((_a3 = currentStyle[prop]) != null ? _a3 : "").split(" ").filter(Boolean);
+        const currentDecorations = String(currentStyle[prop] ?? "").split(" ").filter(Boolean);
         const requestedDecorations2 = value.split(" ").filter(Boolean);
         return requestedDecorations2.every(
           (decoration) => currentDecorations.includes(decoration)
@@ -40016,10 +39812,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
         continue;
       }
       if (prop === "textDecoration" && requestedDecorations.length > 0 ? requestedDecorations.every(
-        (decoration) => {
-          var _a4;
-          return String((_a4 = atom.style[prop]) != null ? _a4 : "").split(" ").includes(decoration);
-        }
+        (decoration) => String(atom.style[prop] ?? "").split(" ").includes(decoration)
       ) : atom.style[prop] === value)
         count += 1;
     }
@@ -40028,13 +39821,12 @@ If you are using Vue, this may be because you are using the runtime-only build o
     return "some";
   }
   get keybindings() {
-    var _a3, _b3;
     if (this._keybindings) return this._keybindings;
     const [keybindings, errors] = normalizeKeybindings(
       this.options.keybindings,
-      (_a3 = getActiveKeyboardLayout()) != null ? _a3 : getDefaultKeyboardLayout()
+      getActiveKeyboardLayout() ?? getDefaultKeyboardLayout()
     );
-    if (((_b3 = getActiveKeyboardLayout()) == null ? void 0 : _b3.score) > 0) {
+    if (getActiveKeyboardLayout()?.score > 0) {
       this._keybindings = keybindings;
       if (errors.length > 0) {
         console.error(
@@ -40046,8 +39838,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     return keybindings;
   }
   get menu() {
-    var _a3;
-    (_a3 = this._menu) != null ? _a3 : this._menu = new Menu(getDefaultMenuItems(this), { host: this.host });
+    this._menu ??= new Menu(getDefaultMenuItems(this), { host: this.host });
     return this._menu;
   }
   set menuItems(menuItems) {
@@ -40055,10 +39846,9 @@ If you are using Vue, this may be because you are using the runtime-only build o
     else this._menu = new Menu(menuItems, { host: this.host });
   }
   setOptions(config) {
-    var _a3, _b3, _c2;
     const previousDefaultMode = this.options.defaultMode;
     const wasFreeLines = previousDefaultMode === "free-text" || previousDefaultMode === "free-math";
-    this.options = __spreadValues(__spreadValues({}, this.options), update(config));
+    this.options = { ...this.options, ...update(config) };
     const isFreeLines = this.options.defaultMode === "free-text" || this.options.defaultMode === "free-math";
     this._keybindings = void 0;
     if (this.options.defaultMode === "inline-math")
@@ -40067,17 +39857,14 @@ If you are using Vue, this may be because you are using the runtime-only build o
     if ("defaultMode" in config && (isFreeLines !== wasFreeLines || previousDefaultMode !== this.options.defaultMode)) {
       const previousPosition = this.model.position;
       if (isFreeLines && !isFreeLinesRoot(this.model.root)) {
-        const body = this.model.root.type === "root" ? [...(_a3 = this.model.root.branch("body")) != null ? _a3 : []] : [this.model.root];
+        const body = this.model.root.type === "root" ? [...this.model.root.branch("body") ?? []] : [this.model.root];
         this.model.root = this.options.defaultMode === "free-math" ? makeFreeMathRoot([body]) : makeFreeTextRoot([body]);
-      } else if (isFreeLines && isFreeLinesRoot(this.model.root) && (this.options.defaultMode === "free-text" && !isFreeTextRoot(this.model.root) || this.options.defaultMode === "free-math" && ((_b3 = this.model.root.firstChild) == null ? void 0 : _b3.mode) !== "free-math")) {
+      } else if (isFreeLines && isFreeLinesRoot(this.model.root) && (this.options.defaultMode === "free-text" && !isFreeTextRoot(this.model.root) || this.options.defaultMode === "free-math" && this.model.root.firstChild?.mode !== "free-math")) {
         const content2 = this.model.getValue("latex");
         this.model.root = this.options.defaultMode === "free-math" ? parseFreeMathValue(content2, this.context) : parseFreeTextValue(content2, this.context);
       } else if (!isFreeLines && isFreeLinesRoot(this.model.root)) {
         const body = this.model.root.rows.flatMap(
-          (row) => row.flatMap((cell) => {
-            var _a4;
-            return (_a4 = cell == null ? void 0 : cell.filter((atom) => atom.type !== "first")) != null ? _a4 : [];
-          })
+          (row) => row.flatMap((cell) => cell?.filter((atom) => atom.type !== "first") ?? [])
         );
         this.model.root = new Atom({
           type: "root",
@@ -40090,7 +39877,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     }
     let mode = this.options.defaultMode;
     if (mode === "inline-math") mode = "math";
-    if (((_c2 = this.model.root.firstChild) == null ? void 0 : _c2.mode) !== mode)
+    if (this.model.root.firstChild?.mode !== mode)
       this.model.root.firstChild.mode = mode;
     if (this.options.readOnly) {
       if (this.hasFocus() && window.mathVirtualKeyboard.visible)
@@ -40120,10 +39907,9 @@ If you are using Vue, this may be because you are using the runtime-only build o
    * to be able to properly remove the event handler later.
    */
   async handleEvent(evt) {
-    var _a3, _b3, _c2;
     if (!isValidMathfield(this)) return;
     if (isVirtualKeyboardMessage(evt)) {
-      if (!validateOrigin(evt.origin, (_a3 = this.options.originValidator) != null ? _a3 : "none")) {
+      if (!validateOrigin(evt.origin, this.options.originValidator ?? "none")) {
         throw new DOMException(
           `Message from unknown origin (${evt.origin}) cannot be handled`,
           "SecurityError"
@@ -40150,15 +39936,15 @@ If you are using Vue, this may be because you are using the runtime-only build o
         break;
       // Safari on iOS <= 13 and Firefox on Android
       case "mousedown":
-        if (this.userSelect !== "none" && !((_b3 = evt.target) == null ? void 0 : _b3.closest(
+        if (this.userSelect !== "none" && !evt.target?.closest(
           "[part=virtual-keyboard-toggle],[part=menu-toggle]"
-        )))
+        ))
           onPointerDown(this, evt);
         break;
       case "pointerdown":
-        if (!evt.defaultPrevented && this.userSelect !== "none" && !((_c2 = evt.target) == null ? void 0 : _c2.closest(
+        if (!evt.defaultPrevented && this.userSelect !== "none" && !evt.target?.closest(
           "[part=virtual-keyboard-toggle],[part=menu-toggle]"
-        ))) {
+        )) {
           onPointerDown(this, evt);
           if (evt.shiftKey === false) {
             if (await onContextMenu(evt, this.container, this.menu))
@@ -40243,7 +40029,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     disposeEnvironmentPopover();
   }
   flushInlineShortcutBuffer(options) {
-    options != null ? options : options = { defer: false };
+    options ??= { defer: false };
     if (!options.defer) {
       this.inlineShortcutBuffer.length = 0;
       clearTimeout(this.inlineShortcutBufferFlushTimer);
@@ -40276,14 +40062,13 @@ If you are using Vue, this may be because you are using the runtime-only build o
     return this.model.getValue(arg1, arg2, arg3);
   }
   setValue(value, options) {
-    var _a3;
-    options = options != null ? options : { mode: effectiveMode(this.options) };
+    options = options ?? { mode: effectiveMode(this.options) };
     if (options.insertionMode === void 0)
       options.insertionMode = "replaceAll";
     if (options.format === void 0 || options.format === "auto")
       options.format = "latex";
     if (options.mode === void 0 || options.mode === "auto")
-      options.mode = (_a3 = getMode(this.model, this.model.position)) != null ? _a3 : effectiveMode(this.options);
+      options.mode = getMode(this.model, this.model.position) ?? effectiveMode(this.options);
     if ((this.options.defaultMode === "free-text" || this.options.defaultMode === "free-math") && (options.mode === "free-text" || options.mode === "free-math" || options.mode === "text") && options.insertionMode === "replaceAll" && (options.format === "latex" || options.format === "plain-text")) {
       if (!this.model.contentWillChange({ data: value, inputType: "insertText" }))
         return;
@@ -40318,7 +40103,6 @@ If you are using Vue, this may be because you are using the runtime-only build o
    * the page
    */
   scrollIntoView() {
-    var _a3;
     if (!this.element) return;
     if (this.host) {
       if (this.options.onScrollIntoView) this.options.onScrollIntoView(this);
@@ -40328,7 +40112,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
           const kbdBounds = window.mathVirtualKeyboard.boundingRect;
           const mathfieldBounds = this.host.getBoundingClientRect();
           if (mathfieldBounds.bottom > kbdBounds.top) {
-            (_a3 = window.document.scrollingElement) == null ? void 0 : _a3.scrollBy(
+            window.document.scrollingElement?.scrollBy(
               0,
               mathfieldBounds.bottom - kbdBounds.top + 8
             );
@@ -40385,11 +40169,11 @@ If you are using Vue, this may be because you are using the runtime-only build o
   }
   insert(s, options) {
     if (typeof s !== "string") return false;
-    if (s.length === 0 && ((options == null ? void 0 : options.insertionMode) === "insertBefore" || (options == null ? void 0 : options.insertionMode) === "insertAfter"))
+    if (s.length === 0 && (options?.insertionMode === "insertBefore" || options?.insertionMode === "insertAfter"))
       return false;
     if (s.length === 0 && this.model.selectionIsCollapsed) return false;
     this.flushInlineShortcutBuffer();
-    options = options != null ? options : { mode: "math" };
+    options = options ?? { mode: "math" };
     if (options.focus) this.focus();
     if (options.feedback) {
       if (globalThis.MathfieldElement.keypressVibration && canVibrate())
@@ -40401,12 +40185,12 @@ If you are using Vue, this may be because you are using the runtime-only build o
     } else if (s === "&") addColumnAfter(this.model);
     else {
       if (this.model.selectionIsCollapsed) {
-        const style = __spreadValues({}, computeInsertStyle(this));
+        const style = { ...computeInsertStyle(this) };
         if (!/^[a-zA-Z0-9]$/.test(s) && this.styleBias !== "none") {
           style.variant = "normal";
           style.variantStyle = void 0;
         }
-        ModeEditor.insert(this.model, s, __spreadValues({ style }, options));
+        ModeEditor.insert(this.model, s, { style, ...options });
       } else ModeEditor.insert(this.model, s, options);
     }
     this.snapshot(`insert-${this.model.at(this.model.position).type}`);
@@ -40513,14 +40297,13 @@ If you are using Vue, this may be because you are using the runtime-only build o
     return !this.blurred;
   }
   focus(options) {
-    var _a3;
     if (this.disabled || this.focusBlurInProgress) return;
     if (!this.hasFocus()) {
       this.programmaticFocusInProgress = true;
       this.onFocus();
       this.model.announce("line");
     }
-    if (!((_a3 = options == null ? void 0 : options.preventScroll) != null ? _a3 : false)) this.scrollIntoView();
+    if (!(options?.preventScroll ?? false)) this.scrollIntoView();
   }
   blur() {
     this.disconnectFromVirtualKeyboard();
@@ -40532,7 +40315,6 @@ If you are using Vue, this may be because you are using the runtime-only build o
     this.focus();
   }
   applyStyle(inStyle, inOptions = {}) {
-    var _a3;
     let range2;
     let operation = "set";
     let silenceNotifications = false;
@@ -40540,23 +40322,23 @@ If you are using Vue, this may be because you are using the runtime-only build o
     else {
       if (inOptions.operation === "toggle") operation = "toggle";
       range2 = inOptions.range;
-      silenceNotifications = (_a3 = inOptions.silenceNotifications) != null ? _a3 : false;
+      silenceNotifications = inOptions.silenceNotifications ?? false;
     }
     if (range2) range2 = this.model.normalizeRange(range2);
     if (range2 && range2[0] === range2[1]) range2 = void 0;
     const style = validateStyle(this, inStyle);
     if (range2 === void 0 && this.model.selectionIsCollapsed) {
       if (operation === "set") {
-        const newStyle2 = __spreadValues({}, this.defaultStyle);
+        const newStyle2 = { ...this.defaultStyle };
         if ("color" in style) delete newStyle2.verbatimColor;
         if ("backgroundColor" in style) delete newStyle2.verbatimBackgroundColor;
-        this.defaultStyle = __spreadValues(__spreadValues({}, newStyle2), style);
+        this.defaultStyle = { ...newStyle2, ...style };
         this.styleBias = "none";
         requestUpdate(this);
         return;
       }
       const currentStyle = computeInsertStyle(this);
-      const newStyle = __spreadValues({}, this.defaultStyle);
+      const newStyle = { ...this.defaultStyle };
       for (const prop of Object.keys(style)) {
         if (currentStyle[prop] === style[prop]) {
           if (prop === "color") delete newStyle.verbatimColor;
@@ -40582,23 +40364,19 @@ If you are using Vue, this may be because you are using the runtime-only build o
     requestUpdate(this);
   }
   toggleContextMenu() {
-    var _a3;
     const menu = this.menu;
     if (!menu.visible) return false;
     if (menu.state === "open") {
       menu.hide();
       return true;
     }
-    const caretBounds = (_a3 = getElementInfo(this, this.model.position)) == null ? void 0 : _a3.bounds;
+    const caretBounds = getElementInfo(this, this.model.position)?.bounds;
     if (!caretBounds) return false;
     const location = { x: caretBounds.right, y: caretBounds.bottom };
     menu.show({
       target: this.element.querySelector("[part=container]"),
       location,
-      onDismiss: () => {
-        var _a4;
-        return (_a4 = this.element) == null ? void 0 : _a4.focus();
-      }
+      onDismiss: () => this.element?.focus()
     });
     return true;
   }
@@ -40643,11 +40421,12 @@ If you are using Vue, this may be because you are using the runtime-only build o
         "body"
       );
       this.model.setSelection(branchRange);
-      this.insert(value, __spreadProps(__spreadValues({}, insertOptions), {
+      this.insert(value, {
+        ...insertOptions,
         insertionMode: "replaceSelection"
-      }));
+      });
     }
-    if (insertOptions == null ? void 0 : insertOptions.silenceNotifications)
+    if (insertOptions?.silenceNotifications)
       this.valueOnFocus = this.getValue();
     requestUpdate(this);
   }
@@ -40693,11 +40472,10 @@ If you are using Vue, this may be because you are using the runtime-only build o
       window.mathVirtualKeyboard.update(makeProxy(this));
   }
   snapshot(op) {
-    var _a3;
     if (this.undoManager.snapshot(op)) {
       if (window.mathVirtualKeyboard.visible)
         window.mathVirtualKeyboard.update(makeProxy(this));
-      (_a3 = this.host) == null ? void 0 : _a3.dispatchEvent(
+      this.host?.dispatchEvent(
         new CustomEvent("undo-state-change", {
           bubbles: true,
           composed: true,
@@ -40716,9 +40494,8 @@ If you are using Vue, this may be because you are using the runtime-only build o
     this.undoManager.startRecording();
   }
   undo() {
-    var _a3;
     if (!this.undoManager.undo()) return;
-    (_a3 = this.host) == null ? void 0 : _a3.dispatchEvent(
+    this.host?.dispatchEvent(
       new CustomEvent("undo-state-change", {
         bubbles: true,
         composed: true,
@@ -40727,9 +40504,8 @@ If you are using Vue, this may be because you are using the runtime-only build o
     );
   }
   redo() {
-    var _a3;
     if (!this.undoManager.redo()) return;
-    (_a3 = this.host) == null ? void 0 : _a3.dispatchEvent(
+    this.host?.dispatchEvent(
       new CustomEvent("undo-state-change", {
         bubbles: true,
         composed: true,
@@ -40738,11 +40514,9 @@ If you are using Vue, this may be because you are using the runtime-only build o
     );
   }
   resetUndo() {
-    var _a3;
-    (_a3 = this.undoManager) == null ? void 0 : _a3.reset();
+    this.undoManager?.reset();
   }
   onSelectionDidChange() {
-    var _a3, _b3;
     const model = this.model;
     if (model.mathfield.hasFocus()) {
       this.keyboardDelegate.setValue(
@@ -40753,23 +40527,23 @@ If you are using Vue, this may be because you are using the runtime-only build o
       const latexGroup = getLatexGroup(model);
       const pos = model.position;
       const cursor = model.at(pos);
-      const mode = cursor.mode === "text" && this.options.defaultMode === "free-text" ? "free-text" : cursor.mode === "math" && this.options.defaultMode === "free-math" ? "free-math" : (_a3 = cursor.mode) != null ? _a3 : effectiveMode(this.options);
+      const mode = cursor.mode === "text" && this.options.defaultMode === "free-text" ? "free-text" : cursor.mode === "math" && this.options.defaultMode === "free-math" ? "free-math" : cursor.mode ?? effectiveMode(this.options);
       if (latexGroup && (pos < model.offsetOf(latexGroup.firstChild) || pos > model.offsetOf(latexGroup.lastChild))) {
         complete(this, "accept", { mode });
         const cursorOffset = model.offsetOf(cursor);
         if (cursorOffset >= 0) model.position = cursorOffset;
       } else {
         const sibling = model.at(pos + 1);
-        if ((sibling == null ? void 0 : sibling.type) === "first" && sibling.mode === "latex")
+        if (sibling?.type === "first" && sibling.mode === "latex")
           model.position = pos + 1;
-        else if (latexGroup && (sibling == null ? void 0 : sibling.mode) !== "latex")
+        else if (latexGroup && sibling?.mode !== "latex")
           model.position = pos - 1;
         else {
           this.switchMode(mode);
         }
       }
     }
-    (_b3 = this.host) == null ? void 0 : _b3.dispatchEvent(
+    this.host?.dispatchEvent(
       new Event("selection-change", {
         bubbles: true,
         composed: true
@@ -40780,16 +40554,16 @@ If you are using Vue, this may be because you are using the runtime-only build o
     updateEnvironmentPopover(this);
   }
   onContentWillChange(options) {
-    var _a3, _b3, _c2;
-    return (_c2 = (_b3 = this.host) == null ? void 0 : _b3.dispatchEvent(
-      new InputEvent("beforeinput", __spreadProps(__spreadValues({}, options), {
+    return this.host?.dispatchEvent(
+      new InputEvent("beforeinput", {
+        ...options,
         // To work around a bug in WebKit/Safari (the inputType property gets stripped), include the inputType as the 'data' property. (see #1843)
-        data: options.data ? options.data : (_a3 = options.inputType) != null ? _a3 : "",
+        data: options.data ? options.data : options.inputType ?? "",
         cancelable: true,
         bubbles: true,
         composed: true
-      }))
-    )) != null ? _c2 : true;
+      })
+    ) ?? true;
   }
   onFocus(options) {
     if (this.disabled || this.focusBlurInProgress || !this.blurred) return;
@@ -40806,9 +40580,8 @@ If you are using Vue, this may be because you are using the runtime-only build o
       this.executeCommand("moveToNextPlaceholder");
     render(this, { interactive: true });
     setTimeout(() => {
-      var _a3, _b3;
       if (!isValidMathfield(this)) return;
-      const suppressEvents = (_a3 = options == null ? void 0 : options.suppressEvents) != null ? _a3 : false;
+      const suppressEvents = options?.suppressEvents ?? false;
       if (suppressEvents) {
         const abortController = new AbortController();
         const signal = abortController.signal;
@@ -40817,7 +40590,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
           evt.stopPropagation();
         };
         for (const event of ["focus", "focusin"]) {
-          (_b3 = this.host) == null ? void 0 : _b3.addEventListener(event, captureEvent, {
+          this.host?.addEventListener(event, captureEvent, {
             capture: true,
             signal
           });
@@ -40837,7 +40610,6 @@ If you are using Vue, this may be because you are using the runtime-only build o
     }, 60);
   }
   onBlur(options) {
-    var _a3, _b3, _c2, _d2;
     if (this.focusBlurInProgress || this.blurred) return;
     this.focusBlurInProgress = true;
     this.stopCoalescingUndo();
@@ -40847,21 +40619,21 @@ If you are using Vue, this may be because you are using the runtime-only build o
     if (this.ariaLiveText) this.ariaLiveText.textContent = "";
     hideSuggestionPopover(this);
     if (this.model.getValue() !== this.valueOnFocus) {
-      (_a3 = this.host) == null ? void 0 : _a3.dispatchEvent(
+      this.host?.dispatchEvent(
         new Event("change", { bubbles: true, composed: true })
       );
     }
     this.disconnectFromVirtualKeyboard();
-    const dispatchEvents = (_b3 = options == null ? void 0 : options.dispatchEvents) != null ? _b3 : true;
+    const dispatchEvents = options?.dispatchEvents ?? true;
     if (dispatchEvents) {
-      (_c2 = this.host) == null ? void 0 : _c2.dispatchEvent(
+      this.host?.dispatchEvent(
         new Event("blur", {
           bubbles: false,
           // DOM 'focus' and 'blur' don't bubble
           composed: true
         })
       );
-      (_d2 = this.host) == null ? void 0 : _d2.dispatchEvent(
+      this.host?.dispatchEvent(
         new UIEvent("focusout", {
           bubbles: true,
           // unlike 'blur', focusout does bubble
@@ -40955,8 +40727,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     return result;
   }
   onGeometryChange() {
-    var _a3;
-    (_a3 = this._menu) == null ? void 0 : _a3.hide();
+    this._menu?.hide();
     updateSuggestionPopoverPosition(this);
     updateEnvironmentPopover(this);
   }
@@ -40979,14 +40750,13 @@ If you are using Vue, this may be because you are using the runtime-only build o
     );
   }
   get context() {
-    var _a3, _b3;
     return {
-      registers: (_a3 = this.options.registers) != null ? _a3 : {},
+      registers: this.options.registers ?? {},
       smartFence: this.smartFence,
       letterShapeStyle: this.letterShapeStyle,
       minFontScale: this.minFontScale,
       maxMatrixCols: this.maxMatrixCols,
-      placeholderSymbol: (_b3 = this.options.placeholderSymbol) != null ? _b3 : "\u25A2",
+      placeholderSymbol: this.options.placeholderSymbol ?? "\u25A2",
       colorMap: (name) => this.colorMap(name),
       backgroundColorMap: (name) => this.backgroundColorMap(name),
       getMacro: (token) => getMacroDefinition(
@@ -41008,8 +40778,7 @@ register2(
   { target: "mathfield" }
 );
 function speak(mathfield, scope, speakOptions) {
-  var _a3;
-  speakOptions = speakOptions != null ? speakOptions : { withHighlighting: false };
+  speakOptions = speakOptions ?? { withHighlighting: false };
   const { model } = mathfield;
   function getAtoms(scope2) {
     let result = null;
@@ -41039,7 +40808,7 @@ function speak(mathfield, scope, speakOptions) {
         break;
       case "parent": {
         const { parent } = model.at(model.position);
-        if (parent == null ? void 0 : parent.parent) result = parent;
+        if (parent?.parent) result = parent;
         else result = model.root;
         break;
       }
@@ -41078,7 +40847,7 @@ function speak(mathfield, scope, speakOptions) {
   const mfe = globalThis.MathfieldElement;
   const atoms = getAtoms(scope);
   if (atoms === null) {
-    (_a3 = mfe.speakHook) == null ? void 0 : _a3.call(mfe, getFailedSpeech(scope));
+    mfe.speakHook?.(getFailedSpeech(scope));
     return false;
   }
   if (speakOptions.withHighlighting || mfe.speechEngine === "amazon") {
@@ -41093,7 +40862,6 @@ function speak(mathfield, scope, speakOptions) {
   return false;
 }
 function defaultSpeakHook(text) {
-  var _a3, _b3;
   if (!isBrowser()) {
     console.log("Speak:", text);
     return;
@@ -41111,7 +40879,7 @@ function defaultSpeakHook(text) {
       const polly = new globalThis.AWS.Polly({ apiVersion: "2016-06-10" });
       const parameters = {
         OutputFormat: "mp3",
-        VoiceId: (_a3 = mfe.speechEngineVoice) != null ? _a3 : "Joanna",
+        VoiceId: mfe.speechEngineVoice ?? "Joanna",
         Engine: [
           "Amy",
           "Emma",
@@ -41124,7 +40892,7 @@ function defaultSpeakHook(text) {
           "Joey",
           "Justin",
           "Matthew"
-        ].includes((_b3 = mfe.speechEngineVoice) != null ? _b3 : "Joanna") ? "neural" : "standard",
+        ].includes(mfe.speechEngineVoice ?? "Joanna") ? "neural" : "standard",
         // SampleRate: '24000',
         Text: text,
         TextType: "ssml"
@@ -41135,7 +40903,7 @@ function defaultSpeakHook(text) {
           console.trace(
             `MathLive {{SDK_VERSION}}: \`polly.synthesizeSpeech()\` error: ${err}`
           );
-        } else if (data == null ? void 0 : data.AudioStream) {
+        } else if (data?.AudioStream) {
           const uInt8Array = new Uint8Array(data.AudioStream);
           const blob = new Blob([uInt8Array.buffer], { type: "audio/mpeg" });
           const url = URL.createObjectURL(blob);
@@ -41159,9 +40927,8 @@ function removeHighlight(element) {
     for (const child of element.children) removeHighlight(child);
 }
 function highlightAtomID(element, atomID) {
-  var _a3;
   if (!element) return;
-  if (!atomID || ((_a3 = element.dataset) == null ? void 0 : _a3.atomId) === atomID) {
+  if (!atomID || element.dataset?.atomId === atomID) {
     element.classList.add("ML__highlight");
     if (element.children && element.children.length > 0) {
       [...element.children].forEach((x) => {
@@ -41178,7 +40945,6 @@ function highlightAtomID(element, atomID) {
   }
 }
 function defaultReadAloudHook(element, text) {
-  var _a3;
   if (!isBrowser()) return;
   if (globalThis.MathfieldElement.speechEngine !== "amazon") {
     console.error(
@@ -41197,7 +40963,7 @@ function defaultReadAloudHook(element, text) {
   const polly = new globalThis.AWS.Polly({ apiVersion: "2016-06-10" });
   const parameters = {
     OutputFormat: "json",
-    VoiceId: (_a3 = globalThis.MathfieldElement.speechEngineVoice) != null ? _a3 : "Joanna",
+    VoiceId: globalThis.MathfieldElement.speechEngineVoice ?? "Joanna",
     Engine: "standard",
     // The neural engine does not appear to support ssml marks
     Text: text,
@@ -41212,7 +40978,7 @@ function defaultReadAloudHook(element, text) {
       );
       return;
     }
-    if (!(data == null ? void 0 : data.AudioStream)) {
+    if (!data?.AudioStream) {
       console.log("polly.synthesizeSpeech():", data);
       return;
     }
@@ -41233,7 +40999,7 @@ function defaultReadAloudHook(element, text) {
         );
         return;
       }
-      if (!(data2 == null ? void 0 : data2.AudioStream)) return;
+      if (!data2?.AudioStream) return;
       const uInt8Array = new Uint8Array(data2.AudioStream);
       const blob = new Blob([uInt8Array.buffer], {
         type: "audio/mpeg"
@@ -41351,7 +41117,7 @@ var DEPRECATED_OPTIONS = {
   decimalSeparator: "MathfieldElement.decimalSeparator = ...",
   fractionNavigationOrder: "MathfieldElement.fractionNavigationOrder = ..."
 };
-var _MathfieldElement = class _MathfieldElement extends HTMLElement {
+var MathfieldElement = class _MathfieldElement extends HTMLElement {
   /**
        * To create programmatically a new mathfield use:
        *
@@ -41434,6 +41200,9 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
       this.shadowRoot.innerHTML = "<style>" + getStylesheetContent("core") + getStylesheetContent("mathfield") + getStylesheetContent("mathfield-element") + getStylesheetContent("ui") + getStylesheetContent("menu") + '</style><span></span><slot style="display:none"></slot>';
     }
     if (options) this._setOptions(options);
+  }
+  static {
+    this.version = "{{SDK_VERSION}}";
   }
   /** @internal */
   static get formAssociated() {
@@ -41528,6 +41297,17 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
       reloadFonts();
     }
   }
+  static {
+    this.openUrl = (href) => {
+      if (!href) return;
+      const url = new URL(href);
+      if (!["http:", "https:", "file:"].includes(url.protocol.toLowerCase())) {
+        _MathfieldElement.playSound("plonk");
+        return;
+      }
+      window.open(url, "_blank");
+    };
+  }
   /** @internal */
   get fontsDirectory() {
     throw new Error("Use MathfieldElement.fontsDirectory instead");
@@ -41535,6 +41315,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   /** @internal */
   set fontsDirectory(_value) {
     throw new Error("Use MathfieldElement.fontsDirectory instead");
+  }
+  static {
+    /** @internal */
+    this._fontsDirectory = "./fonts/";
   }
   /**
    * A URL fragment pointing to the directory containing the optional
@@ -41559,6 +41343,18 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   /** @internal */
   set soundsDirectory(_value) {
     throw new Error("Use MathfieldElement.soundsDirectory instead");
+  }
+  static {
+    /** @internal */
+    this._soundsDirectory = "./sounds";
+  }
+  static {
+    /**
+     * When a key on the virtual keyboard is pressed, produce a short haptic
+     * feedback, if the device supports it.
+     * @category Virtual Keyboard
+     */
+    this.keypressVibration = true;
   }
   /**
    * When a key on the virtual keyboard is pressed, produce a short audio
@@ -41586,7 +41382,6 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     return this._keypressSound;
   }
   static set keypressSound(value) {
-    var _a3, _b3, _c2;
     this.audioBuffers = {};
     if (value === null) {
       this._keypressSound = {
@@ -41604,12 +41399,25 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
       };
     } else if (typeof value === "object" && "default" in value) {
       this._keypressSound = {
-        spacebar: (_a3 = value.spacebar) != null ? _a3 : value.default,
-        return: (_b3 = value.return) != null ? _b3 : value.default,
-        delete: (_c2 = value.delete) != null ? _c2 : value.default,
+        spacebar: value.spacebar ?? value.default,
+        return: value.return ?? value.default,
+        delete: value.delete ?? value.default,
         default: value.default
       };
     }
+  }
+  static {
+    /** @internal */
+    this._keypressSound = {
+      spacebar: "keypress-spacebar.wav",
+      return: "keypress-return.wav",
+      delete: "keypress-delete.wav",
+      default: "keypress-standard.wav"
+    };
+  }
+  static {
+    /** @ignore */
+    this._plonkSound = "plonk.wav";
   }
   /**
    * Sound played to provide feedback when a command has no effect, for example
@@ -41629,10 +41437,27 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     this.audioBuffers = {};
     this._plonkSound = value;
   }
+  static {
+    /** @internal */
+    this.audioBuffers = {};
+  }
   /** @internal */
   static get audioContext() {
     if (!this._audioContext) this._audioContext = new AudioContext();
     return this._audioContext;
+  }
+  static {
+    /**
+     * Support for [Trusted Type](https://www.w3.org/TR/trusted-types/).
+     *
+     * This optional function will be called before a string of HTML is
+     * injected in the DOM, allowing that string to be sanitized
+     * according to a policy defined by the host.
+     *
+     * Consider using this option if you are displaying untrusted content. Read more about [Security Considerations](/mathfield/guides/security/)
+     *
+     */
+    this.createHTML = (x) => x;
   }
   // @todo https://github.com/microsoft/TypeScript/issues/30024
   /**
@@ -41669,6 +41494,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   static set speechEngineRate(value) {
     this._speechEngineRate = value;
   }
+  static {
+    /** @internal */
+    this._speechEngineRate = "100%";
+  }
   /**
    * Indicates the voice to use with the speech engine.
    *
@@ -41683,6 +41512,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   static set speechEngineVoice(value) {
     this._speechEngineVoice = value;
   }
+  static {
+    /** @internal */
+    this._speechEngineVoice = "Joanna";
+  }
   /**
    * The markup syntax to use for the output of conversion to spoken text.
    *
@@ -41696,6 +41529,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   }
   static set textToSpeechMarkup(value) {
     this._textToSpeechMarkup = value;
+  }
+  static {
+    /** @internal */
+    this._textToSpeechMarkup = "";
   }
   /**
    * Specify which set of text to speech rules to use.
@@ -41719,6 +41556,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   static set textToSpeechRules(value) {
     this._textToSpeechRules = value;
   }
+  static {
+    /** @internal */
+    this._textToSpeechRules = "mathlive";
+  }
   /**
    * A set of key/value pairs that can be used to configure the speech rule
    * engine.
@@ -41734,6 +41575,18 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   }
   static set textToSpeechRulesOptions(value) {
     this._textToSpeechRulesOptions = value;
+  }
+  static {
+    /** @internal */
+    this._textToSpeechRulesOptions = {};
+  }
+  static {
+    /** @category Speech */
+    this.speakHook = defaultSpeakHook;
+  }
+  static {
+    /** @category Speech */
+    this.readAloudHook = defaultReadAloudHook;
   }
   /**
    * The locale (language + region) to use for string localization.
@@ -41791,6 +41644,19 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   set strings(_val) {
     throw new Error("Use MathfieldElement.strings instead");
   }
+  static {
+    /**
+     * When switching from a tab to one that contains a mathfield that was
+     * previously focused, restore the focus to the mathfield.
+     *
+     * This is behavior consistent with `<textarea>`, however it can be
+     * disabled if it is not desired.
+     *
+     * **Default**: `true`
+     * @category Customization
+     */
+    this.restoreFocusWhenDocumentFocused = true;
+  }
   /**
    * The symbol used to separate the integer part from the fractional part of a
    * number.
@@ -41826,6 +41692,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   set decimalSeparator(_val) {
     throw new Error("Use MathfieldElement.decimalSeparator instead");
   }
+  static {
+    /** @internal */
+    this._decimalSeparator = ".";
+  }
   /** The template used to format numbers in scientific notation.
    * The template should include the placeholders `#1` and `#2`, which will
    * be replaced by the significand and exponent, respectively.
@@ -41845,6 +41715,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   }
   static get scientificNotationTemplate() {
     return this._scientificNotationTemplate;
+  }
+  static {
+    /** @internal */
+    this._scientificNotationTemplate = "#1\\times10^{#2}";
   }
   /**
    * When using the keyboard to navigate a fraction, the order in which the
@@ -41874,22 +41748,22 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * used. If `null` is specified, no compute engine is used.
    */
   static get computeEngine() {
-    var _a3, _b3;
     if (this._computeEngine === void 0) {
       const globalComputeEngine = window[Symbol.for("io.cortexjs.compute-engine")];
-      const ComputeEngineCtor = globalComputeEngine == null ? void 0 : globalComputeEngine.ComputeEngine;
+      const ComputeEngineCtor = globalComputeEngine?.ComputeEngine;
       if (!ComputeEngineCtor) return null;
       this._computeEngine = new ComputeEngineCtor();
       if (this._computeEngine && this.decimalSeparator === ",") {
-        const [major, minor] = String((_a3 = globalComputeEngine == null ? void 0 : globalComputeEngine.version) != null ? _a3 : "").split(".").map((x) => parseInt(x, 10));
+        const [major, minor] = String(globalComputeEngine?.version ?? "").split(".").map((x) => parseInt(x, 10));
         if (major > 0 || major === 0 && minor >= 58) {
-          this._computeEngine.latexOptions = __spreadProps(__spreadValues({}, this._computeEngine.latexOptions), {
+          this._computeEngine.latexOptions = {
+            ...this._computeEngine.latexOptions,
             decimalSeparator: "{,}"
-          });
+          };
         }
       }
     }
-    return (_b3 = this._computeEngine) != null ? _b3 : null;
+    return this._computeEngine ?? null;
   }
   static set computeEngine(value) {
     this._computeEngine = value;
@@ -41901,6 +41775,13 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   /** @internal */
   set computeEngine(_val) {
     throw new Error("Use MathfieldElement.computeEngine instead");
+  }
+  static {
+    /** @internal */
+    this._isFunction = (command) => {
+      const ce = globalThis.MathfieldElement.computeEngine;
+      return ce?.parse(command).domain?.isFunction ?? false;
+    };
   }
   static get isFunction() {
     if (typeof this._isFunction !== "function") return () => false;
@@ -41942,7 +41823,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
       this.audioBuffers[sound] = audioBuffer;
-    } catch (e) {
+    } catch {
     }
   }
   static async playSound(name) {
@@ -41959,8 +41840,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   }
   /** @category Menu */
   showMenu(_) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.showMenu(_)) != null ? _b3 : false;
+    return this._mathfield?.showMenu(_) ?? false;
   }
   /** @internal */
   get mathVirtualKeyboard() {
@@ -42007,13 +41887,11 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @category Prompts
    */
   getPromptValue(placeholderId, format) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.getPromptValue(placeholderId, format)) != null ? _b3 : "";
+    return this._mathfield?.getPromptValue(placeholderId, format) ?? "";
   }
   /** @category Prompts */
   setPromptValue(id, content, insertOptions) {
-    var _a3;
-    (_a3 = this._mathfield) == null ? void 0 : _a3.setPromptValue(id, content, insertOptions);
+    this._mathfield?.setPromptValue(id, content, insertOptions);
   }
   /**
    * Return the selection range for the specified prompt.
@@ -42028,42 +41906,35 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    *
    */
   getPromptRange(id) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.getPromptRange(id)) != null ? _b3 : null;
+    return this._mathfield?.getPromptRange(id) ?? null;
   }
   /** Return the id of the prompts matching the filter.
    * @category Prompts
    */
   getPrompts(filter) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.getPrompts(filter)) != null ? _b3 : [];
+    return this._mathfield?.getPrompts(filter) ?? [];
   }
   /** True if the mathfield has editable content, such as unlocked prompts */
   get hasEditableContent() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.hasEditableContent) != null ? _b3 : false;
+    return this._mathfield?.hasEditableContent ?? false;
   }
   /** @internal */
   get form() {
-    var _a3;
-    return (_a3 = this._internals) == null ? void 0 : _a3["form"];
+    return this._internals?.["form"];
   }
   /** @internal */
   get name() {
-    var _a3;
-    return (_a3 = this.getAttribute("name")) != null ? _a3 : "";
+    return this.getAttribute("name") ?? "";
   }
   /** @internal */
   get type() {
     return this.localName;
   }
   get mode() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.model.mode) != null ? _b3 : this.defaultMode === "free-text" || this.defaultMode === "free-math" ? this.defaultMode : this.defaultMode === "text" ? "text" : "math";
+    return this._mathfield?.model.mode ?? (this.defaultMode === "free-text" || this.defaultMode === "free-math" ? this.defaultMode : this.defaultMode === "text" ? "text" : "math");
   }
   set mode(value) {
-    var _a3;
-    (_a3 = this._mathfield) == null ? void 0 : _a3.switchMode(value);
+    this._mathfield?.switchMode(value);
   }
   /**
      * If the Compute Engine library is available, return a boxed MathJSON expression representing the value of the mathfield.
@@ -42090,9 +41961,8 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     return this._mathfield.expression;
   }
   set expression(mathJson) {
-    var _a3, _b3;
     if (!this._mathfield) return;
-    const latex = (_b3 = (_a3 = _MathfieldElement.computeEngine) == null ? void 0 : _a3.box(mathJson).latex) != null ? _b3 : null;
+    const latex = _MathfieldElement.computeEngine?.box(mathJson).latex ?? null;
     if (latex !== null) this._mathfield.setValue(latex);
     if (!window[Symbol.for("io.cortexjs.compute-engine")]) {
       console.error(
@@ -42109,16 +41979,20 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @category Accessing and changing the content
    */
   get errors() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.errors) != null ? _b3 : [];
+    return this._mathfield?.errors ?? [];
   }
   _getOptions(keys) {
     if (this._mathfield) return get(this._mathfield.options, keys);
     if (!gDeferredState.has(this)) return null;
-    return __spreadValues({}, get(
-      __spreadValues(__spreadValues({}, getDefault()), update(gDeferredState.get(this).options)),
-      keys
-    ));
+    return {
+      ...get(
+        {
+          ...getDefault(),
+          ...update(gDeferredState.get(this).options)
+        },
+        keys
+      )
+    };
   }
   getOptions(keys) {
     console.warn(
@@ -42132,7 +42006,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     if (this._mathfield) return get(this._mathfield.options, keys);
     if (!gDeferredState.has(this)) return null;
     return get(
-      __spreadValues(__spreadValues({}, getDefault()), update(gDeferredState.get(this).options)),
+      {
+        ...getDefault(),
+        ...update(gDeferredState.get(this).options)
+      },
       keys
     );
   }
@@ -42183,11 +42060,15 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   _setOptions(options) {
     if (this._mathfield) this._mathfield.setOptions(options);
     else if (gDeferredState.has(this)) {
-      const mergedOptions = __spreadValues(__spreadValues({}, gDeferredState.get(this).options), options);
-      gDeferredState.set(this, __spreadProps(__spreadValues({}, gDeferredState.get(this)), {
+      const mergedOptions = {
+        ...gDeferredState.get(this).options,
+        ...options
+      };
+      gDeferredState.set(this, {
+        ...gDeferredState.get(this),
         selection: { ranges: mergedOptions.readOnly ? [[0, 0]] : [[0, -1]] },
         options: mergedOptions
-      }));
+      });
     } else {
       gDeferredState.set(this, {
         value: void 0,
@@ -42223,16 +42104,14 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     this._setOptions(options);
   }
   executeCommand(...args) {
-    var _a3, _b3;
     let selector;
     if (args.length === 1)
       selector = args[0];
     else selector = [args[0], ...args.slice(1)];
-    if (selector) return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.executeCommand(selector)) != null ? _b3 : false;
+    if (selector) return this._mathfield?.executeCommand(selector) ?? false;
     throw new Error("Invalid selector");
   }
   getValue(arg1, arg2, arg3) {
-    var _a3, _b3;
     if (this._mathfield)
       return this._mathfield.model.getValue(arg1, arg2, arg3);
     if (gDeferredState.has(this)) {
@@ -42255,7 +42134,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
         format = arg1;
       }
       if ((format === void 0 || format === "latex") && start === 0 && end === -1)
-        return (_b3 = (_a3 = gDeferredState.get(this).value) != null ? _a3 : this.textContent) != null ? _b3 : "";
+        return gDeferredState.get(this).value ?? this.textContent ?? "";
     }
     return "";
   }
@@ -42269,7 +42148,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     if (this._mathfield && value !== void 0) {
       const currentValue = this._mathfield.model.getValue();
       if (currentValue === value) return;
-      options != null ? options : options = { silenceNotifications: true, mode: "math" };
+      options ??= { silenceNotifications: true, mode: "math" };
       this._mathfield.setValue(value, options);
       return;
     }
@@ -42299,8 +42178,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    *
    */
   hasFocus() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.hasFocus()) != null ? _b3 : false;
+    return this._mathfield?.hasFocus() ?? false;
   }
   /**
    * Sets the focus to the mathfield (will respond to keyboard input).
@@ -42309,9 +42187,8 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    *
    */
   focus() {
-    var _a3;
     if (this.disabled) return;
-    (_a3 = this._mathfield) == null ? void 0 : _a3.focus();
+    this._mathfield?.focus();
   }
   /**
    * Remove the focus from the mathfield (will no longer respond to keyboard
@@ -42321,16 +42198,14 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    *
    */
   blur() {
-    var _a3;
-    (_a3 = this._mathfield) == null ? void 0 : _a3.blur();
+    this._mathfield?.blur();
   }
   /**
    * Select the content of the mathfield.
    * @category Selection
    */
   select() {
-    var _a3;
-    (_a3 = this._mathfield) == null ? void 0 : _a3.select();
+    this._mathfield?.select();
   }
   /**
      * Insert a block of text at the current insertion point.
@@ -42344,8 +42219,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
      *  @category Accessing and changing the content
      */
   insert(s, options) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.insert(s, options)) != null ? _b3 : false;
+    return this._mathfield?.insert(s, options) ?? false;
   }
   /**
    * Update the style (color, bold, italic, etc...) of the selection or sets
@@ -42372,8 +42246,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @category Styles
    */
   applyStyle(style, options) {
-    var _a3;
-    return (_a3 = this._mathfield) == null ? void 0 : _a3.applyStyle(style, options);
+    return this._mathfield?.applyStyle(style, options);
   }
   /**
    * If there is a selection, return if all the atoms in the selection,
@@ -42386,8 +42259,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @category Styles
    */
   queryStyle(style) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.queryStyle(style)) != null ? _b3 : "none";
+    return this._mathfield?.queryStyle(style) ?? "none";
   }
   /** The offset closest to the location `(x, y)` in viewport coordinate.
    *
@@ -42410,8 +42282,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @category Undo
    */
   resetUndo() {
-    var _a3;
-    (_a3 = this._mathfield) == null ? void 0 : _a3.resetUndo();
+    this._mathfield?.resetUndo();
   }
   /**
    * Return whether there are undoable items
@@ -42431,23 +42302,21 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
   }
   /** @internal */
   handleEvent(evt) {
-    var _a3, _b3, _c2, _d2, _e;
     if (Scrim.state !== "closed") return;
-    if (((_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.menu) == null ? void 0 : _b3.state) !== "closed") return;
+    if (this._mathfield?.menu?.state !== "closed") return;
     if (evt.type === "pointerdown") this.onPointerDown();
     if (evt.type === "focus") return;
     if (evt.type !== "blur") return;
     const touch = isTouchCapable();
-    if (touch && ((_c2 = window == null ? void 0 : window.mathVirtualKeyboard) == null ? void 0 : _c2.visible)) return;
-    if (((_d2 = Scrim.scrim) == null ? void 0 : _d2.state) !== "closed" || touch && isInIframe()) return;
-    (_e = this._mathfield) == null ? void 0 : _e.onBlur({ dispatchEvents: false });
+    if (touch && window?.mathVirtualKeyboard?.visible) return;
+    if (Scrim.scrim?.state !== "closed" || touch && isInIframe()) return;
+    this._mathfield?.onBlur({ dispatchEvents: false });
   }
   /**
    * Custom elements lifecycle hooks
    * @internal
    */
   connectedCallback() {
-    var _a3, _b3, _c2, _d2;
     const shadowRoot = this.shadowRoot;
     const host = shadowRoot.host;
     const computedStyle = window.getComputedStyle(this);
@@ -42460,8 +42329,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     host.addEventListener("focus", this, true);
     host.addEventListener("blur", this, true);
     this._observer = new MutationObserver(() => {
-      var _a4;
-      this.value = (_a4 = this.textContent) != null ? _a4 : "";
+      this.value = this.textContent ?? "";
     });
     this._observer.observe(this, {
       childList: true,
@@ -42496,14 +42364,15 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     let value = "";
     if (this.hasAttribute("value")) value = this.getAttribute("value");
     else {
-      value = (_a3 = slot == null ? void 0 : slot.assignedNodes().map((x) => x.nodeType === 3 ? x.textContent : "").join("").trim()) != null ? _a3 : "";
+      value = slot?.assignedNodes().map((x) => x.nodeType === 3 ? x.textContent : "").join("").trim() ?? "";
     }
     this._mathfield = new _Mathfield(
       shadowRoot.querySelector(":host > span"),
-      __spreadProps(__spreadValues({}, (_c2 = (_b3 = gDeferredState.get(this)) == null ? void 0 : _b3.options) != null ? _c2 : getOptionsFromAttributes(this)), {
+      {
+        ...gDeferredState.get(this)?.options ?? getOptionsFromAttributes(this),
         eventSink: this,
         value
-      })
+      }
     );
     if (!gDeferredState.has(this)) {
       this.upgradeProperty("disabled");
@@ -42511,7 +42380,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
       for (const attr of Object.keys(_MathfieldElement.optionsAttributes))
         this.upgradeProperty(toCamelCase(attr));
     }
-    if (!((_d2 = this._mathfield) == null ? void 0 : _d2.model)) {
+    if (!this._mathfield?.model) {
       this._mathfield = null;
       return;
     }
@@ -42544,10 +42413,9 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @internal
    */
   disconnectedCallback() {
-    var _a3, _b3, _c2;
     this.shadowRoot.host.removeEventListener("pointerdown", this, true);
     if (!this._mathfield) return;
-    (_a3 = this._observer) == null ? void 0 : _a3.disconnect();
+    this._observer?.disconnect();
     this._observer = null;
     window.queueMicrotask(
       () => (
@@ -42568,7 +42436,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     gDeferredState.set(this, {
       value: this._mathfield.getValue(),
       selection: this._mathfield.model.selection,
-      menuItems: (_c2 = (_b3 = this._mathfield.menu) == null ? void 0 : _b3.menuItems) != null ? _c2 : void 0,
+      menuItems: this._mathfield.menu?.menuItems ?? void 0,
       options
     });
     this._mathfield.dispose();
@@ -42633,14 +42501,13 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
     return this.hasAttribute("disabled");
   }
   set disabled(value) {
-    var _a3;
     const isDisabled = Boolean(value);
     if (isDisabled) this.setAttribute("disabled", "");
     else this.removeAttribute("disabled");
     if (isElementInternalsSupported())
       this._internals.ariaDisabled = isDisabled ? "true" : "false";
     else this.setAttribute("aria-disabled", isDisabled ? "true" : "false");
-    if (isDisabled && ((_a3 = this._mathfield) == null ? void 0 : _a3.hasFocus) && window.mathVirtualKeyboard.visible)
+    if (isDisabled && this._mathfield?.hasFocus && window.mathVirtualKeyboard.visible)
       this._mathfield.executeCommand("hideVirtualKeyboard");
   }
   /**
@@ -42718,7 +42585,7 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
         set(_, prop, value) {
           if (typeof prop !== "string") return false;
           that._setOptions({
-            registers: __spreadProps(__spreadValues({}, that._getOption("registers")), { [prop]: value })
+            registers: { ...that._getOption("registers"), [prop]: value }
           });
           return true;
         },
@@ -43027,15 +42894,13 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @category Menu
    */
   get menuItems() {
-    var _a3;
     if (!this._mathfield) throw new Error("Mathfield not mounted");
-    return (_a3 = this._mathfield.menu._menuItems.map((x) => x.menuItem)) != null ? _a3 : [];
+    return this._mathfield.menu._menuItems.map((x) => x.menuItem) ?? [];
   }
   set menuItems(menuItems) {
-    var _a3;
     if (!this._mathfield) throw new Error("Mathfield not mounted");
     if (this._mathfield) {
-      const btn = (_a3 = this._mathfield.element) == null ? void 0 : _a3.querySelector(
+      const btn = this._mathfield.element?.querySelector(
         "[part=menu-toggle]"
       );
       if (btn) btn.style.display = menuItems.length === 0 ? "none" : "";
@@ -43174,18 +43039,15 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * This is a standard DOM property
    * @internal */
   get isSelectionEditable() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.isSelectionEditable) != null ? _b3 : false;
+    return this._mathfield?.isSelectionEditable ?? false;
   }
   /** @category Prompts */
   setPromptState(id, state, locked) {
-    var _a3;
-    (_a3 = this._mathfield) == null ? void 0 : _a3.setPromptState(id, state, locked);
+    this._mathfield?.setPromptState(id, state, locked);
   }
   /** @category Prompts */
   getPromptState(id) {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.getPromptState(id)) != null ? _b3 : [void 0, true];
+    return this._mathfield?.getPromptState(id) ?? [void 0, true];
   }
   /**
    * An array of ranges representing the selection.
@@ -43213,9 +43075,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
       return;
     }
     if (gDeferredState.has(this)) {
-      gDeferredState.set(this, __spreadProps(__spreadValues({}, gDeferredState.get(this)), {
+      gDeferredState.set(this, {
+        ...gDeferredState.get(this),
         selection: sel
-      }));
+      });
       return;
     }
     gDeferredState.set(this, {
@@ -43253,9 +43116,10 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
       requestUpdate(this._mathfield);
     }
     if (gDeferredState.has(this)) {
-      gDeferredState.set(this, __spreadProps(__spreadValues({}, gDeferredState.get(this)), {
+      gDeferredState.set(this, {
+        ...gDeferredState.get(this),
         selection: { ranges: [[offset, offset]] }
-      }));
+      });
       return;
     }
     gDeferredState.set(this, {
@@ -43270,88 +43134,9 @@ var _MathfieldElement = class _MathfieldElement extends HTMLElement {
    * @category Selection
    */
   get lastOffset() {
-    var _a3, _b3;
-    return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.model.lastOffset) != null ? _b3 : -1;
+    return this._mathfield?.model.lastOffset ?? -1;
   }
 };
-_MathfieldElement.version = "{{SDK_VERSION}}";
-_MathfieldElement.openUrl = (href) => {
-  if (!href) return;
-  const url = new URL(href);
-  if (!["http:", "https:", "file:"].includes(url.protocol.toLowerCase())) {
-    _MathfieldElement.playSound("plonk");
-    return;
-  }
-  window.open(url, "_blank");
-};
-/** @internal */
-_MathfieldElement._fontsDirectory = "./fonts/";
-/** @internal */
-_MathfieldElement._soundsDirectory = "./sounds";
-/**
- * When a key on the virtual keyboard is pressed, produce a short haptic
- * feedback, if the device supports it.
- * @category Virtual Keyboard
- */
-_MathfieldElement.keypressVibration = true;
-/** @internal */
-_MathfieldElement._keypressSound = {
-  spacebar: "keypress-spacebar.wav",
-  return: "keypress-return.wav",
-  delete: "keypress-delete.wav",
-  default: "keypress-standard.wav"
-};
-/** @ignore */
-_MathfieldElement._plonkSound = "plonk.wav";
-/** @internal */
-_MathfieldElement.audioBuffers = {};
-/**
- * Support for [Trusted Type](https://www.w3.org/TR/trusted-types/).
- *
- * This optional function will be called before a string of HTML is
- * injected in the DOM, allowing that string to be sanitized
- * according to a policy defined by the host.
- *
- * Consider using this option if you are displaying untrusted content. Read more about [Security Considerations](/mathfield/guides/security/)
- *
- */
-_MathfieldElement.createHTML = (x) => x;
-/** @internal */
-_MathfieldElement._speechEngineRate = "100%";
-/** @internal */
-_MathfieldElement._speechEngineVoice = "Joanna";
-/** @internal */
-_MathfieldElement._textToSpeechMarkup = "";
-/** @internal */
-_MathfieldElement._textToSpeechRules = "mathlive";
-/** @internal */
-_MathfieldElement._textToSpeechRulesOptions = {};
-/** @category Speech */
-_MathfieldElement.speakHook = defaultSpeakHook;
-/** @category Speech */
-_MathfieldElement.readAloudHook = defaultReadAloudHook;
-/**
- * When switching from a tab to one that contains a mathfield that was
- * previously focused, restore the focus to the mathfield.
- *
- * This is behavior consistent with `<textarea>`, however it can be
- * disabled if it is not desired.
- *
- * **Default**: `true`
- * @category Customization
- */
-_MathfieldElement.restoreFocusWhenDocumentFocused = true;
-/** @internal */
-_MathfieldElement._decimalSeparator = ".";
-/** @internal */
-_MathfieldElement._scientificNotationTemplate = "#1\\times10^{#2}";
-/** @internal */
-_MathfieldElement._isFunction = (command) => {
-  var _a3, _b3;
-  const ce = globalThis.MathfieldElement.computeEngine;
-  return (_b3 = (_a3 = ce == null ? void 0 : ce.parse(command).domain) == null ? void 0 : _a3.isFunction) != null ? _b3 : false;
-};
-var MathfieldElement = _MathfieldElement;
 function toCamelCase(s) {
   return s.replace(/[^a-zA-Z\d]+(.)/g, (_m, c) => c.toUpperCase());
 }
@@ -43359,19 +43144,18 @@ function getOptionsFromAttributes(mfe) {
   const result = { readOnly: false };
   const attribs = MathfieldElement.optionsAttributes;
   Object.keys(attribs).forEach((x) => {
-    var _a3;
     if (mfe.hasAttribute(x)) {
       let value = mfe.getAttribute(x);
-      if (x === "placeholder") result.contentPlaceholder = value != null ? value : "";
+      if (x === "placeholder") result.contentPlaceholder = value ?? "";
       else if (attribs[x] === "boolean") result[toCamelCase(x)] = true;
       else if (attribs[x] === "on/off") {
-        value = (_a3 = value == null ? void 0 : value.toLowerCase()) != null ? _a3 : "";
+        value = value?.toLowerCase() ?? "";
         if (value === "on" || value === "true") result[toCamelCase(x)] = true;
         else if (value === "off" || value === "false")
           result[toCamelCase(x)] = false;
         else result[toCamelCase(x)] = void 0;
       } else if (attribs[x] === "number")
-        result[toCamelCase(x)] = Number.parseFloat(value != null ? value : "0");
+        result[toCamelCase(x)] = Number.parseFloat(value ?? "0");
       else result[toCamelCase(x)] = value;
     }
   });
@@ -43384,13 +43168,12 @@ function isElementInternalsSupported() {
   return true;
 }
 var mathfield_element_default = MathfieldElement;
-var _a2, _b2, _c, _d;
-if (isBrowser() && !((_a2 = window.customElements) == null ? void 0 : _a2.get("math-field"))) {
-  (_c = window[_b2 = Symbol.for("io.cortexjs.mathlive")]) != null ? _c : window[_b2] = {};
+if (isBrowser() && !window.customElements?.get("math-field")) {
+  window[Symbol.for("io.cortexjs.mathlive")] ??= {};
   const global = window[Symbol.for("io.cortexjs.mathlive")];
   global.version = "{{SDK_VERSION}}";
   globalThis.MathfieldElement = MathfieldElement;
-  (_d = window.customElements) == null ? void 0 : _d.define("math-field", MathfieldElement);
+  window.customElements?.define("math-field", MathfieldElement);
 }
 
 // src/public/math-static-elements.ts
@@ -43448,10 +43231,9 @@ var MathStaticElement = class extends HTMLElement {
     if ("IntersectionObserver" in window && !this._hasRendered) {
       this._observer = new IntersectionObserver(
         (entries) => {
-          var _a3;
           if (entries[0].isIntersecting && !this._hasRendered) {
             this.render();
-            (_a3 = this._observer) == null ? void 0 : _a3.disconnect();
+            this._observer?.disconnect();
           }
         },
         { rootMargin: "50px" }
@@ -43462,8 +43244,7 @@ var MathStaticElement = class extends HTMLElement {
     }
   }
   disconnectedCallback() {
-    var _a3;
-    (_a3 = this._observer) == null ? void 0 : _a3.disconnect();
+    this._observer?.disconnect();
   }
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue && this._hasRendered) this.render();
@@ -43524,8 +43305,7 @@ var MathStaticElement = class extends HTMLElement {
    * Macros to use for rendering
    */
   get macros() {
-    var _a3;
-    return (_a3 = this.getAttribute("macros")) != null ? _a3 : void 0;
+    return this.getAttribute("macros") ?? void 0;
   }
   set macros(value) {
     if (value === void 0) this.removeAttribute("macros");
@@ -43557,9 +43337,8 @@ var MathStaticElement = class extends HTMLElement {
    * Manually trigger a re-render of the content
    */
   render() {
-    var _a3, _b3, _c2;
     try {
-      const content = (_b3 = (_a3 = this.textContent) == null ? void 0 : _a3.trim()) != null ? _b3 : "";
+      const content = this.textContent?.trim() ?? "";
       if (!content) {
         this._renderContainer.innerHTML = "";
         this._errorFallback.style.display = "none";
@@ -43610,7 +43389,7 @@ var MathStaticElement = class extends HTMLElement {
     } catch (error) {
       console.error("MathLive static element render error:", error);
       this._renderContainer.style.display = "none";
-      this._errorFallback.textContent = (_c2 = this.textContent) != null ? _c2 : "";
+      this._errorFallback.textContent = this.textContent ?? "";
       this._errorFallback.style.display = "block";
       this._removeMathML();
       this.dispatchEvent(
@@ -43685,12 +43464,11 @@ var MathDivElement = class extends MathStaticElement {
   }
 };
 function registerStaticElements() {
-  var _a3, _b3, _c2, _d2;
   if (typeof window === "undefined") return;
-  if (!((_a3 = window.customElements) == null ? void 0 : _a3.get("math-span")))
-    (_b3 = window.customElements) == null ? void 0 : _b3.define("math-span", MathSpanElement);
-  if (!((_c2 = window.customElements) == null ? void 0 : _c2.get("math-div")))
-    (_d2 = window.customElements) == null ? void 0 : _d2.define("math-div", MathDivElement);
+  if (!window.customElements?.get("math-span"))
+    window.customElements?.define("math-span", MathSpanElement);
+  if (!window.customElements?.get("math-div"))
+    window.customElements?.define("math-div", MathDivElement);
 }
 registerStaticElements();
 
@@ -43769,19 +43547,18 @@ function splitAtDelimiters(startData, leftDelim, rightDelim, mathstyle, format =
   return finalData;
 }
 function splitWithDelimiters(text, options) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h;
   let data = [{ type: "text", data: text }];
-  if ((_b3 = (_a3 = options.TeX) == null ? void 0 : _a3.delimiters) == null ? void 0 : _b3.display) {
+  if (options.TeX?.delimiters?.display) {
     options.TeX.delimiters.display.forEach(([openDelim, closeDelim]) => {
       data = splitAtDelimiters(data, openDelim, closeDelim, "displaystyle");
     });
   }
-  if ((_d2 = (_c2 = options.TeX) == null ? void 0 : _c2.delimiters) == null ? void 0 : _d2.inline) {
+  if (options.TeX?.delimiters?.inline) {
     options.TeX.delimiters.inline.forEach(([openDelim, closeDelim]) => {
       data = splitAtDelimiters(data, openDelim, closeDelim, "textstyle");
     });
   }
-  if ((_f = (_e = options.asciiMath) == null ? void 0 : _e.delimiters) == null ? void 0 : _f.inline) {
+  if (options.asciiMath?.delimiters?.inline) {
     options.asciiMath.delimiters.inline.forEach(([openDelim, closeDelim]) => {
       data = splitAtDelimiters(
         data,
@@ -43792,7 +43569,7 @@ function splitWithDelimiters(text, options) {
       );
     });
   }
-  if ((_h = (_g = options.asciiMath) == null ? void 0 : _g.delimiters) == null ? void 0 : _h.display) {
+  if (options.asciiMath?.delimiters?.display) {
     options.asciiMath.delimiters.display.forEach(([openDelim, closeDelim]) => {
       data = splitAtDelimiters(
         data,
@@ -43822,9 +43599,10 @@ function createMathMLNode(latex, options) {
 }
 function createMarkupNode(text, options, mathstyle) {
   try {
-    const html = options.renderToMarkup(text, __spreadProps(__spreadValues({}, options), {
+    const html = options.renderToMarkup(text, {
+      ...options,
       defaultMode: mathstyle === "displaystyle" ? "math" : "inline-math"
-    }));
+    });
     const element = document.createElement("span");
     element.dataset.latex = text;
     element.style.display = mathstyle === "displaystyle" ? "flex" : "inline-flex";
@@ -43838,13 +43616,12 @@ function createMarkupNode(text, options, mathstyle) {
   }
 }
 function createAccessibleMarkupPair(latex, mathstyle, options) {
-  var _a3;
   const markupNode = createMarkupNode(
     latex,
     options,
     mathstyle ? mathstyle : "textstyle"
   );
-  const accessibleContent = (_a3 = options.renderAccessibleContent) != null ? _a3 : "";
+  const accessibleContent = options.renderAccessibleContent ?? "";
   if (/\b(mathml|speakable-text)\b/i.test(accessibleContent)) {
     const fragment = document.createElement("span");
     if (/\bmathml\b/i.test(accessibleContent) && options.renderToMathML)
@@ -43863,9 +43640,8 @@ function createAccessibleMarkupPair(latex, mathstyle, options) {
   return markupNode;
 }
 function scanText2(text, options) {
-  var _a3;
   if (/^\s*$/.test(text)) return null;
-  if (((_a3 = options.TeX) == null ? void 0 : _a3.processEnvironments) && /^\s*\\begin/.test(text))
+  if (options.TeX?.processEnvironments && /^\s*\\begin/.test(text))
     return [createAccessibleMarkupPair(text, "", options)];
   const runs = splitWithDelimiters(text, options);
   if (runs.length === 1 && runs[0].type === "text") return null;
@@ -43885,10 +43661,9 @@ function scanText2(text, options) {
   return result;
 }
 function scanElement(element, options) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
   if (element.childNodes.length === 1 && element.childNodes[0].nodeType === 3) {
-    const text = (_a3 = element.childNodes[0].textContent) != null ? _a3 : "";
-    if (((_b3 = options.TeX) == null ? void 0 : _b3.processEnvironments) && /^\s*\\begin/.test(text)) {
+    const text = element.childNodes[0].textContent ?? "";
+    if (options.TeX?.processEnvironments && /^\s*\\begin/.test(text)) {
       element.textContent = "";
       element.append(createAccessibleMarkupPair(text, "", options));
       return;
@@ -43911,7 +43686,7 @@ function scanElement(element, options) {
   const nodes = [...element.childNodes];
   for (const childNode of nodes) {
     if (childNode.nodeType === 3) {
-      const nodes2 = scanText2((_c2 = childNode.textContent) != null ? _c2 : "", options);
+      const nodes2 = scanText2(childNode.textContent ?? "", options);
       if (nodes2) childNode.replaceWith(...nodes2);
     } else if (childNode.nodeType === 1) {
       const tag = childNode.nodeName.toLowerCase();
@@ -43920,13 +43695,12 @@ function scanElement(element, options) {
         const type = scriptNode.type.toLowerCase();
         if (type === "module" || type === "javascript") continue;
         let textContent = void 0;
-        if ((_d2 = options.processScriptTypePattern) == null ? void 0 : _d2.test(type))
-          textContent = (_e = scriptNode.textContent) != null ? _e : "";
-        else if ((_f = options.processMathJSONScriptTypePattern) == null ? void 0 : _f.test(type)) {
+        if (options.processScriptTypePattern?.test(type))
+          textContent = scriptNode.textContent ?? "";
+        else if (options.processMathJSONScriptTypePattern?.test(type)) {
           try {
-            textContent = (_h = options.serializeToLatex) == null ? void 0 : _h.call(
-              options,
-              JSON.parse((_g = scriptNode.textContent) != null ? _g : "")
+            textContent = options.serializeToLatex?.(
+              JSON.parse(scriptNode.textContent ?? "")
             );
           } catch (e) {
             console.error(e);
@@ -43943,15 +43717,15 @@ function scanElement(element, options) {
         }
       } else {
         const el = childNode;
-        if ((_i = options.texClassDisplayPattern) == null ? void 0 : _i.test(el.className)) {
-          replaceWithMath(el, (_j = el.textContent) != null ? _j : "", "displaystyle", options);
+        if (options.texClassDisplayPattern?.test(el.className)) {
+          replaceWithMath(el, el.textContent ?? "", "displaystyle", options);
           continue;
         }
-        if ((_k = options.texClassInlinePattern) == null ? void 0 : _k.test(el.className)) {
-          replaceWithMath(el, (_l = el.textContent) != null ? _l : "", "textstyle", options);
+        if (options.texClassInlinePattern?.test(el.className)) {
+          replaceWithMath(el, el.textContent ?? "", "textstyle", options);
           continue;
         }
-        const shouldProcess = ((_n = (_m = options.processClassPattern) == null ? void 0 : _m.test(el.className)) != null ? _n : false) || !(((_p = (_o = options.skipTags) == null ? void 0 : _o.includes(tag)) != null ? _p : false) || ((_r = (_q = options.ignoreClassPattern) == null ? void 0 : _q.test(el.className)) != null ? _r : false));
+        const shouldProcess = (options.processClassPattern?.test(el.className) ?? false) || !((options.skipTags?.includes(tag) ?? false) || (options.ignoreClassPattern?.test(el.className) ?? false));
         if (shouldProcess) scanElement(el, options);
       }
     }
@@ -43999,27 +43773,29 @@ var DEFAULT_AUTO_RENDER_OPTIONS = {
   }
 };
 function _renderMathInElement(element, options) {
-  var _a3, _b3, _c2, _d2, _e, _f, _g, _h;
   try {
-    const optionsPrivate = __spreadValues(__spreadValues({}, DEFAULT_AUTO_RENDER_OPTIONS), options);
+    const optionsPrivate = {
+      ...DEFAULT_AUTO_RENDER_OPTIONS,
+      ...options
+    };
     optionsPrivate.ignoreClassPattern = new RegExp(
-      (_a3 = optionsPrivate.ignoreClass) != null ? _a3 : ""
+      optionsPrivate.ignoreClass ?? ""
     );
     optionsPrivate.processClassPattern = new RegExp(
-      (_b3 = optionsPrivate.processClass) != null ? _b3 : ""
+      optionsPrivate.processClass ?? ""
     );
     optionsPrivate.processScriptTypePattern = new RegExp(
-      (_c2 = optionsPrivate.processScriptType) != null ? _c2 : ""
+      optionsPrivate.processScriptType ?? ""
     );
     optionsPrivate.processMathJSONScriptTypePattern = new RegExp(
-      (_d2 = optionsPrivate.processMathJSONScriptType) != null ? _d2 : ""
+      optionsPrivate.processMathJSONScriptType ?? ""
     );
-    if ((_f = (_e = optionsPrivate.TeX) == null ? void 0 : _e.className) == null ? void 0 : _f.display) {
+    if (optionsPrivate.TeX?.className?.display) {
       optionsPrivate.texClassDisplayPattern = new RegExp(
         optionsPrivate.TeX.className.display
       );
     }
-    if ((_h = (_g = optionsPrivate.TeX) == null ? void 0 : _g.className) == null ? void 0 : _h.inline) {
+    if (optionsPrivate.TeX?.className?.inline) {
       optionsPrivate.texClassInlinePattern = new RegExp(
         optionsPrivate.TeX.className.inline
       );
@@ -44080,8 +43856,7 @@ register2(
 
 // src/mathlive.ts
 function globalMathLive() {
-  var _a3, _b3;
-  (_b3 = globalThis[_a3 = Symbol.for("io.cortexjs.mathlive")]) != null ? _b3 : globalThis[_a3] = {};
+  globalThis[Symbol.for("io.cortexjs.mathlive")] ??= {};
   return globalThis[Symbol.for("io.cortexjs.mathlive")];
 }
 function renderMathInDocument(options) {
@@ -44102,7 +43877,6 @@ function getElement(element) {
   return element;
 }
 function renderMathInElement(element, options) {
-  var _a3, _b3, _c2, _d2;
   if (document.readyState === "loading") {
     document.addEventListener(
       "DOMContentLoaded",
@@ -44112,11 +43886,11 @@ function renderMathInElement(element, options) {
   }
   const el = getElement(element);
   if (!el) return;
-  const optionsPrivate = options != null ? options : {};
-  (_a3 = optionsPrivate.renderToMarkup) != null ? _a3 : optionsPrivate.renderToMarkup = convertLatexToMarkup;
-  (_b3 = optionsPrivate.renderToMathML) != null ? _b3 : optionsPrivate.renderToMathML = convertLatexToMathMl;
-  (_c2 = optionsPrivate.renderToSpeakableText) != null ? _c2 : optionsPrivate.renderToSpeakableText = convertLatexToSpeakableText;
-  (_d2 = optionsPrivate.serializeToLatex) != null ? _d2 : optionsPrivate.serializeToLatex = convertMathJsonToLatex;
+  const optionsPrivate = options ?? {};
+  optionsPrivate.renderToMarkup ??= convertLatexToMarkup;
+  optionsPrivate.renderToMathML ??= convertLatexToMathMl;
+  optionsPrivate.renderToSpeakableText ??= convertLatexToSpeakableText;
+  optionsPrivate.serializeToLatex ??= convertMathJsonToLatex;
   _renderMathInElement(el, optionsPrivate);
 }
 var version = {
@@ -44144,3 +43918,4 @@ export {
   validateLatex2 as validateLatex,
   version
 };
+//# sourceMappingURL=mathlive.mjs.map
