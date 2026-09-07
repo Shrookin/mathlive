@@ -15008,7 +15008,7 @@ M500 241 v40 H399408 v-40z M500 435 v40 H400000 v-40z`
         }
       }
       if (!result) return null;
-      if (result instanceof Atom && result.verbatimLatex === void 0 && !/^\\(llap|rlap|class|cssId|htmlData)$/.test(command)) {
+      if (result instanceof Atom && result.verbatimLatex === void 0 && (info.definitionType !== "function" || !info.parse) && !/^\\(llap|rlap|class|cssId|htmlData)$/.test(command)) {
         const verbatim = joinLatex([
           command,
           tokensToString(this.tokens.slice(initialIndex, this.index))
@@ -15550,6 +15550,12 @@ M500 241 v40 H399408 v-40z M500 435 v40 H400000 v-40z`
     {
       key: "[IntlBackslash]",
       ifMode: "math",
+      command: ["switchMode", "latex", "", "\\"]
+    },
+    // On UK QWERTY keyboards
+    {
+      key: "[IntlBackslash]",
+      ifMode: "text",
       command: ["switchMode", "latex", "", "\\"]
     },
     // On UK QWERTY keyboards
@@ -17091,6 +17097,10 @@ body > .ML__keyboard.is-visible.animate > .MLK__backdrop {
 }
 .MLK__rows > .MLK__row .small {
   font-size: var(--_keycap-small-font-size);
+}
+.MLK__rows > .MLK__row .compact .ML__latex {
+  transform: scale(0.72);
+  transform-origin: center;
 }
 .MLK__rows > .MLK__row .bottom {
   justify-content: flex-end;
@@ -21681,7 +21691,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
           "root",
           "space"
         ].includes(type),
-        `MathLive 0.110.0: an unexpected atom type "${type}" was encountered. Add new atom constructors to \`fromJson()\` in "atom.ts"`
+        `MathLive {{SDK_VERSION}}: an unexpected atom type "${type}" was encountered. Add new atom constructors to \`fromJson()\` in "atom.ts"`
       );
       result = Atom.fromJson(json);
     }
@@ -22232,6 +22242,34 @@ Note there are a different set of tooltip rules for the keyboard toggle
     makeEnvironment
   );
   defineTabularEnvironment(["cases", "dcases", "rcases"], "", makeEnvironment);
+  var MAX_PIECEWISE_ROWS = 100;
+  defineFunction("piecewise", "{count:string}", {
+    parse: (parser) => {
+      var _a3, _b3;
+      const count = (_b3 = (_a3 = parser.scanArgument("string")) == null ? void 0 : _a3.trim()) != null ? _b3 : "";
+      if (count.length === 0) {
+        parser.onError({ code: "missing-argument", arg: "\\piecewise" });
+        return ["1"];
+      }
+      if (!/^[1-9]\d*$/.test(count) || Number(count) > MAX_PIECEWISE_ROWS) {
+        parser.onError({ code: "unexpected-token", arg: count });
+        return ["1"];
+      }
+      return [count];
+    },
+    createAtom: (options) => {
+      var _a3;
+      const count = Number.parseInt((_a3 = options.args) == null ? void 0 : _a3[0], 10);
+      const rows = Number.isInteger(count) && count > 0 ? Math.min(count, MAX_PIECEWISE_ROWS) : 1;
+      return makeEnvironment(
+        "cases",
+        Array.from({ length: rows }, () => [
+          [new PlaceholderAtom()],
+          [new PlaceholderAtom()]
+        ])
+      );
+    }
+  });
   function makeEnvironment(name, content = [[[]]], rowGaps = [], args = [], maxMatrixCols) {
     switch (name) {
       case "math":
@@ -22588,6 +22626,26 @@ Note there are a different set of tooltip rules for the keyboard toggle
       serialize: (atom, options) => atom.command + (!atom.hasEmptyBranch("below") ? `[${atom.belowToLatex(options)}]` : "") + `{${atom.aboveToLatex(options)}}${atom.supsubToLatex(options)}`
     }
   );
+
+  // src/atoms/bounded-argument.ts
+  var BoundedArgumentAtom = class extends PromptAtom {
+    constructor(body, options) {
+      super(void 0, void 0, false, body, options);
+      this.type = "mord";
+      this.captureSelection = false;
+    }
+    render(context) {
+      var _a3, _b3;
+      const hasContent = (_b3 = (_a3 = this.body) == null ? void 0 : _a3.some((atom) => atom.type !== "first")) != null ? _b3 : false;
+      const box = hasContent ? Atom.createBox(context, this.body) : new PlaceholderAtom({ mode: this.mode, style: this.style }).render(context);
+      return box ? this.bind(context, box) : null;
+    }
+    _serialize(options) {
+      var _a3, _b3;
+      const hasContent = (_b3 = (_a3 = this.body) == null ? void 0 : _a3.some((atom) => atom.type !== "first")) != null ? _b3 : false;
+      return hasContent ? this.bodyToLatex(options) : "\\placeholder{}";
+    }
+  };
 
   // src/latex-commands/functions.ts
   defineFunction(
@@ -22994,6 +23052,46 @@ Note there are a different set of tooltip rules for the keyboard toggle
       var _a3;
       return `\\the${(_a3 = serializeLatexValue(atom.args[0])) != null ? _a3 : "\\relax"}`;
     }
+  });
+  function parseBoundedOperator(parser) {
+    if (parser.peek() !== "<{>") return [];
+    const lower = parser.scanArgument("expression");
+    if (!lower) return [];
+    if (parser.peek() !== "<{>") return [lower];
+    const upper = parser.scanArgument("expression");
+    return upper ? [lower, upper] : [lower];
+  }
+  function createBoundedOperator(symbol, options) {
+    var _a3;
+    const atom = new ExtensibleSymbolAtom(symbol, __spreadProps(__spreadValues({}, options), {
+      limits: "auto",
+      variant: "main"
+    }));
+    atom.verbatimLatex = null;
+    const [lower, upper] = (_a3 = options.args) != null ? _a3 : [];
+    atom.boundedArgumentSlots = {
+      subscript: Boolean(lower),
+      superscript: Boolean(upper)
+    };
+    if (lower)
+      atom.setChildren(
+        [new BoundedArgumentAtom(argAtoms(lower), options)],
+        "subscript"
+      );
+    if (upper)
+      atom.setChildren(
+        [new BoundedArgumentAtom(argAtoms(upper), options)],
+        "superscript"
+      );
+    return atom;
+  }
+  defineFunction(["int", "sum", "prod"], "{lower:expression}{upper:expression}", {
+    ifMode: "math",
+    parse: parseBoundedOperator,
+    createAtom: (options) => createBoundedOperator(
+      { int: "\u222B", sum: "\u2211", prod: "\u220F" }[options.command.slice(1)],
+      options
+    )
   });
 
   // src/latex-commands/styling.ts
@@ -26474,7 +26572,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
         return;
       } catch (error) {
         console.error(
-          `MathLive 0.110.0: The math fonts could not be loaded from "${fontsFolder}"`,
+          `MathLive {{SDK_VERSION}}: The math fonts could not be loaded from "${fontsFolder}"`,
           { cause: error }
         );
         document.body.classList.add("ML__fonts-did-not-load");
@@ -28322,7 +28420,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
     if (typeof layout === "string") {
       console.assert(
         LAYOUTS[layout] !== void 0,
-        `MathLive 0.110.0: unknown keyboard layout "${layout}"`
+        `MathLive {{SDK_VERSION}}: unknown keyboard layout "${layout}"`
       );
       return normalizeLayout(LAYOUTS[layout]);
     }
@@ -28330,7 +28428,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
     if ("rows" in layout && Array.isArray(layout.rows)) {
       console.assert(
         !("layers" in layout || "markup" in layout),
-        `MathLive 0.110.0: when providing a "rows" property, "layers" and "markup" are ignored`
+        `MathLive {{SDK_VERSION}}: when providing a "rows" property, "layers" and "markup" are ignored`
       );
       const _a3 = layout, { rows } = _a3, partialLayout = __objRest(_a3, ["rows"]);
       result = __spreadProps(__spreadValues({}, partialLayout), {
@@ -28346,7 +28444,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
       if ("layers" in layout) result.layers = normalizeLayer(layout.layers);
       else {
         console.error(
-          `MathLive 0.110.0: provide either a "rows", "markup" or "layers" property`
+          `MathLive {{SDK_VERSION}}: provide either a "rows", "markup" or "layers" property`
         );
       }
     }
@@ -29858,7 +29956,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
             updates.defaultMode
           )) {
             console.error(
-              `MathLive 0.110.0:  valid values for defaultMode are "text", "free-text", "free-math", "math" or "inline-math"`
+              `MathLive {{SDK_VERSION}}:  valid values for defaultMode are "text", "free-text", "free-math", "math" or "inline-math"`
             );
             result.defaultMode = "math";
           } else result.defaultMode = updates.defaultMode;
@@ -30355,6 +30453,20 @@ Note there are a different set of tooltip rules for the keyboard toggle
   var UndoManager = _UndoManager;
 
   // src/editor-model/delete.ts
+  function isEmptyBoundedOperator(atom) {
+    if (!atom || atom.type !== "extensible-symbol") return false;
+    const boundedSlots = atom.boundedArgumentSlots;
+    const isEmptySlot = (branch) => {
+      var _a3;
+      const children = atom.branch(branch);
+      if (!children || children.length !== 2) return false;
+      const argument = children[1];
+      return argument instanceof PlaceholderAtom || argument instanceof BoundedArgumentAtom && ((_a3 = argument.body) == null ? void 0 : _a3.length) === 2 && argument.body[1] instanceof PlaceholderAtom;
+    };
+    return Boolean(
+      (boundedSlots == null ? void 0 : boundedSlots.subscript) && boundedSlots.superscript && isEmptySlot("subscript") && isEmptySlot("superscript")
+    );
+  }
   function onDelete(model, direction, atom, branch) {
     var _a3, _b3, _c2, _d2, _e, _f;
     const parent = atom.parent;
@@ -30463,6 +30575,12 @@ Note there are a different set of tooltip rules for the keyboard toggle
         return true;
       }
       if (branch && atom.hasEmptyBranch(branch)) {
+        const boundedSlots = atom.boundedArgumentSlots;
+        if (boundedSlots && (branch === "subscript" && boundedSlots.subscript || branch === "superscript" && boundedSlots.superscript)) {
+          atom.setChildren([new PlaceholderAtom()], branch);
+          model.position = model.offsetOf(atom.firstChild);
+          return true;
+        }
         atom.removeBranch(branch);
         if (atom.type === "subsup" && !atom.subscript && !atom.superscript) {
           const pos = direction === "forward" ? model.offsetOf(atom) : Math.max(0, model.offsetOf(atom) - 1);
@@ -30534,6 +30652,17 @@ Note there are a different set of tooltip rules for the keyboard toggle
         let target = model.at(model.position);
         if (target && onDelete(model, "backward", target)) return;
         if (target == null ? void 0 : target.isFirstSibling) {
+          const next = target.rightSibling;
+          if (isEmptyBoundedOperator(next)) {
+            const parent = next.parent;
+            if (parent) {
+              const position = model.offsetOf(next.leftSibling);
+              parent.removeChild(next);
+              model.position = position;
+              model.announce("delete", void 0, [next]);
+              return;
+            }
+          }
           if (onDelete(model, "backward", target.parent, target.parentBranch))
             return;
           target = null;
@@ -30543,8 +30672,16 @@ Note there are a different set of tooltip rules for the keyboard toggle
           return;
         }
         const targetParent = target.parent;
+        const deletedBranch = target.parentBranch;
         model.position = model.offsetOf(target.leftSibling);
         targetParent.removeChild(target);
+        if (targetParent instanceof BoundedArgumentAtom && targetParent.hasEmptyBranch("body")) {
+          targetParent.setChildren([new PlaceholderAtom()], "body");
+        }
+        const boundedSlots = targetParent.boundedArgumentSlots;
+        if (boundedSlots && (deletedBranch === "subscript" || deletedBranch === "superscript") && (deletedBranch === "subscript" && boundedSlots.subscript || deletedBranch === "superscript" && boundedSlots.superscript) && targetParent.hasEmptyBranch(deletedBranch)) {
+          targetParent.setChildren([new PlaceholderAtom()], deletedBranch);
+        }
         model.announce("delete", void 0, [target]);
         if (targetParent.type === "latexgroup" && targetParent.hasEmptyBranch("body")) {
           const pos = model.offsetOf(targetParent.leftSibling);
@@ -33399,6 +33536,12 @@ Note there are a different set of tooltip rules for the keyboard toggle
   }
 
   // src/editor-mathfield/mode-editor-math.ts
+  function normalizeCasesRowSeparators(latex) {
+    return latex.replace(
+      /\\begin\\{(cases|dcases|rcases)\\}([\\s\\S]*?)\\end\\{\\1\\}/g,
+      (_match, name, body) => `\\begin{${name}}${body.replace(/\\\\/g, "\\\\cr")}\\end{${name}}`
+    );
+  }
   var MathModeEditor = class extends ModeEditor {
     constructor() {
       super("math");
@@ -33678,6 +33821,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
           inlineShortcuts: model.mathfield.options.inlineShortcuts
         });
       }
+      if (typeof s === "string") s = normalizeCasesRowSeparators(s);
       if (options.format === "latex") [, s] = trimModeShiftCommand(s);
       result = parseLatex(s, {
         context: model.mathfield.context,
@@ -36869,7 +37013,7 @@ data-command='["setEnvironment","pmatrix"]'>
           result2 = SRE.toSpeech(mathML);
         } catch (e) {
           console.error(
-            `MathLive 0.110.0: \`SRE.toSpeech()\` runtime error`,
+            `MathLive {{SDK_VERSION}}: \`SRE.toSpeech()\` runtime error`,
             e
           );
         }
@@ -37348,7 +37492,7 @@ data-command='["setEnvironment","pmatrix"]'>
       if (ComputeEngineCtor) gComputeEngine = new ComputeEngineCtor();
       else {
         console.error(
-          `MathLive 0.110.0: The CortexJS Compute Engine library is not available.
+          `MathLive {{SDK_VERSION}}: The CortexJS Compute Engine library is not available.
         
         Load the library, for example with:
         
@@ -39163,7 +39307,7 @@ data-command='["setEnvironment","pmatrix"]'>
       if (format === "typst") return atomToTypst(atom);
       if (format === "plain-text") return atomToAsciiMath(atom, { plain: true });
       if (format === "ascii-math") return atomToAsciiMath(atom);
-      console.error(`MathLive 0.110.0: Unexpected format "${format}`);
+      console.error(`MathLive {{SDK_VERSION}}: Unexpected format "${format}`);
       return "";
     }
     getValue(arg1, arg2, arg3) {
@@ -39603,7 +39747,7 @@ data-command='["setEnvironment","pmatrix"]'>
       );
       if (!this.element.children) {
         console.error(
-          `%cMathLive 0.110.0: Something went wrong and the mathfield could not be created.%c
+          `%cMathLive {{SDK_VERSION}}: Something went wrong and the mathfield could not be created.%c
 If you are using Vue, this may be because you are using the runtime-only build of Vue. Make sure to include \`runtimeCompiler: true\` in your Vue configuration. There may a warning from Vue in the log above.`,
           "color:red;font-family:system-ui;font-size:1.2rem;font-weight:bold",
           "color:inherit;font-family:system-ui;font-size:inherit;font-weight:inherit"
@@ -39885,7 +40029,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
         this._keybindings = keybindings;
         if (errors.length > 0) {
           console.error(
-            `MathLive 0.110.0: Invalid keybindings for current keyboard layout`,
+            `MathLive {{SDK_VERSION}}: Invalid keybindings for current keyboard layout`,
             errors
           );
         }
@@ -40445,7 +40589,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
       );
       console.assert(
         prompt !== void 0,
-        `MathLive 0.110.0:  no prompts with matching ID found`
+        `MathLive {{SDK_VERSION}}:  no prompts with matching ID found`
       );
       return prompt;
     }
@@ -40472,7 +40616,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
       if (value !== void 0) {
         const prompt = this.getPrompt(id);
         if (!prompt) {
-          console.error(`MathLive 0.110.0: unknown prompt ${id}`);
+          console.error(`MathLive {{SDK_VERSION}}: unknown prompt ${id}`);
           return;
         }
         const branchRange = this.model.getBranchRange(
@@ -40491,7 +40635,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     setPromptState(id, state, locked) {
       const prompt = this.getPrompt(id);
       if (!prompt) {
-        console.error(`MathLive 0.110.0: unknown prompt ${id}`);
+        console.error(`MathLive {{SDK_VERSION}}: unknown prompt ${id}`);
         return;
       }
       if (state === "undefined") prompt.correctness = void 0;
@@ -40505,7 +40649,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     getPromptState(id) {
       const prompt = this.getPrompt(id);
       if (!prompt) {
-        console.error(`MathLive 0.110.0: unknown prompt ${id}`);
+        console.error(`MathLive {{SDK_VERSION}}: unknown prompt ${id}`);
         return [void 0, true];
       }
       return [prompt.correctness, prompt.locked];
@@ -40513,7 +40657,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     getPromptRange(id) {
       const prompt = this.getPrompt(id);
       if (!prompt) {
-        console.error(`MathLive 0.110.0: unknown prompt ${id}`);
+        console.error(`MathLive {{SDK_VERSION}}: unknown prompt ${id}`);
         return [0, 0];
       }
       return this.model.getBranchRange(this.model.offsetOf(prompt), "body");
@@ -40942,7 +41086,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     } else if (mfe.speechEngine === "amazon") {
       if (!("AWS" in window)) {
         console.error(
-          `MathLive 0.110.0: AWS SDK not loaded. See https://www.npmjs.com/package/aws-sdk`
+          `MathLive {{SDK_VERSION}}: AWS SDK not loaded. See https://www.npmjs.com/package/aws-sdk`
         );
       } else {
         const polly = new globalThis.AWS.Polly({ apiVersion: "2016-06-10" });
@@ -40970,7 +41114,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
         polly.synthesizeSpeech(parameters, (err, data) => {
           if (err) {
             console.trace(
-              `MathLive 0.110.0: \`polly.synthesizeSpeech()\` error: ${err}`
+              `MathLive {{SDK_VERSION}}: \`polly.synthesizeSpeech()\` error: ${err}`
             );
           } else if (data == null ? void 0 : data.AudioStream) {
             const uInt8Array = new Uint8Array(data.AudioStream);
@@ -40983,7 +41127,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
       }
     } else if (mfe.speechEngine === "google") {
       console.error(
-        `MathLive 0.110.0: The Google speech engine is not supported yet. Please come again.`
+        `MathLive {{SDK_VERSION}}: The Google speech engine is not supported yet. Please come again.`
       );
     }
   }
@@ -41019,7 +41163,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     if (!isBrowser()) return;
     if (globalThis.MathfieldElement.speechEngine !== "amazon") {
       console.error(
-        `MathLive 0.110.0: Use Amazon TTS Engine for synchronized highlighting`
+        `MathLive {{SDK_VERSION}}: Use Amazon TTS Engine for synchronized highlighting`
       );
       if (typeof globalThis.MathfieldElement.speakHook === "function")
         globalThis.MathfieldElement.speakHook(text);
@@ -41027,7 +41171,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     }
     if (!globalThis.AWS) {
       console.error(
-        `MathLive 0.110.0: AWS SDK not loaded. See https://www.npmjs.com/package/aws-sdk`
+        `MathLive {{SDK_VERSION}}: AWS SDK not loaded. See https://www.npmjs.com/package/aws-sdk`
       );
       return;
     }
@@ -41045,7 +41189,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     polly.synthesizeSpeech(parameters, (err, data) => {
       if (err) {
         console.trace(
-          `MathLive 0.110.0: \`polly.synthesizeSpeech()\` error: ${err}`
+          `MathLive {{SDK_VERSION}}: \`polly.synthesizeSpeech()\` error: ${err}`
         );
         return;
       }
@@ -41066,7 +41210,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
       polly.synthesizeSpeech(parameters, (err2, data2) => {
         if (err2) {
           console.trace(
-            `MathLive 0.110.0: \`polly.synthesizeSpeech("${text}") error:${err2}`
+            `MathLive {{SDK_VERSION}}: \`polly.synthesizeSpeech("${text}") error:${err2}`
           );
           return;
         }
@@ -41132,7 +41276,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
   // src/public/mathfield-element.ts
   if (!isBrowser()) {
     console.error(
-      `MathLive 0.110.0: this version of the MathLive library is for use in the browser. A subset of the API is available on the server side in the "mathlive-ssr" library. If using server side rendering (with React for example) you may want to do a dynamic import of the MathLive library inside a \`useEffect()\` call.`
+      `MathLive {{SDK_VERSION}}: this version of the MathLive library is for use in the browser. A subset of the API is available on the server side in the "mathlive-ssr" library. If using server side rendering (with React for example) you may want to do a dynamic import of the MathLive library inside a \`useEffect()\` call.`
     );
   }
   var gDeferredState = /* @__PURE__ */ new WeakMap();
@@ -41236,7 +41380,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
         }
         if (warnings.length > 0) {
           console.group(
-            `%cMathLive 0.110.0: %cInvalid Options`,
+            `%cMathLive {{SDK_VERSION}}: %cInvalid Options`,
             "color:#12b; font-size: 1.1rem",
             "color:#db1111; font-size: 1.1rem"
           );
@@ -41651,7 +41795,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
       this._decimalSeparator = value;
       if (this._computeEngine) {
         console.warn(
-          `MathLive 0.110.0: setting MathfieldElement.decimalSeparator after the Compute Engine has been created has no effect on the engine. Reassign MathfieldElement.computeEngine with a freshly configured instance to apply the new separator.`
+          `MathLive {{SDK_VERSION}}: setting MathfieldElement.decimalSeparator after the Compute Engine has been created has no effect on the engine. Reassign MathfieldElement.computeEngine with a freshly configured instance to apply the new separator.`
         );
       }
     }
@@ -41920,7 +42064,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     }
     getOptions(keys) {
       console.warn(
-        `%cMathLive 0.110.0: %cDeprecated Usage%c
+        `%cMathLive {{SDK_VERSION}}: %cDeprecated Usage%c
       \`mf.getOptions()\` is deprecated. Read the property directly on the mathfield instead.
       See mathfield/changelog/ for details.`,
         "color:#12b; font-size: 1.1rem",
@@ -41964,7 +42108,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
      */
     getOption(key) {
       console.warn(
-        `%cMathLive 0.110.0: %cDeprecated Usage%c
+        `%cMathLive {{SDK_VERSION}}: %cDeprecated Usage%c
       \`mf.getOption()\` is deprecated. Read the property directly on the mathfield instead.
       See mathfield/changelog/ for details.`,
         "color:#12b; font-size: 1.1rem",
@@ -42002,7 +42146,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
      */
     setOptions(options) {
       console.group(
-        `%cMathLive 0.110.0: %cDeprecated Usage`,
+        `%cMathLive {{SDK_VERSION}}: %cDeprecated Usage`,
         "color:#12b; font-size: 1.1rem",
         "color:#db1111; font-size: 1.1rem"
       );
@@ -43072,7 +43216,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
       return (_b3 = (_a3 = this._mathfield) == null ? void 0 : _a3.model.lastOffset) != null ? _b3 : -1;
     }
   };
-  _MathfieldElement.version = "0.110.0";
+  _MathfieldElement.version = "{{SDK_VERSION}}";
   _MathfieldElement.openUrl = (href) => {
     if (!href) return;
     const url = new URL(href);
@@ -43186,7 +43330,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
   if (isBrowser() && !((_a2 = window.customElements) == null ? void 0 : _a2.get("math-field"))) {
     (_c = window[_b2 = Symbol.for("io.cortexjs.mathlive")]) != null ? _c : window[_b2] = {};
     const global = window[Symbol.for("io.cortexjs.mathlive")];
-    global.version = "0.110.0";
+    global.version = "{{SDK_VERSION}}";
     globalThis.MathfieldElement = MathfieldElement;
     (_d = window.customElements) == null ? void 0 : _d.define("math-field", MathfieldElement);
   }
@@ -43611,7 +43755,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
       span.innerHTML = globalThis.MathfieldElement.createHTML(html);
     } catch (error) {
       console.error(
-        `MathLive 0.110.0:  Could not convert "${latex}"' to MathML with ${error}`
+        `MathLive {{SDK_VERSION}}:  Could not convert "${latex}"' to MathML with ${error}`
       );
       span.textContent = latex;
     }
@@ -43918,7 +44062,7 @@ If you are using Vue, this may be because you are using the runtime-only build o
     _renderMathInElement(el, optionsPrivate);
   }
   var version = {
-    mathlive: "0.110.0"
+    mathlive: "{{SDK_VERSION}}"
   };
   return __toCommonJS(mathlive_exports);
 })();
