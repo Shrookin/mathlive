@@ -15068,7 +15068,7 @@ M500 241 v40 H399408 v-40z M500 435 v40 H400000 v-40z`
         }
       }
       if (!result) return null;
-      if (result instanceof Atom && result.verbatimLatex === void 0 && !/^\\(llap|rlap|class|cssId|htmlData)$/.test(command)) {
+      if (result instanceof Atom && result.verbatimLatex === void 0 && (info.definitionType !== "function" || !info.parse) && !/^\\(llap|rlap|class|cssId|htmlData)$/.test(command)) {
         const verbatim = joinLatex([
           command,
           tokensToString(this.tokens.slice(initialIndex, this.index))
@@ -15610,6 +15610,12 @@ M500 241 v40 H399408 v-40z M500 435 v40 H400000 v-40z`
     {
       key: "[IntlBackslash]",
       ifMode: "math",
+      command: ["switchMode", "latex", "", "\\"]
+    },
+    // On UK QWERTY keyboards
+    {
+      key: "[IntlBackslash]",
+      ifMode: "text",
       command: ["switchMode", "latex", "", "\\"]
     },
     // On UK QWERTY keyboards
@@ -17151,6 +17157,10 @@ body > .ML__keyboard.is-visible.animate > .MLK__backdrop {
 }
 .MLK__rows > .MLK__row .small {
   font-size: var(--_keycap-small-font-size);
+}
+.MLK__rows > .MLK__row .compact .ML__latex {
+  transform: scale(0.72);
+  transform-origin: center;
 }
 .MLK__rows > .MLK__row .bottom {
   justify-content: flex-end;
@@ -22291,6 +22301,34 @@ Note there are a different set of tooltip rules for the keyboard toggle
     makeEnvironment
   );
   defineTabularEnvironment(["cases", "dcases", "rcases"], "", makeEnvironment);
+  var MAX_PIECEWISE_ROWS = 100;
+  defineFunction("piecewise", "{count:string}", {
+    parse: (parser) => {
+      var _a3, _b3;
+      const count = (_b3 = (_a3 = parser.scanArgument("string")) == null ? void 0 : _a3.trim()) != null ? _b3 : "";
+      if (count.length === 0) {
+        parser.onError({ code: "missing-argument", arg: "\\piecewise" });
+        return ["1"];
+      }
+      if (!/^[1-9]\d*$/.test(count) || Number(count) > MAX_PIECEWISE_ROWS) {
+        parser.onError({ code: "unexpected-token", arg: count });
+        return ["1"];
+      }
+      return [count];
+    },
+    createAtom: (options) => {
+      var _a3;
+      const count = Number.parseInt((_a3 = options.args) == null ? void 0 : _a3[0], 10);
+      const rows = Number.isInteger(count) && count > 0 ? Math.min(count, MAX_PIECEWISE_ROWS) : 1;
+      return makeEnvironment(
+        "cases",
+        Array.from({ length: rows }, () => [
+          [new PlaceholderAtom()],
+          [new PlaceholderAtom()]
+        ])
+      );
+    }
+  });
   function makeEnvironment(name, content = [[[]]], rowGaps = [], args = [], maxMatrixCols) {
     switch (name) {
       case "math":
@@ -22647,6 +22685,26 @@ Note there are a different set of tooltip rules for the keyboard toggle
       serialize: (atom, options) => atom.command + (!atom.hasEmptyBranch("below") ? `[${atom.belowToLatex(options)}]` : "") + `{${atom.aboveToLatex(options)}}${atom.supsubToLatex(options)}`
     }
   );
+
+  // src/atoms/bounded-argument.ts
+  var BoundedArgumentAtom = class extends PromptAtom {
+    constructor(body, options) {
+      super(void 0, void 0, false, body, options);
+      this.type = "mord";
+      this.captureSelection = false;
+    }
+    render(context) {
+      var _a3, _b3;
+      const hasContent = (_b3 = (_a3 = this.body) == null ? void 0 : _a3.some((atom) => atom.type !== "first")) != null ? _b3 : false;
+      const box = hasContent ? Atom.createBox(context, this.body) : new PlaceholderAtom({ mode: this.mode, style: this.style }).render(context);
+      return box ? this.bind(context, box) : null;
+    }
+    _serialize(options) {
+      var _a3, _b3;
+      const hasContent = (_b3 = (_a3 = this.body) == null ? void 0 : _a3.some((atom) => atom.type !== "first")) != null ? _b3 : false;
+      return hasContent ? this.bodyToLatex(options) : "\\placeholder{}";
+    }
+  };
 
   // src/latex-commands/functions.ts
   defineFunction(
@@ -23053,6 +23111,46 @@ Note there are a different set of tooltip rules for the keyboard toggle
       var _a3;
       return `\\the${(_a3 = serializeLatexValue(atom.args[0])) != null ? _a3 : "\\relax"}`;
     }
+  });
+  function parseBoundedOperator(parser) {
+    if (parser.peek() !== "<{>") return [];
+    const lower = parser.scanArgument("expression");
+    if (!lower) return [];
+    if (parser.peek() !== "<{>") return [lower];
+    const upper = parser.scanArgument("expression");
+    return upper ? [lower, upper] : [lower];
+  }
+  function createBoundedOperator(symbol, options) {
+    var _a3;
+    const atom = new ExtensibleSymbolAtom(symbol, __spreadProps(__spreadValues({}, options), {
+      limits: "auto",
+      variant: "main"
+    }));
+    atom.verbatimLatex = null;
+    const [lower, upper] = (_a3 = options.args) != null ? _a3 : [];
+    atom.boundedArgumentSlots = {
+      subscript: Boolean(lower),
+      superscript: Boolean(upper)
+    };
+    if (lower)
+      atom.setChildren(
+        [new BoundedArgumentAtom(argAtoms(lower), options)],
+        "subscript"
+      );
+    if (upper)
+      atom.setChildren(
+        [new BoundedArgumentAtom(argAtoms(upper), options)],
+        "superscript"
+      );
+    return atom;
+  }
+  defineFunction(["int", "sum", "prod"], "{lower:expression}{upper:expression}", {
+    ifMode: "math",
+    parse: parseBoundedOperator,
+    createAtom: (options) => createBoundedOperator(
+      { int: "\u222B", sum: "\u2211", prod: "\u220F" }[options.command.slice(1)],
+      options
+    )
   });
 
   // src/latex-commands/styling.ts
@@ -30405,6 +30503,20 @@ Note there are a different set of tooltip rules for the keyboard toggle
   var UndoManager = _UndoManager;
 
   // src/editor-model/delete.ts
+  function isEmptyBoundedOperator(atom) {
+    if (!atom || atom.type !== "extensible-symbol") return false;
+    const boundedSlots = atom.boundedArgumentSlots;
+    const isEmptySlot = (branch) => {
+      var _a3;
+      const children = atom.branch(branch);
+      if (!children || children.length !== 2) return false;
+      const argument = children[1];
+      return argument instanceof PlaceholderAtom || argument instanceof BoundedArgumentAtom && ((_a3 = argument.body) == null ? void 0 : _a3.length) === 2 && argument.body[1] instanceof PlaceholderAtom;
+    };
+    return Boolean(
+      (boundedSlots == null ? void 0 : boundedSlots.subscript) && boundedSlots.superscript && isEmptySlot("subscript") && isEmptySlot("superscript")
+    );
+  }
   function onDelete(model, direction, atom, branch) {
     var _a3, _b3, _c2, _d2, _e, _f;
     const parent = atom.parent;
@@ -30513,6 +30625,12 @@ Note there are a different set of tooltip rules for the keyboard toggle
         return true;
       }
       if (branch && atom.hasEmptyBranch(branch)) {
+        const boundedSlots = atom.boundedArgumentSlots;
+        if (boundedSlots && (branch === "subscript" && boundedSlots.subscript || branch === "superscript" && boundedSlots.superscript)) {
+          atom.setChildren([new PlaceholderAtom()], branch);
+          model.position = model.offsetOf(atom.firstChild);
+          return true;
+        }
         atom.removeBranch(branch);
         if (atom.type === "subsup" && !atom.subscript && !atom.superscript) {
           const pos = direction === "forward" ? model.offsetOf(atom) : Math.max(0, model.offsetOf(atom) - 1);
@@ -30584,6 +30702,17 @@ Note there are a different set of tooltip rules for the keyboard toggle
         let target = model.at(model.position);
         if (target && onDelete(model, "backward", target)) return;
         if (target == null ? void 0 : target.isFirstSibling) {
+          const next = target.rightSibling;
+          if (isEmptyBoundedOperator(next)) {
+            const parent = next.parent;
+            if (parent) {
+              const position = model.offsetOf(next.leftSibling);
+              parent.removeChild(next);
+              model.position = position;
+              model.announce("delete", void 0, [next]);
+              return;
+            }
+          }
           if (onDelete(model, "backward", target.parent, target.parentBranch))
             return;
           target = null;
@@ -30593,8 +30722,16 @@ Note there are a different set of tooltip rules for the keyboard toggle
           return;
         }
         const targetParent = target.parent;
+        const deletedBranch = target.parentBranch;
         model.position = model.offsetOf(target.leftSibling);
         targetParent.removeChild(target);
+        if (targetParent instanceof BoundedArgumentAtom && targetParent.hasEmptyBranch("body")) {
+          targetParent.setChildren([new PlaceholderAtom()], "body");
+        }
+        const boundedSlots = targetParent.boundedArgumentSlots;
+        if (boundedSlots && (deletedBranch === "subscript" || deletedBranch === "superscript") && (deletedBranch === "subscript" && boundedSlots.subscript || deletedBranch === "superscript" && boundedSlots.superscript) && targetParent.hasEmptyBranch(deletedBranch)) {
+          targetParent.setChildren([new PlaceholderAtom()], deletedBranch);
+        }
         model.announce("delete", void 0, [target]);
         if (targetParent.type === "latexgroup" && targetParent.hasEmptyBranch("body")) {
           const pos = model.offsetOf(targetParent.leftSibling);
@@ -33461,6 +33598,12 @@ Note there are a different set of tooltip rules for the keyboard toggle
   }
 
   // src/editor-mathfield/mode-editor-math.ts
+  function normalizeCasesRowSeparators(latex) {
+    return latex.replace(
+      /\\begin\\{(cases|dcases|rcases)\\}([\\s\\S]*?)\\end\\{\\1\\}/g,
+      (_match, name, body) => `\\begin{${name}}${body.replace(/\\\\/g, "\\\\cr")}\\end{${name}}`
+    );
+  }
   var MathModeEditor = class extends ModeEditor {
     constructor() {
       super("math");
@@ -33740,6 +33883,7 @@ Note there are a different set of tooltip rules for the keyboard toggle
           inlineShortcuts: model.mathfield.options.inlineShortcuts
         });
       }
+      if (typeof s === "string") s = normalizeCasesRowSeparators(s);
       if (options.format === "latex") [, s] = trimModeShiftCommand(s);
       result = parseLatex(s, {
         context: model.mathfield.context,

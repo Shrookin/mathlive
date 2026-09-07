@@ -46,24 +46,26 @@ const BUILD_OPTIONS = {
   external: ['@cortex-js/compute-engine'],
 };
 
-// Build and serve the library
-build({
+// Build and serve the library. Await every artifact so publish commits cannot
+// capture only whichever asynchronous build happens to finish first.
+await Promise.all([
+  build({
   ...BUILD_OPTIONS,
   entryPoints: ['./src/mathlive.ts'],
   outfile: './dist/mathlive.mjs',
   format: 'esm',
-});
+  }),
 
-build({
+  build({
   ...BUILD_OPTIONS,
   entryPoints: ['./src/mathlive.ts'],
   outfile: './dist/mathlive.js',
   format: 'iife',
   ...UMD_OPTIONS,
   globalName: 'MathLive',
-});
+  }),
 
-build({
+  build({
   ...BUILD_OPTIONS,
   drop: ['debugger'],
   pure: ['console.assert', 'console.log'],
@@ -71,9 +73,9 @@ build({
   outfile: './dist/mathlive.min.mjs',
   format: 'esm',
   minify: true,
-});
+  }),
 
-build({
+  build({
   ...BUILD_OPTIONS,
   entryPoints: ['./src/mathlive.ts'],
   drop: ['debugger'],
@@ -83,9 +85,9 @@ build({
   ...UMD_OPTIONS,
   globalName: 'MathLive',
   minify: true,
-});
+  }),
 
-build({
+  build({
   ...BUILD_OPTIONS,
   entryPoints: ['./src/public/mathlive-ssr.ts'],
   drop: ['debugger'],
@@ -93,12 +95,13 @@ build({
   outfile: './dist/mathlive-ssr.min.mjs',
   format: 'esm',
   minify: true,
-});
+  }),
 
-build({
+  build({
   ...BUILD_OPTIONS,
   entryPoints: ['./src/vue-mathlive.js'],
   outfile: './dist/vue-mathlive.mjs',
   format: 'esm',
   minify: true,
-});
+  }),
+]);
