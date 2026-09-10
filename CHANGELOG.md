@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Fixed `free-text` fields to follow the host's logical text direction, including right-aligned multiline rows for RTL prose while embedded math remains LTR.
+
 ### Breaking Changes
 
 - The `@cortex-js/compute-engine` package is no longer a dependency of
