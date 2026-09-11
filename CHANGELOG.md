@@ -25,6 +25,7 @@
   entered directly.
 
 - Added experimental `free-math` multiline mathfield mode alongside `free-text`, preserving rows, empty lines, tabs, clipboard plain text, and public output formats when values are round-tripped.
+- Fixed `free-text` fields to resolve direction independently for every line, keep mixed Hebrew/Latin prose in Unicode bidi order, group formulas with adjacent Latin text in logical LTR islands, and render the visual caret beside the logical insertion point instead of pinning it to the RTL edge.
 
 ## 0.110.0 _2026-06-08_
 

@@ -318,6 +318,191 @@ test('free-text mode preserves lines and inline math', async ({ page }) => {
   expect(values.ariaMultiline).toBe('true');
 });
 
+test('free-text resolves each line direction and isolates math runs', async ({
+  page,
+}) => {
+  await page.goto('/dist/playwright-test-page/');
+  const field = page.locator('#mf-free-text');
+
+  const layout = await field.evaluate(async (e: MathfieldElement) => {
+    e.dir = 'rtl';
+    e.style.display = 'block';
+    e.style.width = '600px';
+    e.setValue('\u05d0\u05d1 asdf \u05d2\u05d3\nEnglish line\n$x+1$', {
+      mode: 'free-text',
+      format: 'plain-text',
+    });
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+
+    const content = e.shadowRoot?.querySelector('[part="content"]');
+    const root = e.shadowRoot?.querySelector('.ML__free-text-root');
+    const lines = [
+      ...(root?.querySelectorAll<HTMLElement>('.ML__free-text-line') ?? []),
+    ];
+    const math = root?.querySelector<HTMLElement>('.ML__free-text-math-island');
+    if (!content || !root || lines.length !== 3 || !math)
+      throw new Error('Expected rendered free-text direction markers');
+
+    const contentRect = content.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    return {
+      value: e.getValue('plain-text'),
+      contentDirection: getComputedStyle(content).direction,
+      contentJustify: getComputedStyle(content).justifyContent,
+      lineAttributes: lines.map((line) => line.getAttribute('dir')),
+      lineDirections: lines.map((line) => getComputedStyle(line).direction),
+      lineTextAlignments: lines.map((line) => getComputedStyle(line).textAlign),
+      mathDirection: getComputedStyle(math).direction,
+      mathBidi: getComputedStyle(math).unicodeBidi,
+      leftGap: rootRect.left - contentRect.left,
+      rightGap: contentRect.right - rootRect.right,
+    };
+  });
+
+  expect(layout.value).toBe(
+    '\u05d0\u05d1 asdf \u05d2\u05d3\nEnglish line\nx+1'
+  );
+  expect(layout.contentDirection).toBe('rtl');
+  expect(layout.contentJustify).toBe('flex-start');
+  expect(layout.lineAttributes).toEqual(['auto', 'auto', 'ltr']);
+  expect(layout.lineDirections).toEqual(['rtl', 'ltr', 'ltr']);
+  expect(layout.lineTextAlignments).toEqual(['start', 'start', 'start']);
+  expect(layout.mathDirection).toBe('ltr');
+  expect(layout.mathBidi).toBe('isolate');
+  expect(layout.rightGap).toBeLessThan(layout.leftGap);
+});
+
+test('free-text keeps the visual caret with mixed RTL and LTR input', async ({
+  page,
+}) => {
+  await page.goto('/dist/playwright-test-page/');
+  const field = page.locator('#mf-free-text');
+  await field.evaluate((e: MathfieldElement) => {
+    e.dir = 'rtl';
+    e.setValue('', { mode: 'free-text' });
+    e.focus();
+  });
+
+  await field.pressSequentially('\u05d0\u05d1 asdf \u05d2\u05d3');
+  await expect
+    .poll(() =>
+      field.evaluate((e: MathfieldElement) => e.getValue('plain-text'))
+    )
+    .toBe('\u05d0\u05d1 asdf \u05d2\u05d3');
+
+  const caret = await field.evaluate((e: MathfieldElement) => {
+    const line = e.shadowRoot?.querySelector<HTMLElement>(
+      '.ML__free-text-line'
+    );
+    const marker = e.shadowRoot?.querySelector<HTMLElement>('.ML__text-caret');
+    const textNodes = [
+      ...(line?.querySelectorAll<HTMLElement>('.ML__text') ?? []),
+    ];
+    if (!line || !marker || textNodes.length === 0)
+      throw new Error('Expected a mixed-direction line and visible text caret');
+    const markerRect = marker.getBoundingClientRect();
+    const textLeft = Math.min(
+      ...textNodes.map((node) => node.getBoundingClientRect().left)
+    );
+    return {
+      lineDirection: getComputedStyle(line).direction,
+      lineAttribute: line.getAttribute('dir'),
+      caretLeft: markerRect.left,
+      textLeft,
+    };
+  });
+
+  expect(caret.lineAttribute).toBe('auto');
+  expect(caret.lineDirection).toBe('rtl');
+  expect(caret.caretLeft).toBeLessThanOrEqual(caret.textLeft + 2);
+
+  await field.press('Enter');
+  await field.pressSequentially('\\alpha');
+  await expect
+    .poll(() => field.evaluate((e: MathfieldElement) => e.mode))
+    .toBe('latex');
+  const latexLine = await field.evaluate((e: MathfieldElement) => {
+    const lines = [
+      ...(e.shadowRoot?.querySelectorAll<HTMLElement>('.ML__free-text-line') ??
+        []),
+    ];
+    const line = lines.at(-1);
+    const math = line?.querySelector<HTMLElement>('.ML__free-text-math-island');
+    return {
+      attribute: line?.getAttribute('dir'),
+      direction: line ? getComputedStyle(line).direction : null,
+      mathDirection: math ? getComputedStyle(math).direction : null,
+    };
+  });
+  expect(latexLine).toEqual({
+    attribute: 'ltr',
+    direction: 'ltr',
+    mathDirection: 'ltr',
+  });
+});
+
+test('free-text preserves formula and Latin order inside RTL prose', async ({
+  page,
+}) => {
+  await page.goto('/dist/playwright-test-page/');
+  const field = page.locator('#mf-free-text');
+  await field.evaluate((e: MathfieldElement) => {
+    e.dir = 'rtl';
+    e.setValue('', { mode: 'free-text' });
+    e.focus();
+  });
+
+  await field.pressSequentially('\u05d0\u05d1 ');
+  await field.pressSequentially(String.raw`\int`);
+  await field.press('Space');
+  await field.pressSequentially('asdf ');
+  await field.pressSequentially('\u05d2\u05d3');
+
+  const layout = await field.evaluate((e: MathfieldElement) => {
+    const line = e.shadowRoot?.querySelector<HTMLElement>(
+      '.ML__free-text-line'
+    );
+    const island = line?.querySelector<HTMLElement>(
+      '.ML__free-text-ltr-island'
+    );
+    const math = island?.querySelector<HTMLElement>(
+      '.ML__free-text-math-island'
+    );
+    if (!line || !island || !math)
+      throw new Error('Expected a formula and Latin text in one LTR island');
+    const latinRects: DOMRect[] = [];
+    const walker = document.createTreeWalker(island, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!/[A-Za-z]/u.test(node.textContent ?? '')) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      latinRects.push(range.getBoundingClientRect());
+    }
+    if (latinRects.length === 0)
+      throw new Error('Expected Latin text inside the LTR island');
+    return {
+      plainText: e.getValue('plain-text'),
+      latex: e.getValue('latex'),
+      mode: e.mode,
+      islandDirection: getComputedStyle(island).direction,
+      mathRight: math.getBoundingClientRect().right,
+      latinLeft: Math.min(...latinRects.map((rect) => rect.left)),
+      islandText: island.textContent,
+    };
+  });
+
+  expect(layout.plainText).toContain('\u05d0\u05d1');
+  expect(layout.plainText).toContain('asdf');
+  expect(layout.plainText).toContain('\u05d2\u05d3');
+  expect(layout.latex).toContain(String.raw`\int`);
+  expect(layout.mode).toBe('free-text');
+  expect(layout.islandDirection).toBe('ltr');
+  expect(layout.islandText).toContain('asdf');
+  expect(layout.mathRight).toBeLessThanOrEqual(layout.latinLeft + 2);
+});
+
 test('free-text preserves empty lines, tabs, bullets, styles, and outputs', async ({
   page,
 }) => {
