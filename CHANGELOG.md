@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-- Fixed `free-text` fields to follow the host's logical text direction, including right-aligned multiline rows for RTL prose while embedded math remains LTR.
+- Fixed `free-text` fields to resolve direction independently for every line, keep mixed Hebrew/Latin prose in Unicode bidi order, isolate math and active LaTeX runs as LTR, and render the visual caret beside the logical insertion point instead of pinning it to the RTL edge.
 
 ### Breaking Changes
 
