@@ -443,6 +443,66 @@ test('free-text keeps the visual caret with mixed RTL and LTR input', async ({
   });
 });
 
+test('free-text preserves formula and Latin order inside RTL prose', async ({
+  page,
+}) => {
+  await page.goto('/dist/playwright-test-page/');
+  const field = page.locator('#mf-free-text');
+  await field.evaluate((e: MathfieldElement) => {
+    e.dir = 'rtl';
+    e.setValue('', { mode: 'free-text' });
+    e.focus();
+  });
+
+  await field.pressSequentially('\u05d0\u05d1 ');
+  await field.pressSequentially(String.raw`\int`);
+  await field.press('Space');
+  await field.pressSequentially('asdf ');
+  await field.pressSequentially('\u05d2\u05d3');
+
+  const layout = await field.evaluate((e: MathfieldElement) => {
+    const line = e.shadowRoot?.querySelector<HTMLElement>(
+      '.ML__free-text-line'
+    );
+    const island = line?.querySelector<HTMLElement>(
+      '.ML__free-text-ltr-island'
+    );
+    const math = island?.querySelector<HTMLElement>(
+      '.ML__free-text-math-island'
+    );
+    if (!line || !island || !math)
+      throw new Error('Expected a formula and Latin text in one LTR island');
+    const latinRects: DOMRect[] = [];
+    const walker = document.createTreeWalker(island, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!/[A-Za-z]/u.test(node.textContent ?? '')) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      latinRects.push(range.getBoundingClientRect());
+    }
+    if (latinRects.length === 0)
+      throw new Error('Expected Latin text inside the LTR island');
+    return {
+      plainText: e.getValue('plain-text'),
+      latex: e.getValue('latex'),
+      mode: e.mode,
+      islandDirection: getComputedStyle(island).direction,
+      mathRight: math.getBoundingClientRect().right,
+      latinLeft: Math.min(...latinRects.map((rect) => rect.left)),
+      islandText: island.textContent,
+    };
+  });
+
+  expect(layout.plainText).toContain('\u05d0\u05d1');
+  expect(layout.plainText).toContain('asdf');
+  expect(layout.plainText).toContain('\u05d2\u05d3');
+  expect(layout.latex).toContain(String.raw`\int`);
+  expect(layout.mode).toBe('free-text');
+  expect(layout.islandDirection).toBe('ltr');
+  expect(layout.islandText).toContain('asdf');
+  expect(layout.mathRight).toBeLessThanOrEqual(layout.latinLeft + 2);
+});
+
 test('free-text preserves empty lines, tabs, bullets, styles, and outputs', async ({
   page,
 }) => {
