@@ -16,8 +16,11 @@ import { moveAfterParent } from '../editor-model/commands-move';
 import { range } from '../editor-model/selection-utils';
 
 import { complete, removeSuggestion, updateAutocomplete } from './autocomplete';
-import { getLatexGroupBody } from './mode-editor-latex';
-import { getDefinition } from '../latex-commands/definitions-utils';
+import { getLatexGroup, getLatexGroupBody } from './mode-editor-latex';
+import {
+  COMMAND_MODE_CHARACTERS,
+  getDefinition,
+} from '../latex-commands/definitions-utils';
 import { requestUpdate } from './render';
 import type { _Mathfield } from './mathfield-private';
 import { removeIsolatedSpace, smartMode } from './smartmode';
@@ -854,6 +857,36 @@ export function onInput(
   // 4/ Insert the specified text at the current insertion point.
   // If the selection is not collapsed, the content will be deleted first
   //
+
+  if (model.mode === 'latex') {
+    // A non-LaTeX character cannot be inserted into the raw command group.
+    // When a prose-origin command is already complete, commit it first and let
+    // the normal prose branch below insert that character without losing it.
+    const latexGroup = getLatexGroup(model);
+    const latex = getLatexGroupBody(model)
+      .filter((atom) => !atom.isSuggestion)
+      .map((atom) => atom.value)
+      .join('');
+    const definition = /^\\[A-Za-z*]+$/u.test(latex)
+      ? getDefinition(latex, 'math')
+      : undefined;
+    const isCompleteCommand =
+      definition?.definitionType === 'symbol' ||
+      (definition?.definitionType === 'function' &&
+        (definition.params.every((parameter) => parameter.isOptional) ||
+          /^\\(?:int|sum|prod)$/u.test(latex)));
+    const containsProseCharacter = [...graphemes].some(
+      (grapheme) => !COMMAND_MODE_CHARACTERS.test(grapheme)
+    );
+    if (
+      (latexGroup?.originMode === 'text' ||
+        latexGroup?.originMode === 'free-text') &&
+      unclosedBraceDepth(latex) === 0 &&
+      isCompleteCommand &&
+      containsProseCharacter
+    )
+      complete(mathfield, 'accept-all');
+  }
 
   if (model.mode === 'latex') {
     model.deferNotifications(

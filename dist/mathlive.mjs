@@ -12663,14 +12663,23 @@ function isAlignEnvironment(environment) {
 
 // src/atoms/array.ts
 function freeTextRowDirection(atoms) {
+  let hasMath = false;
   for (const atom of atoms) {
-    if (atom.type === "first") continue;
-    if (!isTextMode(atom.mode)) return "ltr";
-    if (atom.value && !/^\s+$/u.test(atom.value)) return "auto";
+    const bidiClass = freeTextBidiClass(atom);
+    if (bidiClass === "rtl" || bidiClass === "ltr") return "auto";
+    if (bidiClass === "math") hasMath = true;
   }
-  return "auto";
+  return hasMath ? "ltr" : "auto";
 }
-function makeFreeTextCellBox(context, atoms) {
+function freeTextBidiClass(atom) {
+  if (!isTextMode(atom.mode)) return "math";
+  if (!atom.value || atom.type === "first") return "neutral";
+  if (/[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufeff]/u.test(atom.value))
+    return "rtl";
+  if (/[\p{Letter}\p{Number}]/u.test(atom.value)) return "ltr";
+  return "neutral";
+}
+function renderFreeTextAtoms(context, atoms) {
   const runs = [];
   for (const atom of atoms) {
     const atomIsText = atom.type === "first" || isTextMode(atom.mode);
@@ -12679,7 +12688,7 @@ function makeFreeTextCellBox(context, atoms) {
       runs.push({ atoms: [atom], isText: atomIsText });
     else current.atoms.push(atom);
   }
-  const boxes = runs.flatMap((run) => {
+  return runs.flatMap((run) => {
     const box = Atom.createBox(context, run.atoms, { type: "ignore" });
     if (!box) return [];
     if (run.isText) return [box];
@@ -12690,6 +12699,49 @@ function makeFreeTextCellBox(context, atoms) {
       })
     ];
   });
+}
+function makeFreeTextCellBox(context, atoms) {
+  const boxes = [];
+  let index = 0;
+  while (index < atoms.length) {
+    if (freeTextBidiClass(atoms[index]) === "rtl") {
+      let end2 = index + 1;
+      while (end2 < atoms.length && freeTextBidiClass(atoms[end2]) === "rtl")
+        end2++;
+      boxes.push(...renderFreeTextAtoms(context, atoms.slice(index, end2)));
+      index = end2;
+      continue;
+    }
+    let end = index + 1;
+    while (end < atoms.length && freeTextBidiClass(atoms[end]) !== "rtl") end++;
+    const region = atoms.slice(index, end);
+    const hasMath = region.some((atom) => freeTextBidiClass(atom) === "math");
+    if (!hasMath) boxes.push(...renderFreeTextAtoms(context, region));
+    else {
+      let islandStart = 0;
+      let islandEnd = region.length;
+      while (islandStart < islandEnd && freeTextBidiClass(region[islandStart]) === "neutral")
+        islandStart++;
+      while (islandEnd > islandStart && freeTextBidiClass(region[islandEnd - 1]) === "neutral")
+        islandEnd--;
+      boxes.push(
+        ...renderFreeTextAtoms(context, region.slice(0, islandStart))
+      );
+      const island = renderFreeTextAtoms(
+        context,
+        region.slice(islandStart, islandEnd)
+      );
+      if (island.length > 0)
+        boxes.push(
+          new Box(island, {
+            classes: "ML__free-text-ltr-island",
+            attributes: { dir: "ltr" }
+          })
+        );
+      boxes.push(...renderFreeTextAtoms(context, region.slice(islandEnd)));
+    }
+    index = end;
+  }
   if (boxes.length === 0) return null;
   return new Box(boxes, { type: "ignore" });
 }
@@ -32450,6 +32502,17 @@ function onInput(mathfield, text, options) {
         handled = false;
     }
     if (handled) return;
+  }
+  if (model.mode === "latex") {
+    const latexGroup = getLatexGroup(model);
+    const latex = getLatexGroupBody(model).filter((atom) => !atom.isSuggestion).map((atom) => atom.value).join("");
+    const definition = /^\\[A-Za-z*]+$/u.test(latex) ? getDefinition(latex, "math") : void 0;
+    const isCompleteCommand = (definition == null ? void 0 : definition.definitionType) === "symbol" || (definition == null ? void 0 : definition.definitionType) === "function" && (definition.params.every((parameter) => parameter.isOptional) || /^\\(?:int|sum|prod)$/u.test(latex));
+    const containsProseCharacter = [...graphemes].some(
+      (grapheme) => !COMMAND_MODE_CHARACTERS.test(grapheme)
+    );
+    if (((latexGroup == null ? void 0 : latexGroup.originMode) === "text" || (latexGroup == null ? void 0 : latexGroup.originMode) === "free-text") && unclosedBraceDepth(latex) === 0 && isCompleteCommand && containsProseCharacter)
+      complete(mathfield, "accept-all");
   }
   if (model.mode === "latex") {
     model.deferNotifications(
