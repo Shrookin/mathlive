@@ -503,6 +503,46 @@ test('free-text preserves formula and Latin order inside RTL prose', async ({
   expect(layout.mathRight).toBeLessThanOrEqual(layout.latinLeft + 2);
 });
 
+test('free-text commits complete LaTeX before direct Hebrew input', async ({
+  page,
+}) => {
+  await page.goto('/dist/playwright-test-page/');
+  const field = page.locator('#mf-free-text');
+
+  for (const command of ['\\alpha', '\\sum', '\\int', '\\prod']) {
+    await field.evaluate((e: MathfieldElement) => {
+      e.setValue('', { mode: 'free-text' });
+      e.focus();
+    });
+    await field.pressSequentially(command);
+    expect(await field.evaluate((e: MathfieldElement) => e.mode)).toBe(
+      'latex'
+    );
+    await field.pressSequentially('\u05d0');
+    const values = await field.evaluate((e: MathfieldElement) => ({
+      mode: e.mode,
+      latex: e.getValue('latex'),
+      plainText: e.getValue('plain-text'),
+      latexGroups:
+        e.shadowRoot?.querySelectorAll('.ML__latex-group').length ?? 0,
+      errors: e.shadowRoot?.querySelectorAll('.ML__error').length ?? 0,
+    }));
+    expect(values.mode).toBe('free-text');
+    expect(values.latex).toContain(command);
+    expect(values.plainText).toContain('\u05d0');
+    expect(values.latexGroups).toBe(0);
+    expect(values.errors).toBe(0);
+  }
+
+  await field.evaluate((e: MathfieldElement) => {
+    e.setValue('', { mode: 'free-text' });
+    e.focus();
+  });
+  await field.pressSequentially(String.raw`\frac`);
+  await field.pressSequentially('\u05d0');
+  expect(await field.evaluate((e: MathfieldElement) => e.mode)).toBe('latex');
+});
+
 test('free-text preserves empty lines, tabs, bullets, styles, and outputs', async ({
   page,
 }) => {
